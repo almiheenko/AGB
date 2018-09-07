@@ -9,14 +9,15 @@ from os import path
 from os.path import join, relpath
 from setuptools import setup, find_packages
 
+from scripts.config import ROOT_DIR
 
 package_name = "AGV"
 
 def find_package_files(dirpath):
     paths = []
-    for (path, dirs, fnames) in os.walk(join(package_name, dirpath)):
+    for (path, dirs, fnames) in os.walk(dirpath):
         for fname in fnames:
-            paths.append(relpath(join(path, fname), package_name))
+            paths.append(relpath(join(path, fname), ROOT_DIR))
     return paths
 
 
@@ -49,6 +50,7 @@ setup(
     package_data={
         package_name:
             find_package_files('scripts') +
+            find_package_files('external_libs') +
             find_package_files('html_files') +
             find_package_files('test_data') +
             [

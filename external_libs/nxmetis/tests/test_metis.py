@@ -4,9 +4,9 @@ import nose.tools
 import networkx as nx
 
 import nxmetis
-from nxmetis import exceptions
-from nxmetis import metis
-from nxmetis import types
+from external_libs.nxmetis import exceptions
+from external_libs.nxmetis import metis
+from external_libs.nxmetis import types
 
 
 def make_cycle(n):

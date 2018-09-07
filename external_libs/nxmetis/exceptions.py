@@ -1,4 +1,4 @@
-from nxmetis import enums
+from external_libs.nxmetis import enums
 __all__ = ['MetisError']
 
 

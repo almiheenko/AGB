@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 import os
 import sys
 from os.path import exists
@@ -41,7 +43,7 @@ def main():
     parser.add_option('-t', dest='threads', default=DEFAULT_THREADS)
 
     parser.set_usage('Usage: ' + __file__ + ' -i assembler_output_dir -o output_dir [-r path_to_reference_genome]'
-                     '-a assembler_name (supported assemblers: ' + ', '.join(SUPPORTED_ASSEMBLERS) + ')')
+                     ' -a assembler_name (supported assemblers: ' + ', '.join(SUPPORTED_ASSEMBLERS) + ')')
     opts, args = parser.parse_args()
     if not opts.assembler:
         parser.print_help(file=sys.stderr)

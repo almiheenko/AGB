@@ -1,7 +1,7 @@
 import numbers
 
-from nxmetis import enums
-from nxmetis import metis
+from external_libs.nxmetis import enums
+from external_libs.nxmetis import metis
 
 __all__ = ['MetisOptions']
 

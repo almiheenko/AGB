@@ -1,11 +1,24 @@
+#!/usr/bin/env python
 """A setuptools based setup module.
 See:
 https://packaging.python.org/en/latest/distributing.html
 https://github.com/pypa/sampleproject
 """
-
-from setuptools import setup, find_packages
+import os
 from os import path
+from os.path import join, relpath
+from setuptools import setup, find_packages
+
+
+package_name = "AGV"
+
+def find_package_files(dirpath):
+    paths = []
+    for (path, dirs, fnames) in os.walk(join(package_name, dirpath)):
+        for fname in fnames:
+            paths.append(relpath(join(path, fname), package_name))
+    return paths
+
 
 setup(
     name='AGV',
@@ -33,7 +46,18 @@ setup(
     # You can just specify the packages manually here if your project is
     # simple. Or you can use find_packages().
     packages=find_packages(),
-
+    package_data={
+        package_name:
+            find_package_files('scripts') +
+            find_package_files('html_files') +
+            find_package_files('test_data') +
+            [
+            'README.md',
+            'LICENSE'
+            ]
+    },
+    include_package_data=True,
+    zip_safe=False,
     # List run-time dependencies here.  These will be installed by pip when
     # your project is installed. For an analysis of "install_requires" vs pip's
     # requirements files see:

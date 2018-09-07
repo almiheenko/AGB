@@ -1,0 +1,268 @@
+#graph {
+    min-height: 400px;
+    min-width: 600px;
+    max-width: 1000px;
+}
+
+#left_panel {
+    width: 390px;
+    float: left;
+    overflow-y: hidden;
+    overflow-x: hidden;
+}
+.info-popup{
+    width:100%;
+    min-height:100%;
+    background-color: rgba(0,0,0,0.5);
+    overflow:hidden;
+    position:fixed;
+    top:0px;
+    z-index: 100;
+}
+.info-popup .info-popup-content{
+    margin:40px auto 0px auto;
+    width: 800px;
+    height: 180px;
+    padding:10px;
+    background-color: #c5c5c5;
+    border-radius:5px;
+    box-shadow: 0px 0px 10px #000;
+    z-index: 101;
+}
+.option_component {
+    padding: 3px 6px;
+}
+.search_box {
+    background-image: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAAXNSR0IArs4c6QAAAAlwSFlzAAALEwAACxMBAJqcGAAAAVlpVFh0WE1MOmNvbS5hZG9iZS54bXAAAAAAADx4OnhtcG1ldGEgeG1sbnM6eD0iYWRvYmU6bnM6bWV0YS8iIHg6eG1wdGs9IlhNUCBDb3JlIDUuNC4wIj4KICAgPHJkZjpSREYgeG1sbnM6cmRmPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5LzAyLzIyLXJkZi1zeW50YXgtbnMjIj4KICAgICAgPHJkZjpEZXNjcmlwdGlvbiByZGY6YWJvdXQ9IiIKICAgICAgICAgICAgeG1sbnM6dGlmZj0iaHR0cDovL25zLmFkb2JlLmNvbS90aWZmLzEuMC8iPgogICAgICAgICA8dGlmZjpPcmllbnRhdGlvbj4xPC90aWZmOk9yaWVudGF0aW9uPgogICAgICA8L3JkZjpEZXNjcmlwdGlvbj4KICAgPC9yZGY6UkRGPgo8L3g6eG1wbWV0YT4KTMInWQAAAtxJREFUOBFtUs9rE1EQfvM2+yubEC/Rg1AkYEQD6qG12B4aEINBetykaYz0LIKIF731L1AvRanH2KQlUFqCFiJI9eCt4CGpWLAEbyVgKjG7m2R3nzNbi6IOPHbfvPnxzTcfmKYpMcakWq02zOdL50ESd5hgafSdBWA2/jcF+JuyJD0rl8v9bDarTk5OjlqtFmAMk1KplBwkz8/f45zVI0bkCgCc9NAAREQPh8cURc04g+F8KnXxw8bG+lfMUy3LEoZhsKBKHpN1VX+KOcx13VUmvOeDAbRl2QsxSZoAwR/qunbJcWxE5E9Uq9UWIlewkBci2Jz5R8kj90G1+vIxQfvDvpgmqzl2cRPR3LQt6wW+Te3v74tEIsFCNLNhRFi/31+l5IWFBa3dbrNksud1uwlwHCdUq9Ut0xzexv6fFFW9Wijcuo6xb7CAwomwkTtiBJu6UjKau7cXFZ1Ox9c0bTA7OxtGnr4JBiuKojAk9RoF4TvShmwPkCEkrk1O6kzfY8Mg6PV6fnD3RVMILCNgjO66rgtOq8KjjEZcJifBpu//DOM0bISg2fD4nUZo6nqYybI/Tk6aOR6PY8xvi0ajhJRshh6wwy5dbNsGTiIJqgr+iERVr9ctLKLie4gOJivkyxWL08B5rt//wXyfv6YCyWTSg1KpZLiu39R0/Qyu+RWKp1SpVLoUcGy5XHGaS7CmaeppZ+AsrVZW7mYyGSMWazjBvHNzc+PApfc4im7b1gETYgXX0vQBNGAww4HniX0UGfM89yOK6QaK6SCdTmtA2t7a2hoUCoUUKntZUZWpYFXENhJGFsAWYglv06iZy3j/jEVmqAgsLi7y7e1tBY9DwSQS2vOvVRHbuzTz2lq5iU1OMZDe4frOIdJddzTMAhFHu0bmOclzZ2cHVfWv0cyNRqN/VIS/jcVOXDj8frgeFPgrnApyEgn5aVXEdre77Hc6aZmQYtMxSVaeeCHp/k+Ejm7EXrIWyAAAAABJRU5ErkJggg=='); /* Add a search icon to input */
+    background-position: 10px 12px; /* Position the search icon */
+    background-repeat: no-repeat; /* Do not repeat the icon image */
+    width: 370px; /* Full-width */
+    font-size: 15px; /* Increase font-size */
+    padding: 12px 20px 12px 40px; /* Add some padding */
+    border: 1px solid #ddd; /* Add a grey border */
+    margin-bottom: 20px; /* Add some space below the input */
+}
+#radioBtn .notActive{
+    color: #3276b1;
+    background-color: #fff;
+}
+.scroll_table_div {
+    width: 102%;
+    height: 150px;
+    overflow-y: scroll;
+}
+
+#edge-tooltip {
+    position: absolute;
+}
+
+.tooltip {
+    white-space: pre-wrap;
+}
+
+input:disabled+label {
+  color: #838383;
+}
+
+.collapse_panel {
+    margin-bottom: 0px;
+    border-radius: 0px;
+}
+
+.scroll_table {
+    border-collapse: collapse;
+    width: 100%;
+    height: 100%;
+    box-sizing: content-box;
+    border: 1px solid #ddd;
+    font-size: 12px;
+}
+
+.scroll_table th, .scroll_table td {
+    text-align: left; /* Left-align text */
+    padding: 5px; /* Add padding */
+}
+
+.scroll_table tr {
+    border-bottom: 1px solid #ddd; 
+}
+
+.scroll_table tbody tr.selected {
+    background-color: #87e3ff;
+}
+
+.scroll_table tbody tr.selected:hover {
+    background-color: #7abaf2;
+}
+
+.scroll_table thead tr.header {
+    background-color: #d6d6d6;
+}
+
+.scroll_table tbody tr:hover {
+    background-color: #d6f5ff;
+}
+
+.selected path {
+    stroke-dasharray: 10,5;
+    stroke-width: 5 !important;
+}
+
+.selected ellipse {
+    stroke-width: 4 !important;
+}
+
+path.contig_selected  {
+    stroke-dasharray: 2,2;
+}
+
+.node_selected_in path {
+    stroke: #48a74b;
+}
+
+.node_selected_in polygon {
+    stroke: #48a74b;
+    fill: #48a74b;
+}
+
+.link {
+    color:blue;
+    text-decoration:underline;
+    cursor:pointer;
+}
+
+.unbalanced_node ellipse {
+    fill: #ef0404;
+}
+
+.hanging_node ellipse {
+    fill: #000000;
+}
+
+.connect_node ellipse {
+    fill: #60fc90;
+    stroke-dasharray: 2,2;
+}
+
+.collapsed_node ellipse {
+    fill: #be21f8;
+}
+
+.part_node ellipse {
+    stroke-width: 3 !important;
+    fill: #344cff;
+}
+
+.node_selected_out path {
+    stroke: #8d48a7;
+}
+
+.node_selected_out polygon {
+    stroke: #8d48a7;
+    fill: #8d48a7;
+}
+
+.gray_text {
+    color: #818181; 
+}
+
+.tooltip_link {
+    border-bottom: 1px dashed #849cff;
+    text-decoration: none;
+}
+
+.selector {
+    background-color: #f1f1f1;
+    color: black;
+    text-decoration: none;
+    display: inline-block;
+    padding: 8px 16px;
+}
+
+.selector:enabled {
+    background-color: #4CAF50;
+    color: white;
+}
+
+.selector:enabled:hover {
+    background-color: #76d07a;
+    color: #d0cece;
+}
+
+.round {
+    border-radius: 50%;
+}
+
+/*!
+* jquery.fixedHeaderTable. The jQuery fixedHeaderTable plugin
+*
+* Copyright (c) 2011 Mark Malek
+* http://fixedheadertable.com
+*
+* Licensed under MIT
+* http://www.opensource.org/licenses/mit-license.php
+* 
+* http://docs.jquery.com/Plugins/Authoring
+* jQuery authoring guidelines
+*
+* Launch  : October 2009
+* Version : 1.3
+* Released: May 9th, 2011
+*
+* 
+* all CSS sizing (width,height) is done in pixels (px)
+*/
+
+/* @group Reset */
+
+
+.fht-table  {
+    border-collapse: collapse;
+    border: 1px solid #ddd;
+	}
+
+/* @end */
+
+/* @group Content */
+
+.fht-table-wrapper,
+.fht-table-wrapper .fht-thead,
+.fht-table-wrapper .fht-tfoot,
+.fht-table-wrapper .fht-fixed-column .fht-tbody,
+.fht-table-wrapper .fht-fixed-body .fht-tbody,
+.fht-table-wrapper .fht-tbody {
+	/* appearance */
+	overflow: hidden;
+	
+	/* position */
+	position: relative;
+	}
+
+	.fht-table-wrapper .fht-fixed-body .fht-tbody,
+	.fht-table-wrapper .fht-tbody {
+		/* appearance */
+	    overflow: auto;
+		}
+
+		.fht-table-wrapper .fht-table .fht-cell {
+			/* appearance */
+			overflow: hidden;
+			
+			/* size */
+		    height: 1px;
+			}
+	
+	.fht-table-wrapper .fht-fixed-column,
+	.fht-table-wrapper .fht-fixed-body {
+	    /* position */
+	    top: 0;
+	    left: 0;
+	    position: absolute;
+	    }
+	    
+	.fht-table-wrapper .fht-fixed-column {
+	    /* position */
+	    z-index: 1;
+	    }
+
+/* @end */

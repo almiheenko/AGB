@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate"/>
+<meta http-equiv="Pragma" content="no-cache"/>
+<meta http-equiv="Expires" content="0"/>
+<head>
+  <title>Assembly graph viewer</title>
+</head>
+<body>
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+<!-- Optional theme -->
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap-theme.min.css" integrity="sha384-rHyoN1iRsVXV4nD0JutlnGaslCJuC7uwjduW9SVrLvRYooPp2bWYgmgJQIXwl/Sp" crossorigin="anonymous">
+<link rel="stylesheet" type="text/css" href="graph_viewer.css" />
+<link rel="stylesheet" type="text/css" href="jquery.css" />
+    
+<script type="text/javascript" src="d3.v4.min.js"></script>
+<script type="text/javascript" src="viz.js"></script>
+<script type="text/javascript" src="jquery.min.js"></script>
+<script type="text/javascript" src="jquery-ui.js"></script>
+<script type="text/javascript" src="d3-graphviz.js"></script>
+<script type="text/javascript" src="https://unpkg.com/d3-graphviz@2.4.2/build/d3-graphviz.min.js"></script>
+<script type="text/javascript" src="bootstrap.min.js"></script>
+<script type="text/javascript" src="sorttable.js"></script>
+<script type="text/javascript" src="jquery.fixedheadertable.min.js"></script>
+<script type="text/javascript" src="d3-path.js"></script>
+<script type="text/javascript" src="d3-zoom.min.js"></script>
+<script type="text/javascript" src="graph.js"></script>
+<script type="text/javascript" src="interface.js"></script>
+<script type="text/javascript" src="utils.js"></script>
+
+<script src="https://cdn.rawgit.com/eligrey/canvas-toBlob.js/f1a01896135ab378aa5c0118eadd81da55e698d8/canvas-toBlob.js"></script>
+<script src="https://cdn.rawgit.com/eligrey/FileSaver.js/e9d941381475b5df8b7d7691013401e171014e89/FileSaver.min.js"></script>
+    
+<script type="text/javascript" src="data/assembly_graph.json"></script>
+<script type="text/javascript" src="data/contig_edges_data.json"></script>
+<script type="text/javascript" src="data/contig_graph.json"></script>
+<script type="text/javascript" src="data/contig_info.json"></script>
+<script type="text/javascript" src="data/contig_partition_info.json"></script>
+<script type="text/javascript" src="data/def_edges_data.json"></script>
+<script type="text/javascript" src="data/def_graph.json"></script>
+<script type="text/javascript" src="data/def_node_info.json"></script>
+<script type="text/javascript" src="data/def_partition_info.json"></script>
+<script type="text/javascript" src="data/edges_base_info.json"></script>
+<script type="text/javascript" src="data/ref_edges_data.json"></script>
+<script type="text/javascript" src="data/ref_graph.json"></script>
+<script type="text/javascript" src="data/ref_partition_info.json"></script>
+<script type="text/javascript" src="data/reference.json"></script>
+<script type="text/javascript" src="data/repeat_edges_data.json"></script>
+<script type="text/javascript" src="data/repeat_graph.json"></script>
+<script type="text/javascript" src="data/repeat_node_info.json"></script>
+<script type="text/javascript" src="data/repeat_partition_info.json"></script>
+
+<h2 style="margin-left: 20px;">Assembly graph <a href="javascript:infoPopUpShow()">(show help)</a></h2>
+
+<div class="info-popup" id="info_popup" style="display:none" onclick="javascript:infoPopUpHide()">
+    <div class="info-popup-content" onclick="javascript:infoPopUpShow()">
+        <p id='info'>Each edge is labeled with its id, length, coverage, and inferred multiplicity. By default, the unique edges (multiplicity 1) are black and thin, the repetitive edges (multiplicity 2 and higher) are colored and thick, and clusters of adjacent repeat edges are shown with the same color. Nodes by default are white, but nodes with the incoming or outgoing degree 0 are black, and nodes with non-zero balance (difference between the total multiplicities of incoming and outgoing edges) are red.</p>
+        <p>Each genome segment is represented by its forward edge (marked with “+”) and its reverse edge (marked with “-“). When an edge is selected, both this edge and its reverse copy are shown as dashed edges.
+        </p>
+        <a>OK</a>
+    </div>
+</div>
+<div id="left_panel" style="margin-top: 10px;">
+    <div style="margin-left: 20px;">
+          <div class="menu_div panel panel-default collapse_panel" style="margin-top: 10px;">
+            <div class="panel-heading">
+              <h4 class="panel-title">
+                <a data-toggle="collapse" href="#collapse_info">Info</a>
+              </h4>
+            </div>
+            <div id="collapse_info" class="panel-collapse collapse in">
+              <div class="panel-body">
+                <span id="node_info">Click on a graph node or an edge</span>
+              </div>
+            </div>
+          </div>
+
+        <div style="margin-bottom: 25px; margin-top: 10px;" class="panel-group">
+          <div class="panel panel-default">
+            <div class="panel-heading">
+              <h4 class="panel-title">
+                <a data-toggle="collapse" href="#collapse_opt">Additional options</a>
+              </h4>
+            </div>
+            <div id="collapse_opt" class="panel-collapse collapse">
+              <div class="panel-body">
+                    <input id="collapse_repeats_checkbox" type="checkbox" ><label for="collapse_repeats_checkbox" >Collapse repeat edges</label>
+                <p>Collapse edges with coverage above <input class="textBox" id="max_cov_threshold" type="text" size="1" style="text-align: right"/>x</p>
+                <p>Remove edges with coverage below <input class="textBox" id="min_cov_threshold" type="text" size="1" style="text-align: right"/>x</p>
+                <p>Collapse edges shorter than <input class="textBox" id="len_min_threshold" type="text" size="3" style="text-align: right"/> kb
+                    and longer than <input class="textBox" id="len_max_threshold" type="text" size="5" style="text-align: right"/> kb</p>
+                <p>Use color to highlight
+                <select id="color_select">
+                    <option value="0" selected>repeated edges</option>
+                    <option value="1">edges mapping to reference</option>
+                    <option value="2">high covered edges</option>
+                </select></p><p><span id='repeat_info' class='gray_text' style='margin-left: 5px; display: none;'>Note: repeated edges are represented with parallel edges</span></p>
+
+                <div>
+                    <input id="unbalanced_checkbox" type="checkbox" checked><label for="unbalanced_checkbox">Mark <span id="unbalanced_toooltip" data-toggle="tooltip" class='tooltip_link' title="Nodes where incoming/outgoing multiplicities do not balance">unbalanced nodes</span> as red</label>
+                  </div>
+                  <div>
+                    <input id="break_checkbox" type="checkbox"><label for="break_checkbox"><span class='tooltip_link' data-toggle="tooltip" title="Incident unique edges will be shown but will not affect the graph connectivity">Remove</span> unique edges from the graph   </label>
+                    <p style="font-size: 10px; display: none;" id="repeatInfo">Dashed light green nodes are connected to the other components.</p>
+                  </div>
+                    <div><input id="show_labels" type="checkbox" checked><label for="show_labels">Show edge labels</label></div>
+                </div>
+            </div>
+          </div>
+        </div>
+
+        <input type="text" id="searchElementBox" class="search_box" placeholder="Search by edge ID, contig, chromosome...">
+        <div id="contig_tab">
+          <div class="panel panel-default collapse_panel">
+            <div class="panel-heading">
+              <h4 class="panel-title">
+                <a data-toggle="collapse" href="#collapse_contig_table" class="collapse_header">Contigs</a>
+              </h4>
+            </div>
+            <div id="collapse_contig_table" class="panel-collapse collapse">
+                <div id='contig_table_div' class="scroll_table_div">
+                </div>
+                <p id='uniqueEdgesWarning' style="text-align: center; font-size: 12px; color: #a80000; display: none">
+                The graph path cannot be shown because it contains only unique edges. Please uncheck "Remove unique edges from the graph" checkbox and select this contig again.
+                </p>
+                <p id='wrongOptionsWarning' style="text-align: center; font-size: 12px; color: #a80000; display: none">
+                Some edges in the graph path are hidden or belong to other components. Try to change thresholds in Additional options or switch to "contig" splitting mode.
+                </p>
+              </div>
+          </div>
+        </div>
+        <div id="ref_tab">
+          <div class="panel panel-default collapse_panel">
+            <div class="panel-heading">
+              <h4 class="panel-title">
+                <a data-toggle="collapse" href="#collapse_ref_table" class="collapse_header">Reference chromosomes</a>
+              </h4>
+            </div>
+            <div id="collapse_ref_table" class="panel-collapse collapse">
+                <div id='ref_table_div' class="scroll_table_div">
+                </div>
+                <p id='uniqueChromEdgesWarning' style="text-align: center; font-size: 12px; color: #a80000; display: none">
+                The graph path cannot be shown because it contains only unique edges. Please uncheck "Remove unique edges from the graph" checkbox and select this contig again.
+                </p>
+                <p id='wrongOptionsChromWarning' style="text-align: center; font-size: 12px; color: #a80000; display: none">
+                Some edges in the graph path are hidden or belong to other components. Try to change thresholds in Additional options or switch to "contig" splitting mode.
+                </p>
+            </div>
+          </div>
+        </div>
+        <div>
+          <div class="panel panel-default collapse_panel">
+            <div class="panel-heading">
+              <h4 class="panel-title">
+                <a data-toggle="collapse" href="#collapse_components_table" class="collapse_header">Connected components</a>
+              </h4>
+            </div>
+            <div id="collapse_components_table" class="panel-collapse collapse">
+              <div>
+                <div id='components_table_div' class="scroll_table_div">
+                </div>
+                <p id='adjRepeatEdgesWarning' style="text-align: center; font-size: 14px; color: #5f5c5c; display: none">
+                    Note: Adjacent unique edges are not taken into account.
+                </p>
+                <p id='adjEdgesWarning' style="text-align: center; font-size: 14px; color: #5f5c5c; display: none">
+                    Note: Adjacent edges are not taken into account.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div>
+          <div class="panel panel-default collapse_panel">
+            <div class="panel-heading">
+              <h4 class="panel-title">
+                <a data-toggle="collapse" href="#collapse_edge_table" class="collapse_header">Edges</a>
+              </h4>
+            </div>
+            <div id="collapse_edge_table" class="panel-collapse collapse">
+              <div>
+                <div id='edge_table_div' class="scroll_table_div">
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div>
+          <div class="panel panel-default collapse_panel">
+            <div class="panel-heading">
+              <h4 class="panel-title">
+                <a data-toggle="collapse" href="#collapse_vertex_table" class="collapse_header">Nodes</a>
+              </h4>
+            </div>
+            <div id="collapse_vertex_table" class="panel-collapse collapse">
+              <div>
+                <div id='vertex_table_div' class="scroll_table_div">
+                </div>
+                Balance shows the difference between the total multiplicities of incoming and outgoing edges. <span id="vert_table_info" style="display: none">Size is the number of edges collapsed into the vertex. </span>
+              </div>
+            </div>
+          </div>
+        </div>
+    </div>
+</div>
+
+<div style="margin-top: 20px; margin-left: 30px; float: left;">
+    <div style="float:left">
+        <button id="prev_btn" class="selector round" disabled>&#8249;</button>
+        <button id="next_btn" class="selector round" disabled>&#8250;</button>
+        <span>Component <span id="component_n"></span>/<span id="component_total"></span> <span id="component_chromosome"></span></span>
+        <p id="partition_warning" style="color:red; display: none; text-align: center; font-size: 8px;">This is a part of the large connected component.</br>Big blue nodes represent other parts of the component.</p>
+    </div>
+    <div id="div_switch" style="float:left; width:235px; margin-left: 10px">
+        <div style="padding-top:-30px; text-align:center">
+            Splitting
+        </div>
+        <div class="btn-group btn-group-toggle" data-toggle="buttons">
+          <label class="btn btn-info active option_component" id="components_default">
+            <input type="radio" name="components" autocomplete="off" enabled=false checked> default
+          </label>
+          <label class="btn btn-info option_component" id="components_chrom">
+            <input type="radio" name="components" autocomplete="off" val="chrom"> chromosomes
+          </label>
+          <label class="btn btn-info option_component" id="components_contig">
+            <input type="radio" name="components" autocomplete="off" val="contig"> contigs
+          </label>
+        </div>
+    </div>
+        <span id="adj_edges_option"><label for="adj_edges_checkbox" class="custom-control custom-checkbox mb-2 mr-sm-2 mb-sm-0"><input id="adj_edges_checkbox" type="checkbox" class="custom-control-input">show adjacent edges</label></span>
+    <div style="float:right" id="saveBtns" style="display: none;">
+        <btn class="btn btn-info" id="saveButton">Save as svg</btn>
+        <btn class="btn btn-info" id="saveDotButton">Save as dot</btn>
+    </div>
+    <div style="clear:left;" id="pathDiv">
+        <p id='contigPath' style="text-align: center; font-size: 16px"></p>
+        <p id='chromPath' style="text-align: center; font-size: 16px"></p>
+    </div>
+    <div id="graph" style="float:left; clear: both; text-align: left;">
+    </div>
+    <i id="edge-tooltip" data-toggle="tooltip" data-placement="right" data-animation="false" data-trigger="manual"></i>
+</div>
+<script>
+
+$(document).ready(function(){
+    $('[data-toggle="tooltip"]').tooltip();
+});
+
+var minCoverage = 0;
+var maxCoverage = '';
+var minLen = 0;
+var maxLen = '';
+var minComponents = 1;
+var componentN = 0;
+var leftPanelWidth = 350;
+
+var lenCovPattern = /([0-9\.]+)k (\d+)x/i;
+var labelPattern = /(.+)\\l\(*([0-9\.]+)k/i;
+var edgePattern = /"(.*\d+)" -> "(.*\d+)" \[/i;
+var colorPattern = /"?color"? ?= ?"([a-z0-9\#A-Z]+)"/i;
+var idPattern = /id = "([a-zA-Z0-9_]+)",/i;
+
+var unbalancedNodes;
+var curChrom = "";
+var srcGraphs = def_graphs;
+var dotSrc = srcGraphs[componentN].dot;
+var dot;
+var partitionDict = JSON.parse(def_parts_info);
+var repeatPartitionDict = JSON.parse(repeat_parts_info);
+var refPartitionDict = JSON.parse(ref_parts_info);
+var srcPartDict = partitionDict;
+if (srcPartDict['part' + componentN] && srcPartDict['part' + componentN].big) $('#partition_warning').show();
+
+var selectedMethod;
+
+var loopEdgeDict = JSON.parse(def_loop_edges);
+var baseLoopEdgeDict = JSON.parse(def_loop_edges);
+var uniqueEdgesDict = {};//JSON.parse(unique_edges_dict);
+
+var collapsedNodes = new Set();
+var defaultHangNodes = JSON.parse(def_hanging_nodes);
+var repeatHangNodes = JSON.parse(repeat_hanging_nodes);
+var hangNodes = defaultHangNodes;
+var repeatConnectNodes = JSON.parse(repeat_connected_nodes);
+var newNodes, nodeColors;
+var edgeInfo = JSON.parse(edge_info);
+var edgeMappingInfo = mapping_info ? JSON.parse(mapping_info) : [];
+
+var edgeDataFull = JSON.parse(def_edge_data);
+var edgeDataRef = JSON.parse(ref_edge_data);
+var edgeDataContig = JSON.parse(contig_edge_data);
+var edgeDataRepeat = JSON.parse(repeat_edge_data);
+var edgeData = edgeDataFull;
+    
+var chromosomes = chromosomes ? JSON.parse(chromosomes) : [];
+var chrom_lengths = chrom_lengths ? JSON.parse(chrom_lengths) : [];
+var newData;
+var diGraph = parseDirectedGraph(full_graph.split('\n'));
+var graph = parseGraph(full_graph.split('\n'));
+var full_diGraph = parseDirectedGraph(full_graph.split('\n'));
+var full_graph = parseGraph(full_graph.split('\n'));
+var contigInfo = JSON.parse(contig_info);
+var contigs = [];
+for (x in contigInfo) {
+    contigs.push(x);
+}
+var clusterNodeSizeDict = {};
+var newEdgesDict = {};
+
+var selectedContig;
+var selectedChrom;
+var chromEdges = [];
+var chromosomesData;
+var selectedEdge = "";
+var selectedMatchEdge = "";
+var nodeToSelect, selectedNode;
+var edgeDescription;
+var contigEdges = [];
+var repeatEdges = new Set();
+var hiddenEdges = new Set();
+    
+var expandedNodes = new Set();
+var adjacentExpNodes = {};
+var clusterCenters = {};
+
+var graphviz = d3.select("#graph").graphviz().attributer(attributer);
+var components = {};
+var timeTransition = 0;
+
+var copyBtn = $("#unbalanced_tooltip").tooltip({ trigger: 'manual' });
+ $("#unbalanced_tooltip").on('mouseover', function () {
+    copyBtn.tooltip('show');
+});
+ $("#unbalanced_tooltip").on('mouseout', function () {
+    copyBtn.tooltip('hide');
+});
+
+setupInterfaceBtns();
+hideEdgesByThresholds();
+timeTransition = 500;
+
+var enableEdges = [];
+var enableContigs = [];
+var enableChroms = [];
+
+</script>

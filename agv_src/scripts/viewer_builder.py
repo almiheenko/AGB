@@ -4,8 +4,8 @@ from os.path import join
 
 import networkx as nx
 
-from scripts.graph_analysis import process_graph
-from scripts.utils import print_dot_header, get_edge_agv_id, calculate_mean_cov, is_empty_file
+from agv_src.scripts.graph_analysis import process_graph
+from agv_src.scripts.utils import print_dot_header, get_edge_agv_id, calculate_mean_cov, is_empty_file
 
 
 def build_jsons(dict_edges, input_dirpath, output_dirpath, strict_mapping_info, chrom_names, edge_by_chrom, contig_edges):

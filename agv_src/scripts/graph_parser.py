@@ -4,8 +4,8 @@ from collections import defaultdict
 import gfapy
 import networkx as nx
 
-from scripts.edge import Edge
-from scripts.utils import get_edge_agv_id, calculate_mean_cov, get_edge_num, find_file_by_pattern, is_empty_file
+from agv_src.scripts.edge import Edge
+from agv_src.scripts.utils import get_edge_agv_id, calculate_mean_cov, get_edge_num, find_file_by_pattern, is_empty_file
 
 repeat_colors = ["red", "darkgreen", "blue", "goldenrod", "cadetblue1", "darkorchid", "aquamarine1",
                  "darkgoldenrod1", "deepskyblue1", "darkolivegreen3"]

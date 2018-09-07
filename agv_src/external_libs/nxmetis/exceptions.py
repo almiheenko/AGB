@@ -1,4 +1,4 @@
-from external_libs.nxmetis import enums
+from agv_src.external_libs.nxmetis import enums
 __all__ = ['MetisError']
 
 

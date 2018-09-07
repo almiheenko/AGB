@@ -5,21 +5,17 @@ https://packaging.python.org/en/latest/distributing.html
 https://github.com/pypa/sampleproject
 """
 import os
-from os import path
 from os.path import join, relpath
 from setuptools import setup, find_packages
 
-from scripts.config import ROOT_DIR
 
-package_name = "AGV"
-
+package_name = "agv_source"
 def find_package_files(dirpath):
     paths = []
-    for (path, dirs, fnames) in os.walk(dirpath):
+    for (path, dirs, fnames) in os.walk(join(package_name, dirpath)):
         for fname in fnames:
-            paths.append(relpath(join(path, fname), ROOT_DIR))
+            paths.append(relpath(join(path, fname), package_name))
     return paths
-
 
 setup(
     name='AGV',

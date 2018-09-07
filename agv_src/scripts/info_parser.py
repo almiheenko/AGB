@@ -4,8 +4,8 @@ import sys
 from collections import defaultdict, OrderedDict
 from os.path import join, abspath
 
-from scripts.graph_parser import parse_abyss_dot, parse_flye_dot, parse_gfa
-from scripts.utils import natural_sort, get_edge_agv_id, is_empty_file, find_file_by_pattern, is_osx, get_edge_num, \
+from agv_src.scripts.graph_parser import parse_abyss_dot, parse_flye_dot, parse_gfa
+from agv_src.scripts.utils import natural_sort, get_edge_agv_id, is_empty_file, find_file_by_pattern, is_osx, get_edge_num, \
     get_canu_id
 
 

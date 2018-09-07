@@ -5,7 +5,7 @@ import re
 from os import listdir
 from os.path import exists, getmtime, join, getsize, abspath, basename
 
-from scripts.config import CSS_DIR, JS_DIR
+from agv_src.scripts.config import CSS_DIR, JS_DIR
 
 
 def is_osx():

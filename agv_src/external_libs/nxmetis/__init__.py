@@ -15,10 +15,10 @@ import sys
 import networkx as nx
 import six
 
-from external_libs.nxmetis import enums
-from external_libs.nxmetis import exceptions
-from external_libs.nxmetis import metis
-from external_libs.nxmetis import types
+from agv_src.external_libs.nxmetis import enums
+from agv_src.external_libs.nxmetis import exceptions
+from agv_src.external_libs.nxmetis import metis
+from agv_src.external_libs.nxmetis import types
 
 __all__ = ['node_nested_dissection', 'partition', 'vertex_separator',
            'MetisOptions']

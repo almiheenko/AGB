@@ -4,7 +4,7 @@
     documentation builds with or without the ``_metis`` extension.
 """
 try:
-    from external_libs.nxmetis import _metis
+    from agv_src.external_libs.nxmetis import _metis
 except ImportError:
     def node_nd(*args, **kwargs):
         raise Exception("NetworkX-METIS not installed!")

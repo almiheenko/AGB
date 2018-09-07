@@ -3,13 +3,13 @@ import math
 from os.path import join
 from collections import defaultdict
 
-from external_libs import nxmetis
+from agv_src.external_libs import nxmetis
 import networkx as nx
 
-from scripts.config import MAX_NODES, MAX_SUB_NODES
-from scripts.edge import Edge
-from scripts.utils import print_dot_header, natural_sort, calculate_mean_cov
-from scripts.viewer_data import ViewerData
+from agv_src.scripts.config import MAX_NODES, MAX_SUB_NODES
+from agv_src.scripts.edge import Edge
+from agv_src.scripts.utils import print_dot_header, natural_sort, calculate_mean_cov
+from agv_src.scripts.viewer_data import ViewerData
 
 
 def process_graph(g, undirected_g, dict_edges, edges_by_nodes, two_way_edges, output_dirpath, suffix, base_graph=None,

@@ -1,9 +1,9 @@
 import subprocess
 from os.path import exists
 
-from scripts.config import *
-from scripts.info_parser import parse_mapping_info
-from scripts.utils import can_reuse, is_empty_file, find_file_by_pattern
+from agv_src.scripts.config import *
+from agv_src.scripts.info_parser import parse_mapping_info
+from agv_src.scripts.utils import can_reuse, is_empty_file, find_file_by_pattern
 
 
 def get_contigs_fpath(assembler, input_dirpath):

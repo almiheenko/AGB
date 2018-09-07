@@ -7,7 +7,7 @@ import os
 import sys
 import tempfile
 
-from external_libs.nxmetis import exceptions
+from agv_src.external_libs.nxmetis import exceptions
 
 __all__ = ['part_graph', 'node_nd', 'compute_vertex_separator']
 

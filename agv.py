@@ -5,11 +5,11 @@ import sys
 from os.path import exists
 from optparse import OptionParser
 
-from scripts.config import *
-from scripts.edges_mapping import map_edges_to_ref
-from scripts.info_parser import parse_abyss_output, parse_canu_output, parse_flye_output, parse_spades_output
-from scripts.viewer_builder import build_jsons
-from scripts.utils import embed_css_and_scripts
+from agv_src.scripts.config import *
+from agv_src.scripts.edges_mapping import map_edges_to_ref
+from agv_src.scripts.info_parser import parse_abyss_output, parse_canu_output, parse_flye_output, parse_spades_output
+from agv_src.scripts.viewer_builder import build_jsons
+from agv_src.scripts.utils import embed_css_and_scripts
 
 
 def parse_assembler_output(assembler_name, input_dirpath):

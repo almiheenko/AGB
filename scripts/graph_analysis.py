@@ -3,7 +3,7 @@ import math
 from os.path import join
 from collections import defaultdict
 
-import nxmetis
+from external_libs import nxmetis
 import networkx as nx
 
 from scripts.config import MAX_NODES, MAX_SUB_NODES

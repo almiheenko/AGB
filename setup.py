@@ -9,7 +9,7 @@ from os.path import join, relpath
 from setuptools import setup, find_packages
 
 
-package_name = "agv_source"
+package_name = "agv_src"
 def find_package_files(dirpath):
     paths = []
     for (path, dirs, fnames) in os.walk(join(package_name, dirpath)):

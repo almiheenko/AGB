@@ -53,7 +53,7 @@ function setupInterfaceBtns() {
 
     $('#collapse_repeats_checkbox').on('change', function() {
         expandedNodes = new Set();
-        hideEdgesByThresholds();
+        hideEdgesByThresholds(false, false, true);
         if ($('#collapse_repeats_checkbox')[0].checked) {
             $('#unbalanced_checkbox').prop('checked', false);
             $('#unbalanced_checkbox').prop('disabled', true);
@@ -89,7 +89,7 @@ function setupInterfaceBtns() {
             edgeData = edgeDataFull;
             hangNodes = defaultHangNodes;
         }
-        changeComponent(componentN);
+        changeComponent(componentN, true);
         deselectContig();
         $("#contig_table tbody tr").removeClass('selected');
         $("#edge_table tbody tr").removeClass('selected');
@@ -116,7 +116,7 @@ function setupInterfaceBtns() {
         $('#components_chrom').removeAttr('disabled');
     });
     $('#adj_edges_checkbox').on('change', function() {
-        hideEdgesByThresholds(false, true);
+        hideEdgesByThresholds(false, true, false);
     });
     $('#show_labels').on('change', function() {
         if (!this.checked)
@@ -127,7 +127,7 @@ function setupInterfaceBtns() {
     document.getElementById('color_select').onchange = function(event) {
         if (document.getElementById('color_select').selectedIndex != 2) document.getElementById('repeat_info').style.display = 'none';
         else document.getElementById('repeat_info').style.display = '';
-        hideEdgesByThresholds(false, false);
+        hideEdgesByThresholds(false, false, false);
     };
 
     function submitOnEnter(event){
@@ -268,7 +268,7 @@ function changeSplitMethod(method, component) {
         hangNodes = defaultHangNodes;
         selectedChrom = "";
     }
-    changeComponent(componentN);
+    changeComponent(componentN, true);
     deselectContig();
     $("#contig_table tbody tr").removeClass('selected');
     $("#edge_table tbody tr").removeClass('selected');
@@ -291,7 +291,7 @@ function setMinCoverage(event, textBox) {
     else if (key == 13) {
         if (parseInt(textBox.value)) minCoverage = parseInt(textBox.value);
         else minCoverage = 0;
-        hideEdgesByThresholds(false, true);
+        hideEdgesByThresholds(false, true, true);
     }
 }
 
@@ -303,7 +303,7 @@ function setMaxCoverage(event, textBox) {
     else if (key == 13) {
         if (parseInt(textBox.value)) maxCoverage = parseInt(textBox.value);
         else maxCoverage = 0;
-        hideEdgesByThresholds(false, true);
+        hideEdgesByThresholds(false, true, true);
     }
 }
 
@@ -318,7 +318,7 @@ function setEdgeLenThreshold(event, minValue, maxValue) {
         else minLen = 0;
         if (parseInt(maxValue)) maxLen = parseFloat(maxValue);
         else maxLen = '';
-        hideEdgesByThresholds(false, true);
+        hideEdgesByThresholds(false, true, true);
     }
 }
 
@@ -795,7 +795,7 @@ function selectNode(selectedNode) {
     document.getElementById('node_info').innerHTML = s;
 }
 
-function changeComponent(component) {
+function changeComponent(component, doRefreshTables) {
     componentN = component;
     if (!srcPartDict || !srcPartDict['part' + componentN] || !srcPartDict['part' + componentN].big) $('#partition_warning').hide();
     else $('#partition_warning').show();
@@ -817,7 +817,7 @@ function changeComponent(component) {
     else {
         $("#prev_btn").prop('disabled', false);
     }
-    hideEdgesByThresholds(true, false);
+    hideEdgesByThresholds(true, false, doRefreshTables);
 }
  
 function attributer(datum, index, nodes) {

@@ -1,7 +1,7 @@
 from os.path import join, dirname, abspath, realpath
 
 ABYSS_NAME = 'ABYSS'
-CANU_NAME = 'CANU'
+CANU_NAME = 'Canu'
 FLYE_NAME = 'Flye'
 SPADES_NAME = 'SPAdes'
 

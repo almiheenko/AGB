@@ -84,7 +84,7 @@ function dfs(g, node, visited) {
     return subGraph;
 }
 
-function render(doRefresh, doAnimate) {
+function render(doRefresh, doAnimate, doRefreshTables) {
     transition1 = d3.transition()
         .ease(d3.easeLinear)
         .delay(0)
@@ -106,11 +106,13 @@ function render(doRefresh, doAnimate) {
         d3.select("#graph > svg").attr("display", "");
         d3.selectAll(".node")
             .attr("id", function(d) { return "node" + d.key; })
-        buildEdgesTable();
-        buildContigsTable();
-        buildChromsTable();
         buildVertexTable();
-        buildComponentsTable();
+        buildContigsTable();
+        if (doRefreshTables) {
+            buildEdgesTable();
+            buildChromsTable();
+            buildComponentsTable();
+        }
         setupAutocompleteSearch();
         $('#saveBtns').show();
         highlightChromEdges();
@@ -164,7 +166,7 @@ function render(doRefresh, doAnimate) {
                     }
                 }
                 d3.event.stopPropagation();
-                hideEdgesByThresholds(false, true);
+                hideEdgesByThresholds(false, true, false);
         });
         edges = d3.selectAll('.edge');
         edges
@@ -351,7 +353,7 @@ function highlightChromEdges() {
     return firstEdge;
 }
 
-function hideEdgesByThresholds(doRefresh, doAnimate) {
+function hideEdgesByThresholds(doRefresh, doAnimate, doRefreshTables) {
     $(".tooltip").tooltip("hide");
     deselectAll();
     dotSrc = srcGraphs[componentN].dot;
@@ -628,7 +630,7 @@ function hideEdgesByThresholds(doRefresh, doAnimate) {
                     continue;
                 }
             }
-            label = edge.len ? ('id ' + edge.name + ' ' + edge.len + 'k ' + edge.cov + 'x') : "";
+            label = edge.len ? ('id ' + edge.name + '\\l' + edge.len + 'k ' + edge.cov + 'x') : "";
             var s = '"' + source + '" -> "' + end + '" [label="' + label + '",id = "' + edgeId + '", color="' + edge.color + '"];';
             dotSrcLines.push(s);
         }
@@ -650,7 +652,7 @@ function hideEdgesByThresholds(doRefresh, doAnimate) {
             if (filterEdges.length == 1) {
                 edge = filterEdges[0];
                 if (edge.id.indexOf('part') === -1) {
-                    label = edge.len ? 'id ' + edge.name + ' ' + edge.len + 'k ' + edge.cov +'x' : "";
+                    label = edge.len ? 'id ' + edge.name + '\\l' + edge.len + 'k ' + edge.cov +'x' : "";
                     var s = '"' + loopNode + '" -> "' + loopNode + '" [label="' + label + '",id = "' + edge.el_id + '", color="' + edge.color + '"];';
                     dotSrcLines.push(s);
                 }
@@ -703,7 +705,7 @@ function hideEdgesByThresholds(doRefresh, doAnimate) {
                         node2 = newEdges[edgeId][1];
                     }
                     newData[edgeId] = [node1, node2]
-                    label = (edge.len && edge.name.indexOf('part') == -1) ? 'id ' + edge.name + ' ' + edge.len + 'k ' + edge.cov +'x' : "";
+                    label = (edge.len && edge.name.indexOf('part') == -1) ? 'id ' + edge.name + '\\l' + edge.len + 'k ' + edge.cov +'x' : "";
                     var s = '"' + node1 + '" -> "' + node2 + '" [label="' + label + '",id = "' + edgeId + '", color="' + edge.color + '"];';
                     //console.log(s)
                     //dotSrcLines.push(s);
@@ -761,7 +763,7 @@ function hideEdgesByThresholds(doRefresh, doAnimate) {
         }
     }
     dot = dotSrcLines.join('\n');
-    render(doRefresh, doAnimate);
+    render(doRefresh, doAnimate, doRefreshTables);
 }
 
 function searchEdge(event) {

@@ -38,6 +38,6 @@ class Edge:
                 (self.start, self.end, self.id)
         else:
             l = str(self.format_len()) + 'k'
-            s = '"%s" -> "%s" [label = id %s %s %dx(%d), id = "%s", color = "%s"] ;\n' % \
+            s = '"%s" -> "%s" [label = id %s\\l%s %dx(%d), id = "%s", color = "%s"] ;\n' % \
                 (self.start, self.end, self.id, l, self.cov, self.multiplicity, self.id, self.color)
         return s

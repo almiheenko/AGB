@@ -6,6 +6,9 @@ source:
   git_rev: 40caa0e
   git_url: https://github.com/almiheenko/AGV
 
+build:
+  number: 1
+
 requirements:
   host:
     - python

@@ -12,8 +12,8 @@ from agv_src.scripts.utils import print_dot_header, natural_sort, calculate_mean
 from agv_src.scripts.viewer_data import ViewerData
 
 
-def process_graph(g, undirected_g, dict_edges, edges_by_nodes, two_way_edges, output_dirpath, suffix, base_graph=None,
-                  contig_edges=None, chrom_names=None, edge_by_chrom=None, strict_mapping_info=None):
+def process_graph(g, undirected_g, dict_edges, edges_by_nodes, two_way_edges, output_dirpath, suffix,
+                  base_graph=None, contig_edges=None, chrom_names=None, edge_by_chrom=None, strict_mapping_info=None):
     last_idx = 0
     parts_info = dict()
     graph = []
@@ -29,7 +29,6 @@ def process_graph(g, undirected_g, dict_edges, edges_by_nodes, two_way_edges, ou
     contig_list = []
     complex_component = False
     if chrom_names and suffix == "ref":
-        print(list(natural_sort(chrom_names)))
         for chrom in list(natural_sort(chrom_names)):
             edges = edge_by_chrom[chrom]
             ref_g = nx.DiGraph()
@@ -61,8 +60,26 @@ def process_graph(g, undirected_g, dict_edges, edges_by_nodes, two_way_edges, ou
                 contig_list.append(contig)
             graph.extend(viewer_data.g)
     elif suffix == "repeat" or suffix == "def":
+        ## combine reverse complement edges
+        fake_edges = []
+        for edge_id, edge in dict_edges.items():
+            if edge_id.startswith("rc"): continue
+            if suffix == "repeat" and not edge.repetitive: continue
+            match_edge_id = edge_id.replace("e", "rc")
+            if match_edge_id not in dict_edges: continue
+            match_edge_nodes = [dict_edges[match_edge_id].start, dict_edges[match_edge_id].end]
+            if not any([e in undirected_g.neighbors(edge.start) for e in match_edge_nodes]) and not \
+                    any([e in undirected_g.neighbors(edge.end) for e in match_edge_nodes]):
+                g.add_edge(edge.end, dict_edges[match_edge_id].start)
+                g.add_edge(edge.start, dict_edges[match_edge_id].end)
+                fake_edges.append((edge.start, dict_edges[match_edge_id].end))
+                fake_edges.append((edge.end, dict_edges[match_edge_id].start))
         connected_components = list(nx.weakly_connected_component_subgraphs(g))
+        if fake_edges:
+            g.remove_edges_from(fake_edges)
         for i, subgraph in enumerate(connected_components):
+            if fake_edges:
+                subgraph.remove_edges_from(fake_edges)
             viewer_data, last_idx, sub_complex_component = \
                 split_graph(subgraph, base_graph, undirected_g, dict_edges, modified_dict_edges, loop_edges, edges_by_nodes,
                         two_way_edges, last_idx, parts_info, find_hanging_nodes=suffix == "def", is_repeat_graph=suffix == "repeat")

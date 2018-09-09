@@ -936,14 +936,13 @@ function selectEdge(edge, edgeId, edgeLen, edgeCov, edgeMulti) {
             $('#edge_table_div').scrollTop( row.offset().top );
         }
         selectedEdge = edgeInfo[selectedEdge] ? selectedEdge : edgeData[selectedEdge].el_id;
-        console.log(edgeInfo, selectedEdge, edgeMappingInfo,edgeMappingInfo, edgeMappingInfo[selectedEdge].length);
         if (edgeInfo[selectedEdge]) {
             edgeDescription = edgeDescription + '<br/><b>Contigs:</b>';
             for (var i = 0; i < edgeInfo[selectedEdge].length; i++) {
                 edgeDescription = edgeDescription + '<li>' + edgeInfo[selectedEdge][i] + '</li>';
             }
         }
-        if (edgeMappingInfo[selectedEdge] && edgeMappingInfo[selectedEdge].length) {
+        if (edgeMappingInfo && edgeMappingInfo[selectedEdge] && edgeMappingInfo[selectedEdge].length) {
             edgeDescription = edgeDescription + '<br/><b>Reference chromosomes:</b>';
             for (var i = 0; i < edgeMappingInfo[selectedEdge].length; i++) {
                 chrom = edgeMappingInfo[selectedEdge][i];

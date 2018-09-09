@@ -30,13 +30,13 @@ def build_jsons(dict_edges, input_dirpath, output_dirpath, strict_mapping_info, 
 
     undirected_g = g.to_undirected()
     edges_by_component = process_graph(g, undirected_g, dict_edges, edges_by_nodes, two_way_edges, output_dirpath, 'def')
-    edges_by_repeat_component = process_graph(repeat_g, undirected_g, dict_edges, edges_by_nodes, two_way_edges, output_dirpath,
-                                              'repeat', base_graph=g)
+    edges_by_repeat_component = process_graph(repeat_g, undirected_g, dict_edges, edges_by_nodes, two_way_edges,
+                                              output_dirpath, 'repeat', base_graph=g)
     edges_by_ref_component = process_graph(g, undirected_g, dict_edges, edges_by_nodes, two_way_edges,
                                            output_dirpath, 'ref', chrom_names=chrom_names,
                                            edge_by_chrom=edge_by_chrom, strict_mapping_info=strict_mapping_info)
-    edges_by_contig_component = process_graph(g, undirected_g, dict_edges, edges_by_nodes, two_way_edges, output_dirpath,
-                                              'contig', contig_edges=contig_edges)
+    edges_by_contig_component = process_graph(g, undirected_g, dict_edges, edges_by_nodes, two_way_edges,
+                                              output_dirpath, 'contig', contig_edges=contig_edges)
     create_contig_info(dict_edges, input_dirpath, output_dirpath,
                        edges_by_component, edges_by_repeat_component, edges_by_ref_component)
     with open(join(output_dirpath, 'title.json'), 'w') as handle:

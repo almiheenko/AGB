@@ -258,7 +258,7 @@ def split_graph(sub_g, g, undirected_g, dict_edges, modified_dict_edges, loop_ed
                     start, end = e[0], e[1]
                     edges = edges_by_nodes[(start, end)] + two_way_edges[(start, end)]
                     for edge_id in edges:
-                        if start == end and not dict_edges[edge_id].repetitive:
+                        if start == end or dict_edges[edge_id].repetitive:
                             continue
                         if edge_id in subgraph:
                             if start != end:
@@ -270,7 +270,7 @@ def split_graph(sub_g, g, undirected_g, dict_edges, modified_dict_edges, loop_ed
                     start, end = e[0], e[1]
                     edges = edges_by_nodes[(start, end)] + two_way_edges[(start, end)]
                     for edge_id in edges:
-                        if start == end and not dict_edges[edge_id].repetitive:
+                        if start == end or dict_edges[edge_id].repetitive:
                             continue
                         if edge_id in subgraph:
                             if start != end:
@@ -297,10 +297,12 @@ def save_graph(graph, hanging_nodes, connected_nodes, enters, exits, dict_edges,
                strict_mapping_info=None, complex_component=False, chrom_list=None, contig_list=None):
     if not complex_component:
         if connected_nodes:
-            sorted_graph = sorted(zip(graph, hanging_nodes, connected_nodes), key=lambda pair: pair[0], reverse=True)
-            graph = [x for x, _, _ in sorted_graph]
-            hanging_nodes = [x for _, x, _ in sorted_graph]
-            connected_nodes = [x for _, _, x in sorted_graph]
+            sorted_graph = sorted(zip(graph, hanging_nodes, connected_nodes, enters, exits), key=lambda pair: pair[0], reverse=True)
+            graph = [x for x, _, _, _, _ in sorted_graph]
+            hanging_nodes = [x for _, x, _, _, _ in sorted_graph]
+            connected_nodes = [x for _, _, x, _, _ in sorted_graph]
+            enters = [x for _, _, _, x, _ in sorted_graph]
+            exits = [x for _, _, _, _, x in sorted_graph]
         elif hanging_nodes:
             sorted_graph = sorted(zip(graph, hanging_nodes), key=lambda pair: pair[0], reverse=True)
             graph = [x for x, _ in sorted_graph]

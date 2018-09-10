@@ -3,11 +3,11 @@ package:
   version: "0.1"
 
 source:
-  git_rev: e5ea231
+  git_rev: a623525
   git_url: https://github.com/almiheenko/AGV
 
 build:
-  number: 1
+  number: 2
 
 requirements:
   host:
@@ -19,6 +19,7 @@ requirements:
     - six
     - cython
     - minimap2
+    - nxmetis
 
   run:
     - python
@@ -27,8 +28,11 @@ requirements:
     - networkx
     - gfapy
     - minimap2
+    - nxmetis
 
 test:
+  import:
+    - nxmetis
 
 about:
   home: https://github.com/almiheenko/AGV

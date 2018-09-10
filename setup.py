@@ -46,7 +46,6 @@ setup(
     package_data={
         package_name:
             find_package_files('scripts') +
-            find_package_files('external_libs') +
             find_package_files('html_files') +
             find_package_files('test_data') +
             [

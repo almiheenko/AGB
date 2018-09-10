@@ -23,7 +23,8 @@ def map_edges_to_ref(assembler, input_dirpath, output_dirpath, json_output_dir, 
         if not can_reuse(mapping_fpath, files_to_check=[reference_fpath], dir_to_check=input_dirpath):
             input_fpath = get_contigs_fpath(assembler, input_dirpath)
             if exists(input_fpath):
-                cmdline = ["minimap2", "-c", "-x", "asm20", "--cs", "-t", str(threads), reference_fpath, input_fpath]
+                cmdline = ["minimap2", "-c", "-x", "asm20", "--cs", "--mask-level", "0.9", "-t", str(threads),
+                           reference_fpath, input_fpath]
                 return_code = subprocess.call(cmdline,
                               stdout=open(mapping_fpath, "w"), stderr=open(join(output_dirpath, "minimap.log"), "w"))
                 if return_code != 0 or is_empty_file(mapping_fpath):

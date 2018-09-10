@@ -3,7 +3,7 @@ import math
 from os.path import join
 from collections import defaultdict
 
-from agv_src.external_libs import nxmetis
+import nxmetis
 import networkx as nx
 
 from agv_src.scripts.config import MAX_NODES, MAX_SUB_NODES
@@ -115,7 +115,7 @@ def split_graph(sub_g, g, undirected_g, dict_edges, modified_dict_edges, loop_ed
             for node in nodes:
                 graph_partition_dict[node] = part_id
         num_graph_parts = len(parts)
-        print('Partition:', edgecuts, len(parts), num_graph_parts, parts[0])
+        # print('Partition:', edgecuts, len(parts), num_graph_parts, parts[0])
     else:
         graph_partition_dict = dict((n, 0) for n in sub_g.nodes())
         parts = [[sub_g.nodes()]]

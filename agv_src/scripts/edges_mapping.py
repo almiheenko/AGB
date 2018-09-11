@@ -23,6 +23,7 @@ def map_edges_to_ref(assembler, input_dirpath, output_dirpath, json_output_dir, 
         if not can_reuse(mapping_fpath, files_to_check=[reference_fpath], dir_to_check=input_dirpath):
             input_fpath = get_contigs_fpath(assembler, input_dirpath)
             if exists(input_fpath):
+                print("Aligning contigs to the reference...")
                 cmdline = ["minimap2", "-c", "-x", "asm20", "--cs", "--mask-level", "0.9", "-t", str(threads),
                            reference_fpath, input_fpath]
                 return_code = subprocess.call(cmdline,

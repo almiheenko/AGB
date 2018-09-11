@@ -78,11 +78,10 @@ def process_graph(g, undirected_g, dict_edges, edges_by_nodes, two_way_edges, ou
         if fake_edges:
             g.remove_edges_from(fake_edges)
         for i, subgraph in enumerate(connected_components):
-            if fake_edges:
-                subgraph.remove_edges_from(fake_edges)
             viewer_data, last_idx, sub_complex_component = \
                 split_graph(subgraph, base_graph, undirected_g, dict_edges, modified_dict_edges, loop_edges, edges_by_nodes,
-                        two_way_edges, last_idx, parts_info, find_hanging_nodes=suffix == "def", is_repeat_graph=suffix == "repeat")
+                        two_way_edges, last_idx, parts_info,
+                        fake_edges=fake_edges, find_hanging_nodes=suffix == "def", is_repeat_graph=suffix == "repeat")
             parts_info = viewer_data.parts_info
             graph.extend(viewer_data.g)
             hanging_nodes.extend(viewer_data.hanging_nodes)
@@ -97,7 +96,7 @@ def process_graph(g, undirected_g, dict_edges, edges_by_nodes, two_way_edges, ou
 
 
 def split_graph(sub_g, g, undirected_g, dict_edges, modified_dict_edges, loop_edges, edges_by_nodes, two_way_edges, last_idx, parts_info,
-                  is_repeat_graph=False, find_hanging_nodes=False, strict_mapping_info=None, chrom=None, contig_edges=None):
+                  is_repeat_graph=False, fake_edges=None, find_hanging_nodes=False, strict_mapping_info=None, chrom=None, contig_edges=None):
     graphs = []
     hanging_nodes = []
     connected_nodes = []
@@ -139,6 +138,8 @@ def split_graph(sub_g, g, undirected_g, dict_edges, modified_dict_edges, loop_ed
             return edge_id not in contig_edges
         return False
 
+    if fake_edges:
+        sub_g.remove_edges_from(fake_edges)
     for part_id in range(num_graph_parts):
         subgraph = []
         subnodes = []
@@ -170,14 +171,14 @@ def split_graph(sub_g, g, undirected_g, dict_edges, modified_dict_edges, loop_ed
                 if is_repeat_graph and is_flanking:
                     unique_nodes.add(start)
                     unique_nodes.add(end)
-                link_component = part_id
+                link_component = last_idx + part_id
                 if start in graph_partition_dict and graph_partition_dict[start] != part_id:
                     link_component = last_idx + graph_partition_dict[start]
                     start = 'part' + str(link_component)
                 elif end in graph_partition_dict and graph_partition_dict[end] != part_id:
                     link_component = last_idx + graph_partition_dict[end]
                     end = 'part' + str(link_component)
-                if link_component != part_id:
+                if link_component != last_idx + part_id:
                     for edge_id in edges:
                         edge = dict_edges[edge_id]
                         new_edge_id = edge.id
@@ -200,10 +201,6 @@ def split_graph(sub_g, g, undirected_g, dict_edges, modified_dict_edges, loop_ed
                         if edges_count[edge.id]:
                             new_edge_id = edge.id + '_' + str(edges_count[edge.id])
                         edges_count[edge.id] += 1
-                        if start == 'part' + str(link_component):
-                            parts_info['part' + str(link_component)]['out'].add(new_edge_id)
-                        else:
-                            parts_info['part' + str(link_component)]['in'].add(new_edge_id)
                         new_edge = Edge(edge.id, edge.name, edge.length, edge.cov, edge.multiplicity, edge.color,
                                         edge.chrom, edge.repetitive, element_id=edge.id)
                         new_edge.start, new_edge.end = start, end
@@ -353,7 +350,7 @@ def save_graph(graph, hanging_nodes, connected_nodes, enters, exits, dict_edges,
                             edges_by_component[real_id] = i
                             edge.start, edge.end = modified_dict_edges[loop_e].start, modified_dict_edges[loop_e].start
                 if edge.start is not None:
-                    out_f.write(edge.print_edge_to_dot())
+                    out_f.write(edge.print_edge_to_dot(id=edge_id))
             out_f.write('}`},')
         out_f.write('];')
 

@@ -29,6 +29,7 @@ def build_jsons(dict_edges, input_dirpath, output_dirpath, strict_mapping_info, 
         out_f.write('}`')
 
     undirected_g = g.to_undirected()
+    print("Building JSON files...")
     edges_by_component = process_graph(g, undirected_g, dict_edges, edges_by_nodes, two_way_edges, output_dirpath, 'def')
     edges_by_repeat_component = process_graph(repeat_g, undirected_g, dict_edges, edges_by_nodes, two_way_edges,
                                               output_dirpath, 'repeat', base_graph=g)

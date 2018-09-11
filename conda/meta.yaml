@@ -3,11 +3,11 @@ package:
   version: "0.1"
 
 source:
-  git_rev: a623525
+  git_rev: 8445048
   git_url: https://github.com/almiheenko/AGV
 
 build:
-  number: 2
+  number: 3
 
 requirements:
   host:

@@ -663,7 +663,7 @@ function hideEdgesByThresholds(doRefresh, doAnimate, doRefreshTables) {
             }
         }
     }
-    dotSrcLines.push('}')
+    dotSrcLines.push('}');
     var colorChromEdges = document.getElementById('color_select').selectedIndex == 1;
     var colorCovEdges = document.getElementById('color_select').selectedIndex == 2;
     //components = calculateComponents(toGraph(dotSrcLines));
@@ -868,8 +868,8 @@ function checkEdge(edgeId, targetChrom) {
         return false;
     if ($('#collapse_repeats_checkbox')[0].checked && !edgeData[edgeId].unique && !expandedNodes.has(source) && !expandedNodes.has(end))
         return false;
-    if($('#break_checkbox')[0].checked && edgeData[edgeId].unique)
-        return false;
+    // if($('#break_checkbox')[0].checked && edgeData[edgeId].unique)
+    //    return false;
     if (selectedMethod == "chrom" && (!edgeDataFull[edgeId] || !edgeMappingInfo[edge.id] || (targetComponent && edgeMappingInfo[edge.id].indexOf(targetComponent) === -1)))
         return false;
     if (selectedMethod == "contig" && (contigInfo[contigs[componentN]].edges.indexOf(edgeData[edgeId].name) == -1 || (!isNaN(targetComponent) && contigInfo[targetComponent].edges.indexOf(edgeData[edgeId].name) == -1)))

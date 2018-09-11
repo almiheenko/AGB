@@ -74,7 +74,6 @@ function setupInterfaceBtns() {
         if($('#break_checkbox')[0].checked) {
             $('#collapse_repeats_checkbox').prop('checked', false);
             $('#adjEdgesWarning').hide();
-            $('#adjRepeatEdgesWarning').show();
             $('#repeatInfo').show();
             srcGraphs = repeat_graphs;
             srcPartDict = repeatPartitionDict;
@@ -82,7 +81,6 @@ function setupInterfaceBtns() {
             hangNodes = repeatHangNodes;
         }
         else {
-            $('#adjRepeatEdgesWarning').hide();
             $('#repeatInfo').hide();
             srcGraphs = def_graphs;
             srcPartDict = partitionDict;
@@ -227,7 +225,6 @@ function changeSplitMethod(method, component) {
         $('#unbalanced_checkbox').prop('disabled', true);
         $('#adj_edges_option').show();
         $('#adjEdgesWarning').show();
-        $('#adjRepeatEdgesWarning').hide();
         $('#repeatInfo').hide();
         srcGraphs = ref_graphs;
         edgeData = edgeDataRef;
@@ -244,7 +241,6 @@ function changeSplitMethod(method, component) {
         $('#unbalanced_checkbox').prop('disabled', true);
         $('#adj_edges_option').show();
         $('#adjEdgesWarning').show();
-        $('#adjRepeatEdgesWarning').hide();
         $('#repeatInfo').hide();
         srcGraphs = contig_graphs;
         edgeData = edgeDataContig;
@@ -260,7 +256,6 @@ function changeSplitMethod(method, component) {
         $('#collapse_repeats_checkbox').prop('disabled', false);
         $('#adj_edges_option').hide();
         $('#adjEdgesWarning').hide();
-        $('#adjRepeatEdgesWarning').hide();
         $('#repeatInfo').hide();
         srcGraphs = def_graphs;
         edgeData = edgeDataFull;
@@ -554,19 +549,29 @@ function buildComponentsTable() {
         componentInfo['len'] = 0;
         var dotSrcLines = dotSrc.split('\n');
         var filteredDotLines = [];
+        var loopFound = false;
+        var loopRepeatFound = false;
         for (j = 0; j < dotSrcLines.length; j++) {
             var matches = dotSrcLines[j].match(idPattern);
             if(matches && matches.length > 1) {
                 edgeId = matches[1];
                 edgeRealId = edgeInfo[edgeId] ? edgeId : (edgeData[edgeId] ? edgeData[edgeId].el_id : edgeId);
                 if (checkEdge(edgeRealId, i)) {
-                    if(edgeData[edgeRealId].unique) componentInfo['unique']++;
-                    else componentInfo['repeat']++;
-                    
-                    var matches = dotSrcLines[j].match(lenCovPattern);
-                    if (matches && matches.length > 2) {
-                        edge_len = parseFloat(matches[1]);
-                        componentInfo['len'] = componentInfo['len'] + edge_len;
+                    if (edgeId[0] === "e") {
+                        if (edgeData[edgeRealId].s === edgeData[edgeRealId].e) {
+                            if (edge.unique) loopFound = true;
+                            else loopRepeatFound = true;
+                        }
+                        else {
+                            if(edgeData[edgeRealId].unique) componentInfo['unique']++;
+                            else componentInfo['repeat']++;
+                        }
+
+                        var matches = dotSrcLines[j].match(lenCovPattern);
+                        if (matches && matches.length > 2) {
+                            edge_len = parseFloat(matches[1]);
+                            componentInfo['len'] = componentInfo['len'] + edge_len;
+                        }
                     }
                     filteredDotLines.push(dotSrcLines[j]);
                 }
@@ -576,9 +581,11 @@ function buildComponentsTable() {
                         if (checkEdge(baseLoopEdgeDict[edgeId][k], i)) {
                             loopEdges++;
                             edge = edgeData[baseLoopEdgeDict[edgeId][k]];
-                            if(edge.unique) componentInfo['unique']++;
-                            else componentInfo['repeat']++;
-                            componentInfo['len'] = componentInfo['len'] + edge.len;
+                            if (edge.unique) loopFound = true;
+                            else loopRepeatFound = true;
+                            if (baseLoopEdgeDict[edgeId][k][0] === "e") {
+                                componentInfo['len'] = componentInfo['len'] + edge.len;
+                            }
                         }
                     }
                     if (loopEdges) filteredDotLines.push(dotSrcLines[j]);
@@ -586,28 +593,29 @@ function buildComponentsTable() {
             }
             else filteredDotLines.push(dotSrcLines[j]);
         }
+        if (loopFound) componentInfo['unique']++;
+        if (loopRepeatFound) componentInfo['repeat']++;
         if (selectedMethod == "chrom" || selectedMethod == "contig")
             componentInfo['n'] = calculateComponents(toGraph(filteredDotLines));
         componentInfo['enter'] = srcGraphs[i].enters;
         componentInfo['exit'] = srcGraphs[i].exits;
-        maxEnters = Math.max(maxEnters, srcGraphs[i].enters)
-        maxExits = Math.max(maxEnters, srcGraphs[i].exits)
+        maxEnters = Math.max(maxEnters, srcGraphs[i].enters);
+        maxExits = Math.max(maxEnters, srcGraphs[i].exits);
         components.push(componentInfo);
         lengths.push(componentInfo['len'])
     }
     var factor = Math.max.apply(Math, lengths) > 10000 ? 1000 : 1;
     var factorText = factor == 1 ? "Kb" : "Mb";
     var showExits = maxEnters || maxExits;
-    table += "<thead><tr class='header'><th>#</th>" + 
-        ($('#break_checkbox')[0].checked ? "" : "<th># unique edges</th>") + 
-        ($('#collapse_repeats_checkbox')[0].checked ? "" : "<th># repeat edges</th>") + 
+    table += "<thead><tr class='header'><th>#</th>" + "<th># unique edges</th>" +
+        ($('#collapse_repeats_checkbox')[0].checked ? "" : "<th># repeat edges</th>") +
         (selectedMethod == "chrom" || selectedMethod == "contig" ? "<th># components</th>" : "") + 
         "<th>Total len (" + factorText + ")</th>" + (showExits ? "<th># entrances</th><th># exits</th>" : "") + "</tr></thead><tbody>";
     for (i = 0; i < components.length; i++) {
         if (components[i]['len']) {
             len = Math.round(components[i]['len'] * 10 / factor) ? Math.round(components[i]['len'] * 10 / factor) / 10 : Math.round(components[i]['len'] * 100 / factor) / 100;
             table += "<tr id='componentrow" + components[i]['id'] + "'><td>" + (components[i]['id'] + 1) +
-                ($('#break_checkbox')[0].checked ? "" : "</td><td>" + (components[i]['unique'] ? components[i]['unique'] : "-")) + 
+                "</td><td>" + (components[i]['unique'] ? components[i]['unique'] : "-") +
                 ($('#collapse_repeats_checkbox')[0].checked ? "" : "</td><td>" + (components[i]['repeat'] ? components[i]['repeat'] : "-")) + 
                 (selectedMethod == "chrom" || selectedMethod == "contig" ? "</td><td>" + (components[i]['n'] ? components[i]['n'] : "-") : "") + 
                 "</td><td>" + len + 

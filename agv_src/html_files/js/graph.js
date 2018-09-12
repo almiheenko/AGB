@@ -211,9 +211,8 @@ function highlightNodes() {
         return nodes.has(nodeId);
     })
     .classed('hanging_node', true);
-    if ($('#break_checkbox')[0].checked) {
+    if (selectedMethod == "repeat") {
         nodes = new Set(repeatConnectNodes[componentN]);
-        console.log(nodes)
         d3.selectAll('.node').filter(function (e) {
             nodeId = d3.select(this).select('title').text();
             return nodes.has(nodeId);
@@ -224,9 +223,10 @@ function highlightNodes() {
         nodeId = d3.select(this).select('title').text();
         return nodeId.lastIndexOf('part', 0) === 0;
     })
-    .attr('rx', 20)
-    .attr('ry', 20)
-    .classed('part_node', true);
+    .classed('part_node', true)
+    .select('ellipse')
+    .attr('rx', 13)
+    .attr('ry', 13);
     d3.selectAll('.node').filter(function (e) {
         nodeId = d3.select(this).select('title').text();
         return newNodes.has(nodeId);
@@ -299,7 +299,8 @@ function highlightContigEdges() {
                 prevEdge = edge;
             }
             contigN = selectedContig;
-            graphPath = '<b>Graph path:</b> ' + graphPath + ' </br><a onclick="changeToContig(' + "'" + selectedContig + "'" + ')">Show contig component</a>';
+            graphPath = '<b>Graph path:</b> ' + graphPath + ' </br>' +
+                (selectedMethod != "contig" ? '<a onclick="changeToContig(' + "'" + selectedContig + "'" + ')">Show contig component</a>' : "");
             if (isHiddenEdges && $('#uniqueEdgesWarning').attr('display') != 'none') $('#wrongOptionsWarning').show();
         }
     }
@@ -363,13 +364,13 @@ function hideEdgesByThresholds(doRefresh, doAnimate, doRefreshTables) {
     repeatEdges = new Set();
     hiddenEdges = new Set();
     var edgesColor = {};
-    if(selectedMethod == "chrom") curChrom = chromosomes[componentN];
+    if(selectedMethod == "ref") curChrom = chromosomes[componentN];
     for (i = 0; i < dotSrcLines.length;) {
         var matches = dotSrcLines[i].match(idPattern);
-        if (matches && matches.length > 1 && (selectedMethod == "chrom" || selectedMethod == "contig") && !$('#adj_edges_checkbox')[0].checked) {
+        if (matches && matches.length > 1 && (selectedMethod == "ref" || selectedMethod == "contig") && !$('#adj_edges_checkbox')[0].checked) {
             edgeId = matches[1];
             edgeRealId = edgeInfo[edgeId] ? edgeId : (edgeData[edgeId] ? edgeData[edgeId].el_id : edgeId);
-            if (selectedMethod == "chrom") {
+            if (selectedMethod == "ref") {
                 if (!checkChromEdge(edgeId)) {
                     hiddenEdges.add(edgeId);
                 }
@@ -421,7 +422,7 @@ function hideEdgesByThresholds(doRefresh, doAnimate, doRefreshTables) {
                 if (repeatEdgesCount == baseLoopEdgeDict[edgeId].length)
                     repeatEdges.add(edgeId);
             }
-            if ($('#break_checkbox')[0].checked && dotSrcLines[i].indexOf('loop') == -1) {
+            if (selectedMethod == "repeat" && dotSrcLines[i].indexOf('loop') == -1) {
                 uniqueEdges.push(dotSrcLines[i])
                 dotSrcLines.splice(i, 1);
             }
@@ -790,15 +791,15 @@ function getEdgeComponent(edgeId) {
         edge = edgeData[edgeId];
     else if (loopEdgeDict[edgeId]) 
         edge = edgeData[loopEdgeDict[edgeId][0]];
-    if ($('#break_checkbox')[0].checked)
+    if (selectedMethod == "repeat")
         edgeComponent = edge.rep_comp;
-    else if (selectedMethod == "chrom") {
+    else if (selectedMethod == "ref") {
         edgeComponent =  edgeDataRef[edgeId].ref_comp;
     }
     else if (selectedMethod == "contig")
         edgeComponent =  edgeDataRef[edgeId].contig_comp;
     else edgeComponent = edge.comp;
-    console.log(edge)
+    console.log(edge);
     return edgeComponent;
 }
 
@@ -859,7 +860,7 @@ function checkEdge(edgeId, targetChrom) {
         end = newData[edgeId] ? newData[edgeId][1] : edge.e;
     }
     targetComponent = NaN;
-    if (selectedMethod == "chrom" && !isNaN(parseInt(targetChrom))) targetComponent = chromosomes[targetChrom];
+    if (selectedMethod == "ref" && !isNaN(parseInt(targetChrom))) targetComponent = chromosomes[targetChrom];
     else if (selectedMethod == "contig" && !isNaN(parseInt(targetChrom))) targetComponent = contigs[targetChrom];
     //if(edge) console.log(edgeMappingInfo[edge.id], targetComponent, chromosomes, edge)
     if (!edge)
@@ -870,9 +871,11 @@ function checkEdge(edgeId, targetChrom) {
         return false;
     // if($('#break_checkbox')[0].checked && edgeData[edgeId].unique)
     //    return false;
-    if (selectedMethod == "chrom" && (!edgeDataFull[edgeId] || !edgeMappingInfo[edge.id] || (targetComponent && edgeMappingInfo[edge.id].indexOf(targetComponent) === -1)))
+    if (selectedMethod == "ref" && (!edgeDataFull[edgeId] || !edgeMappingInfo[edge.id] || (targetComponent && edgeMappingInfo[edge.id].indexOf(targetComponent) === -1)))
         return false;
-    if (selectedMethod == "contig" && (contigInfo[contigs[componentN]].edges.indexOf(edgeData[edgeId].name) == -1 || (!isNaN(targetComponent) && contigInfo[targetComponent].edges.indexOf(edgeData[edgeId].name) == -1)))
+    if (selectedMethod == "contig" &&
+        ((!targetComponent && contigInfo[contigs[componentN]].edges.indexOf(edgeData[edgeId].name) == -1) ||
+            (targetComponent && contigInfo[targetComponent].edges.indexOf(edgeData[edgeId].name) == -1)))
         return false;
     if ($('#collapse_repeats_checkbox')[0].checked && repeatEdges && repeatEdges.has(edgeId) && !expandedNodes.has(source) && !expandedNodes.has(end))
         return false;
@@ -961,8 +964,8 @@ function selectContig(selectedContig){
     contigComponent = null;
     console.log(selectedContig, contigInfo[selectedContig], componentN)
     if (contigInfo[selectedContig]) {
-        if($('#break_checkbox')[0].checked) contigComponent = contigInfo[selectedContig].rep_g;
-        else if(selectedMethod == "chrom") contigComponent = contigInfo[selectedContig].ref_g;
+        if(selectedMethod == "repeat") contigComponent = contigInfo[selectedContig].rep_g;
+        else if(selectedMethod == "ref") contigComponent = contigInfo[selectedContig].ref_g;
         else if(selectedMethod == "contig") contigComponent = contigs.indexOf(selectedContig);
         else contigComponent = contigInfo[selectedContig].g;
         console.log(contigComponent, componentN)
@@ -975,7 +978,7 @@ function selectContig(selectedContig){
             if (contigEdges.length > 0) zoomToElement(contigEdges[0])
         }
     }
-    if ($('#break_checkbox')[0].checked && contigComponent == null ) {
+    if (selectedMethod == "repeat" && contigComponent == null ) {
         $('#uniqueEdgesWarning').show();
         $('#wrongOptionsWarning').hide();
     }

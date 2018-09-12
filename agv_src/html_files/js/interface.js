@@ -2,7 +2,7 @@ function setupInterfaceBtns() {
     var minLeftPanelHeight = 800;
     console.log(window.innerHeight)
     
-    addSplittingSwitch();
+    addModeSwitch();
     if (window.innerHeight <= minLeftPanelHeight) {
         document.getElementById("left_panel").style.height = minLeftPanelHeight + "px";
         document.getElementById("left_panel").style.overflowY = "scroll";
@@ -69,49 +69,34 @@ function setupInterfaceBtns() {
     });
 
     $('#adj_edges_option').hide();
-    $('#break_checkbox').on('change', function() {
-        componentN = 0;
-        if($('#break_checkbox')[0].checked) {
-            $('#collapse_repeats_checkbox').prop('checked', false);
-            $('#adjEdgesWarning').hide();
-            $('#repeatInfo').show();
-            srcGraphs = repeat_graphs;
-            srcPartDict = repeatPartitionDict;
-            edgeData = edgeDataRepeat;
-            hangNodes = repeatHangNodes;
-        }
-        else {
-            $('#repeatInfo').hide();
-            srcGraphs = def_graphs;
-            srcPartDict = partitionDict;
-            edgeData = edgeDataFull;
-            hangNodes = defaultHangNodes;
-        }
-        changeComponent(componentN, true);
-        deselectContig();
-        $("#contig_table tbody tr").removeClass('selected');
-        $("#edge_table tbody tr").removeClass('selected');
-        $("#vertex_table tbody tr").removeClass('selected');
-        //hideEdgesByThresholds(false, true);
-    });
 
-    $('#components_default').on("click",function(){ 
+    $('#default_mode').on("click",function(){
         changeSplitMethod('default');
-        $('#components_default').attr('disabled','disabled');
-        $('#components_chrom').removeAttr('disabled');
-        $('#components_contig').removeAttr('disabled');
+        $('#default_mode').attr('disabled','disabled');
+        $('#repeat_mode').removeAttr('disabled');
+        $('#ref_mode').removeAttr('disabled');
+        $('#contig_mode').removeAttr('disabled');
     });
-    $('#components_chrom').on("click",function(){ 
-        changeSplitMethod('chrom');
-        $('#components_default').removeAttr('disabled');
-        $('#components_chrom').attr('disabled','disabled');
-        $('#components_contig').removeAttr('disabled');
+    $('#ref_mode').on("click",function(){
+        changeSplitMethod('ref');
+        $('#default_mode').removeAttr('disabled');
+        $('#repeat_mode').removeAttr('disabled');
+        $('#ref_mode').attr('disabled','disabled');
+        $('#contig_mode').removeAttr('disabled');
     });
-    $('#components_contig').on("click",function(){ 
+    $('#contig_mode').on("click",function(){
         changeSplitMethod('contig');
-        $('#components_contig').attr('disabled','disabled');
-        $('#components_default').removeAttr('disabled');
-        $('#components_chrom').removeAttr('disabled');
+        $('#default_mode').removeAttr('disabled');
+        $('#repeat_mode').removeAttr('disabled');
+        $('#ref_mode').removeAttr('disabled');
+        $('#contig_mode').attr('disabled','disabled');
+    });
+    $('#repeat_mode').on("click",function(){
+        changeSplitMethod('repeat');
+        $('#default_mode').removeAttr('disabled');
+        $('#ref_mode').removeAttr('disabled');
+        $('#repeat_mode').attr('disabled','disabled');
+        $('#contig_mode').removeAttr('disabled');
     });
     $('#adj_edges_checkbox').on('change', function() {
         hideEdgesByThresholds(false, true, false);
@@ -181,23 +166,28 @@ function setupInterfaceBtns() {
     };*/
 }
 
-function addSplittingSwitch(){
+function addModeSwitch(){
     var div = "";
-    var divWidth = Object.keys(edgeDataRef).length && Object.keys(edgeDataContig).length ? 235 : (Object.keys(edgeDataRef).length ? 180 : 110);
+    var divWidth = 120;
+    if (Object.keys(edgeDataRef).length) divWidth += 70;
+    if (Object.keys(edgeDataContig).length) divWidth += 50;
     if (Object.keys(edgeDataRef).length || Object.keys(edgeDataContig).length) {
-        div += '<div style="padding-top:-30px; width:' + divWidth + 'px; text-align:center">Splitting</div>';
+        div += '<div style="padding-top:-30px; width:' + divWidth + 'px; text-align:center">Mode</div>';
         div += '<div class="btn-group btn-group-toggle" data-toggle="buttons">';
-        div += '<label class="btn btn-info active option_component" id="components_default">';
-        div += '<input type="radio" name="components" autocomplete="off" checked> default';
+        div += '<label class="btn btn-info active option_mode" id="default_mode">';
+        div += '<input type="radio" name="mode" autocomplete="off" checked> default';
+        div += '</label>';
+        div += '<label class="btn btn-info option_mode" id="repeat_mode">';
+        div += '<input type="radio" name="mode" autocomplete="off" checked> repeat';
         div += '</label>';
         if (Object.keys(edgeDataRef).length) {
-            div += '<label class="btn btn-info option_component" id="components_chrom">';
-            div += '<input type="radio" name="components" autocomplete="off" val="chrom"> chromosomes';
+            div += '<label class="btn btn-info option_mode" id="ref_mode">';
+            div += '<input type="radio" name="mode" autocomplete="off" val="ref"> reference';
             div += '</label>';
         }
         if (Object.keys(edgeDataContig).length) {
-            div += '<label class="btn btn-info option_component" id="components_contig">';
-            div += '<input type="radio" name="components" autocomplete="off" val="contig"> contig';
+            div += '<label class="btn btn-info option_mode" id="contig_mode">';
+            div += '<input type="radio" name="mode" autocomplete="off" val="contig"> contig';
             div += '</label>';
         }
         div += '</div>';
@@ -215,17 +205,15 @@ function infoPopUpHide(){
 
 function changeSplitMethod(method, component) {
     selectedMethod = method;
-    $('.option_component').siblings().removeClass('active');
-    if(selectedMethod == 'chrom') {
-        $('#components_chrom').addClass('active');
-        componentN = component || 0;
-        $('#break_checkbox').prop('disabled', true);
-        $('#break_checkbox').prop('checked', false);
+    $('.option_mode').siblings().removeClass('active');
+    componentN = component || 0;
+    if(selectedMethod == 'ref') {
+        $('#ref_mode').addClass('active');
         $('#unbalanced_checkbox').prop('checked', false);
         $('#unbalanced_checkbox').prop('disabled', true);
         $('#adj_edges_option').show();
         $('#adjEdgesWarning').show();
-        $('#repeatInfo').hide();
+        $('#numberEdgesWarning').show();
         srcGraphs = ref_graphs;
         edgeData = edgeDataRef;
         srcPartDict = refPartitionDict;
@@ -233,30 +221,37 @@ function changeSplitMethod(method, component) {
         selectedChrom = 0;
     }
     else if(selectedMethod == 'contig') {
-        $('#components_contig').addClass('active');
-        componentN = component || 0;
-        $('#break_checkbox').prop('disabled', true);
-        $('#break_checkbox').prop('checked', false);
+        $('#contig_mode').addClass('active');
         $('#unbalanced_checkbox').prop('checked', false);
         $('#unbalanced_checkbox').prop('disabled', true);
         $('#adj_edges_option').show();
         $('#adjEdgesWarning').show();
-        $('#repeatInfo').hide();
+        $('#numberEdgesWarning').hide();
         srcGraphs = contig_graphs;
         edgeData = edgeDataContig;
         srcPartDict = null;
         selectedChrom = "";
     }
+    else if (selectedMethod == 'repeat') {
+        $('#repeat_mode').addClass('active');
+        $('#collapse_repeats_checkbox').prop('checked', false);
+        $('#collapse_repeats_checkbox').prop('disabled', true);
+        $('#adj_edges_option').hide();
+        $('#adjEdgesWarning').hide();
+        $('#numberEdgesWarning').show();
+        srcGraphs = repeat_graphs;
+        srcPartDict = repeatPartitionDict;
+        edgeData = edgeDataRepeat;
+        hangNodes = repeatHangNodes;
+    }
     else {
-        $('#components_default').addClass('active');
-        componentN = 0;
+        $('#default_mode').addClass('active');
         $('#unbalanced_checkbox').prop('disabled', false);
         $('#vert_table_info').hide();
-        $('#break_checkbox').prop('disabled', false);
         $('#collapse_repeats_checkbox').prop('disabled', false);
         $('#adj_edges_option').hide();
         $('#adjEdgesWarning').hide();
-        $('#repeatInfo').hide();
+        $('#numberEdgesWarning').show();
         srcGraphs = def_graphs;
         edgeData = edgeDataFull;
         srcPartDict = partitionDict;
@@ -425,7 +420,7 @@ function buildEdgesTable() {
     enableEdges = [];
     for (x in edgeData) {
         if (edgeData[x].name.toString()[0] != '-' && x.indexOf('_') == -1 && checkEdge(x) && 
-            (selectedMethod != "chrom" || !isNaN(parseInt(edgeDataRef[x].ref_comp)))) {
+            (selectedMethod != "ref" || !isNaN(parseInt(edgeDataRef[x].ref_comp)))) {
             enableEdges.push(edgeDataFull[x] || edgeData[x]);
         }
     }
@@ -557,7 +552,7 @@ function buildComponentsTable() {
                 edgeId = matches[1];
                 edgeRealId = edgeInfo[edgeId] ? edgeId : (edgeData[edgeId] ? edgeData[edgeId].el_id : edgeId);
                 if (checkEdge(edgeRealId, i)) {
-                    if (edgeId[0] === "e") {
+                    if (selectedMethod == "contig" || edgeId[0] === "e") {
                         if (edgeData[edgeRealId].s === edgeData[edgeRealId].e) {
                             if (edge.unique) loopFound = true;
                             else loopRepeatFound = true;
@@ -583,7 +578,7 @@ function buildComponentsTable() {
                             edge = edgeData[baseLoopEdgeDict[edgeId][k]];
                             if (edge.unique) loopFound = true;
                             else loopRepeatFound = true;
-                            if (baseLoopEdgeDict[edgeId][k][0] === "e") {
+                            if (selectedMethod == "contig" || baseLoopEdgeDict[edgeId][k][0] === "e") {
                                 componentInfo['len'] = componentInfo['len'] + edge.len;
                             }
                         }
@@ -595,7 +590,7 @@ function buildComponentsTable() {
         }
         if (loopFound) componentInfo['unique']++;
         if (loopRepeatFound) componentInfo['repeat']++;
-        if (selectedMethod == "chrom" || selectedMethod == "contig")
+        if (selectedMethod == "ref" || selectedMethod == "contig")
             componentInfo['n'] = calculateComponents(toGraph(filteredDotLines));
         componentInfo['enter'] = srcGraphs[i].enters;
         componentInfo['exit'] = srcGraphs[i].exits;
@@ -609,7 +604,7 @@ function buildComponentsTable() {
     var showExits = maxEnters || maxExits;
     table += "<thead><tr class='header'><th>#</th>" + "<th># unique edges</th>" +
         ($('#collapse_repeats_checkbox')[0].checked ? "" : "<th># repeat edges</th>") +
-        (selectedMethod == "chrom" || selectedMethod == "contig" ? "<th># components</th>" : "") + 
+        (selectedMethod == "ref" || selectedMethod == "contig" ? "<th># components</th>" : "") +
         "<th>Total len (" + factorText + ")</th>" + (showExits ? "<th># entrances</th><th># exits</th>" : "") + "</tr></thead><tbody>";
     for (i = 0; i < components.length; i++) {
         if (components[i]['len']) {
@@ -617,7 +612,7 @@ function buildComponentsTable() {
             table += "<tr id='componentrow" + components[i]['id'] + "'><td>" + (components[i]['id'] + 1) +
                 "</td><td>" + (components[i]['unique'] ? components[i]['unique'] : "-") +
                 ($('#collapse_repeats_checkbox')[0].checked ? "" : "</td><td>" + (components[i]['repeat'] ? components[i]['repeat'] : "-")) + 
-                (selectedMethod == "chrom" || selectedMethod == "contig" ? "</td><td>" + (components[i]['n'] ? components[i]['n'] : "-") : "") + 
+                (selectedMethod == "ref" || selectedMethod == "contig" ? "</td><td>" + (components[i]['n'] ? components[i]['n'] : "-") : "") +
                 "</td><td>" + len + 
                 (showExits ? "</td><td>" + (components[i]['enter'] ? components[i]['enter'] : "-") : "") + 
                 (showExits ? "</td><td>" + (components[i]['exit'] ? components[i]['exit'] : "-") : "") + 
@@ -636,8 +631,8 @@ function buildComponentsTable() {
 
 function changeToChromosome(chromN) {
     selectedChrom = chromN;
-    if (chromN != componentN || selectedMethod != "chrom") {
-        changeSplitMethod('chrom', selectedChrom);
+    if (chromN != componentN || selectedMethod != "ref") {
+        changeSplitMethod('ref', selectedChrom);
     }
     else highlightChromEdges();
 }
@@ -686,11 +681,11 @@ function selectNode(selectedNode) {
              if (uniqueEdgesDict[edgeId]) {
                 bigEdge = edgeData[edgeId];
                 d3.select('#' + edgeId).classed('node_selected_in', true);
-                if ((!$('#break_checkbox')[0].checked && bigEdge.comp == componentN) || ($('#break_checkbox')[0].checked && bigEdge.rep_comp == componentN)) {
+                if ((selectedMethod != "repeat" && bigEdge.comp == componentN) || ($('#break_checkbox')[0].checked && bigEdge.rep_comp == componentN)) {
                     for (var k = 0; k < uniqueEdgesDict[edgeId].length; k++) {
                         if (edgeDataFull[uniqueEdgesDict[edgeId][k]]) {
                             edge = edgeData[uniqueEdgesDict[edgeId][k]];
-                            if ((!$('#break_checkbox')[0].checked && edge.comp == componentN) || ($('#break_checkbox')[0].checked && edge.rep_comp == componentN))
+                            if ((selectedMethod != "repeat" && edge.comp == componentN) || ($('#break_checkbox')[0].checked && edge.rep_comp == componentN))
                                 inEdges.push(edge);
                         }
                     }
@@ -699,7 +694,7 @@ function selectNode(selectedNode) {
             else if (edgeData[edgeId]) {
                 edge = edgeData[edgeId];
                 d3.select('#' + edgeId).classed('node_selected_in', true);
-                if ((!$('#break_checkbox')[0].checked && edge.comp == componentN) || ($('#break_checkbox')[0].checked && edge.rep_comp == componentN))
+                if ((selectedMethod != "repeat" && edge.comp == componentN) || ($('#break_checkbox')[0].checked && edge.rep_comp == componentN))
                     inEdges.push(edge);
             }
         }
@@ -708,7 +703,7 @@ function selectNode(selectedNode) {
              if (uniqueEdgesDict[edgeId]) {
                 bigEdge = edgeData[edgeId];
                 d3.select('#' + edgeId).classed('node_selected_out', true);
-                if ((!$('#break_checkbox')[0].checked && bigEdge.comp == componentN) || ($('#break_checkbox')[0].checked && bigEdge.rep_comp == componentN)) {
+                if ((selectedMethod != "repeat" && bigEdge.comp == componentN) || ($('#break_checkbox')[0].checked && bigEdge.rep_comp == componentN)) {
                     for (var k = 0; k < uniqueEdgesDict[edgeId].length; k++) {
                         if (edgeData[uniqueEdgesDict[edgeId][k]]) {
                             edge = edgeData[uniqueEdgesDict[edgeId][k]];
@@ -720,7 +715,7 @@ function selectNode(selectedNode) {
             else if (edgeData[edgeId]) {
                 edge = edgeData[edgeId];
                 d3.select('#' + edgeId).classed('node_selected_out', true);
-                if ((!$('#break_checkbox')[0].checked && edge.comp == componentN) || ($('#break_checkbox')[0].checked && edge.rep_comp == componentN))
+                if ((selectedMethod != "repeat" && edge.comp == componentN) || ($('#break_checkbox')[0].checked && edge.rep_comp == componentN))
                     outEdges.push(edge);
             }
         }

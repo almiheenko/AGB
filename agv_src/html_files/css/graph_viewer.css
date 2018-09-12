@@ -29,7 +29,7 @@
     box-shadow: 0px 0px 10px #000;
     z-index: 101;
 }
-.option_component {
+.option_mode {
     padding: 3px 6px;
 }
 .search_box {
@@ -149,8 +149,8 @@ path.contig_selected  {
 }
 
 .part_node ellipse {
-    stroke-width: 3 !important;
-    fill: #344cff;
+    stroke-width: 2 !important;
+    fill: #74ffff;
 }
 
 .node_selected_out path {

@@ -151,11 +151,7 @@
 
                 <div>
                     <input id="unbalanced_checkbox" type="checkbox" checked><label for="unbalanced_checkbox">Mark <span id="unbalanced_toooltip" data-toggle="tooltip" class='tooltip_link' title="Nodes where incoming/outgoing multiplicities do not balance">unbalanced nodes</span> as red</label>
-                  </div>
-                  <div>
-                    <input id="break_checkbox" type="checkbox"><label for="break_checkbox"><span class='tooltip_link' data-toggle="tooltip" title="Incident unique edges will be shown but will not affect the graph connectivity">Remove</span> unique edges from the graph   </label>
-                    <p style="font-size: 10px; display: none;" id="repeatInfo">Dashed light green nodes are connected to the other components.</p>
-                  </div>
+                </div>
                     <div><input id="show_labels" type="checkbox" checked><label for="show_labels">Show edge labels</label></div>
                 </div>
             </div>
@@ -174,10 +170,10 @@
                 <div id='contig_table_div' class="scroll_table_div">
                 </div>
                 <p id='uniqueEdgesWarning' style="text-align: center; font-size: 12px; color: #a80000; display: none">
-                The graph path cannot be shown because it contains only unique edges. Please uncheck "Remove unique edges from the graph" checkbox and select this contig again.
+                The graph path cannot be shown because it contains only unique edges. Please switch to "default" or "contig" mode and select this contig again.
                 </p>
                 <p id='wrongOptionsWarning' style="text-align: center; font-size: 12px; color: #a80000; display: none">
-                Some edges in the graph path are hidden or belong to other components. Try to change thresholds in Additional options or switch to "contig" splitting mode.
+                Some edges in the graph path are hidden or belong to other components. Try to change thresholds in Additional options or switch to "contig" mode.
                 </p>
               </div>
           </div>
@@ -193,10 +189,10 @@
                 <div id='ref_table_div' class="scroll_table_div">
                 </div>
                 <p id='uniqueChromEdgesWarning' style="text-align: center; font-size: 12px; color: #a80000; display: none">
-                The graph path cannot be shown because it contains only unique edges. Please uncheck "Remove unique edges from the graph" checkbox and select this contig again.
+                The graph path cannot be shown because it contains only unique edges. Please switch to "default" or "reference" mode and select this contig again.
                 </p>
                 <p id='wrongOptionsChromWarning' style="text-align: center; font-size: 12px; color: #a80000; display: none">
-                Some edges in the graph path are hidden or belong to other components. Try to change thresholds in Additional options or switch to "contig" splitting mode.
+                Some edges in the graph path are hidden or belong to other components. Try to change thresholds in Additional options or switch to "contig" mode.
                 </p>
             </div>
           </div>
@@ -212,11 +208,11 @@
               <div>
                 <div id='components_table_div' class="scroll_table_div">
                 </div>
-                <p id='numberEdgesWarning' style="text-align: center; font-size: 14px; color: #5f5c5c">
-                    Note: Forward ("+") and reverse ("-") edges are counted as one edge.
-                </p>
-                <p id='adjEdgesWarning' style="text-align: center; font-size: 14px; color: #5f5c5c; display: none">
+                <span id='adjEdgesWarning' style="font-size: 14px; color: #5f5c5c; display: none">
                     Note: Adjacent edges are not taken into account.
+                </span>
+                <p id='numberEdgesWarning' style="font-size: 14px; color: #5f5c5c">
+                    Note: Forward ("+") and reverse ("-") edges are counted as one edge.
                 </p>
               </div>
             </div>
@@ -261,21 +257,24 @@
         <button id="prev_btn" class="selector round" disabled>&#8249;</button>
         <button id="next_btn" class="selector round" disabled>&#8250;</button>
         <span>Component <span id="component_n"></span>/<span id="component_total"></span> <span id="component_chromosome"></span></span>
-        <p id="partition_warning" style="color:red; display: none; text-align: center; font-size: 8px;">This is a part of the large connected component.</br>Big blue nodes represent other parts of the component.</p>
+        <p id="partition_warning" style="color:red; display: none; text-align: center; font-size: 8px;">This is a part of the large connected component.</br>Large blue nodes represent other parts of the component.</p>
     </div>
-    <div id="div_switch" style="float:left; width:235px; margin-left: 10px">
+    <div id="div_switch" style="float:left; width:250px; margin-left: 10px">
         <div style="padding-top:-30px; text-align:center">
-            Splitting
+            Mode
         </div>
         <div class="btn-group btn-group-toggle" data-toggle="buttons">
-          <label class="btn btn-info active option_component" id="components_default">
-            <input type="radio" name="components" autocomplete="off" enabled=false checked> default
+          <label class="btn btn-info active option_mode" id="default_mode">
+            <input type="radio" name="mode" autocomplete="off" enabled=false checked> default
           </label>
-          <label class="btn btn-info option_component" id="components_chrom">
-            <input type="radio" name="components" autocomplete="off" val="chrom"> chromosomes
+          <label class="btn btn-info option_mode" id="repeat_mode">
+            <input type="radio" name="mode" autocomplete="off" enabled=false checked> repeats
           </label>
-          <label class="btn btn-info option_component" id="components_contig">
-            <input type="radio" name="components" autocomplete="off" val="contig"> contigs
+          <label class="btn btn-info option_mode" id="ref_mode">
+            <input type="radio" name="mode" autocomplete="off" val="ref"> reference
+          </label>
+          <label class="btn btn-info option_mode" id="contig_mode">
+            <input type="radio" name="mode" autocomplete="off" val="contig"> contig
           </label>
         </div>
     </div>

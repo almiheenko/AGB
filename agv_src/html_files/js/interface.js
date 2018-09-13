@@ -387,7 +387,7 @@ function buildChromsTable() {
         for (i = 0; i < edgeMappingInfo[x].length; i++) {
             chrom = edgeMappingInfo[x][i];
             chromosomesData[chrom] = chromosomesData[chrom] || [];
-            if (checkEdge(x)) chromosomesData[chrom].push(x);
+            if (checkEdge(x, chromosomes.indexOf(chrom)) && x[0] == "e") chromosomesData[chrom].push(x);
         }
     }
     for (chrom in chrom_lengths) {
@@ -579,7 +579,7 @@ function buildComponentsTable() {
                             edge = edgeData[baseLoopEdgeDict[edgeId][k]];
                             if (edge.unique) loopEdges.add(edgeId);
                             else loopRepeatEdges.add(edgeId);
-                            if (selectedMethod == "contig" || baseLoopEdgeDict[edgeId][k][0] === "e") {
+                            if (selectedMethod == "contig" || edge.id[0] === "e") {
                                 componentInfo['len'] = componentInfo['len'] + edge.len;
                             }
                         }

@@ -375,14 +375,15 @@ function hideEdgesByThresholds(doRefresh, doAnimate, doRefreshTables) {
                     hiddenEdges.add(edgeId);
                 }
                 else if (baseLoopEdgeDict[edgeId]) {
-                    wrongEdges = 0
+                    var hiddenEdgesCount = 0;
                     for (var k = 0; k < baseLoopEdgeDict[edgeId].length; k++) {
                         edge = edgeData[baseLoopEdgeDict[edgeId][k]];
                         if (!checkChromEdge(edge.id)) {
-                            wrongEdges++;
+                            hiddenEdges.add(edge.id);
+                            hiddenEdges.add(edge.id);
                         }
                     }
-                    if (wrongEdges == baseLoopEdgeDict[edgeId].length) hiddenEdges.add(edgeId);
+                    if (hiddenEdgesCount == baseLoopEdgeDict[edgeId].length) hiddenEdges.add(edgeId);
                 }
             }
             else if (selectedMethod == "contig") {
@@ -390,14 +391,15 @@ function hideEdgesByThresholds(doRefresh, doAnimate, doRefreshTables) {
                     hiddenEdges.add(edgeId);
                 }
                 else if (baseLoopEdgeDict[edgeId]) {
-                    wrongEdges = 0
+                    var hiddenEdgesCount = 0;
                     for (var k = 0; k < baseLoopEdgeDict[edgeId].length; k++) {
                         edge = edgeData[baseLoopEdgeDict[edgeId][k]];
                         if (!checkContigEdge(edge)) {
-                            wrongEdges++;
+                            hiddenEdges.add(edge.id);
+                            hiddenEdgesCount++;
                         }
                     }
-                    if (wrongEdges == baseLoopEdgeDict[edgeId].length) hiddenEdges.add(edgeId);
+                    if (hiddenEdgesCount == baseLoopEdgeDict[edgeId].length) hiddenEdges.add(edgeId);
                 }
             }
         }
@@ -410,31 +412,34 @@ function hideEdgesByThresholds(doRefresh, doAnimate, doRefreshTables) {
         if (!checkEdgeCoverage(edgeId)) {
             dotSrcLines.splice(i, 1);
         }
-        else if (dotSrcLines[i].indexOf(' = "black"') !== -1) {
-            repeatEdgesCount = 0;
-            if ($('#collapse_repeats_checkbox')[0].checked && baseLoopEdgeDict[edgeId]) {
-                for (var k = 0; k < baseLoopEdgeDict[edgeId].length; k++) {
-                    edge = edgeData[baseLoopEdgeDict[edgeId][k]];
+        else {
+            if ($('#collapse_repeats_checkbox')[0].checked) {
+                if (baseLoopEdgeDict[edgeId]) {
+                    var repeatEdgesCount = 0;
+                    for (var k = 0; k < baseLoopEdgeDict[edgeId].length; k++) {
+                        edge = edgeData[baseLoopEdgeDict[edgeId][k]];
+                        if (edge && (!edge.unique)) {
+                            repeatEdges.add(edge.id);
+                            repeatEdgesCount++;
+                            edgesColor[edge.id] = dotSrcLines[i].match(colorPattern)[1];
+                        }
+                    }
+                    if (repeatEdgesCount == baseLoopEdgeDict[edgeId].length) repeatEdges.add(edgeId);
+                }
+                else {
+                    edge = edgeData[edgeId];
                     if (edge && (!edge.unique)) {
-                        repeatEdgesCount++;
+                        repeatEdges.add(edge.id);
+                        edgesColor[edge.id] = dotSrcLines[i].match(colorPattern)[1];
                     }
                 }
-                if (repeatEdgesCount == baseLoopEdgeDict[edgeId].length)
-                    repeatEdges.add(edgeId);
             }
-            if (selectedMethod == "repeat" && dotSrcLines[i].indexOf('loop') == -1) {
-                uniqueEdges.push(dotSrcLines[i])
+            if (selectedMethod == "repeat" && dotSrcLines[i].indexOf('loop') == -1 && dotSrcLines[i].indexOf('black') !== -1) {
+                uniqueEdges.push(dotSrcLines[i]);
                 dotSrcLines.splice(i, 1);
             }
             else i++;
         }
-        else if(dotSrcLines[i].indexOf('id') !== -1) {
-            if($('#collapse_repeats_checkbox')[0].checked)
-                repeatEdges.add(edgeId);
-            edgesColor[edgeId] = dotSrcLines[i].match(colorPattern)[1];
-            i++;
-        } 
-        else i++;
     }
 
     diGraph = parseDirectedGraph(dotSrcLines);
@@ -443,7 +448,7 @@ function hideEdgesByThresholds(doRefresh, doAnimate, doRefreshTables) {
     for(var i=0, len=nodes.length; i<len; i++){
         nodes[i] = parseInt(nodes[i], 10);
     }
-    var collapsedNodes = new Set();
+    var collapsedNodes = {};
     newNodes = new Set();
     var strongEdges = {};
     for (node in graph) {
@@ -497,7 +502,7 @@ function hideEdgesByThresholds(doRefresh, doAnimate, doRefreshTables) {
             edgeE = replacementDict[node2] ? replacementDict[node2] : node2;
             if (edgeS == edgeE || !graph[edgeE]) continue;
             if ((strongEdges[edgeS] && strongEdges[edgeS][edgeE]) || (strongEdges[edgeE] && strongEdges[edgeE][edgeS]))
-                continue
+                continue;
             newNodes.add(edgeS);
             for (i = 0; i < Object.keys(graph[edgeE]).length;) {
                 pairNode = Object.keys(graph[edgeE])[i];
@@ -540,12 +545,13 @@ function hideEdgesByThresholds(doRefresh, doAnimate, doRefreshTables) {
             }
             for (e1 in strongEdges) {
                 if (strongEdges[e1][node2])
-                    strongEdges[e1][edgeS] = strongEdges[e1][node2]
+                    strongEdges[e1][edgeS] = strongEdges[e1][node2];
                 if (strongEdges[e1][edgeE])
-                    strongEdges[e1][edgeS] = strongEdges[e1][edgeE]
+                    strongEdges[e1][edgeS] = strongEdges[e1][edgeE];
             }
         }
     }
+    clusterNodeSizeDict = {};
     for (node in collapsedEdges)
         clusterNodeSizeDict[node] = collapsedEdges[node].size;
 
@@ -581,7 +587,7 @@ function hideEdgesByThresholds(doRefresh, doAnimate, doRefreshTables) {
                     end = newData[edgeId] ? newData[edgeId][1] : edge.e;
                     if (expandedNodes.has(source) && expandedNodes.has(end))
                         isWrong = false;
-                    else if (repeatEdges.has(edgeId) || hiddenEdges.has(edgeId) || !checkEdgeWithThresholds(edge))
+                    else if (repeatEdges.has(edge.id) || hiddenEdges.has(edge.id) || !checkEdgeWithThresholds(edge))
                         isWrong = true;
                     else isWrong = false;
                     if (!isWrong) {
@@ -598,11 +604,11 @@ function hideEdgesByThresholds(doRefresh, doAnimate, doRefreshTables) {
                         source = newData[edgeId] ? newData[edgeId][0] : edge.s;
                         if (expandedNodes.has(source))
                             isWrong = false;
-                        else if (repeatEdges.has(edgeId) || hiddenEdges.has(edgeId) || !checkEdgeWithThresholds(edge))
+                        else if (repeatEdges.has(edge.id) || hiddenEdges.has(edge.id) || !checkEdgeWithThresholds(edge))
                             isWrong = true;
                         else isWrong = false;
                         if (!isWrong) {
-                            loopEdgeDict[loopId].add(baseLoopEdgeDict[edgeId][k])
+                            loopEdgeDict[loopId].add(baseLoopEdgeDict[edgeId][k]);
                             diGraph[node] = diGraph[node] || {};
                             diGraph[node][node] = diGraph[node][node] || {};
                             diGraph[node][node].add(loopId);
@@ -620,7 +626,7 @@ function hideEdgesByThresholds(doRefresh, doAnimate, doRefreshTables) {
         if (edge) {
             source = newData[edgeId] ? newData[edgeId][0] : edge.s;
             end = newData[edgeId] ? newData[edgeId][1] : edge.e;
-            if (!checkEdgeWithThresholds(edge)) {
+            if (repeatEdges.has(edge.id) || !checkEdgeWithThresholds(edge) || hiddenEdges.has(edge.id)) {
                 if (!expandedNodes.has(source) && !expandedNodes.has(end)) {
                     clusterNodeSizeDict[source] = clusterNodeSizeDict[source] || 0;
                     clusterNodeSizeDict[source]++;
@@ -635,31 +641,36 @@ function hideEdgesByThresholds(doRefresh, doAnimate, doRefreshTables) {
             var s = '"' + source + '" -> "' + end + '" [label="' + label + '",id = "' + edgeId + '", color="' + edge.color + '"];';
             dotSrcLines.push(s);
         }
-        else if (loopEdgeDict[edgeId]) {
+        else if (loopEdgeDict[edgeId].length > 0) {
             curEdges = 0;
             var loopNode;
             var filterEdges = [];
+            var loopColors = new Set();
             for (var k = 0; k < loopEdgeDict[edgeId].length; k++) {
                 edge = edgeData[loopEdgeDict[edgeId][k]];
-                if (repeatEdges.has(edgeId) || !checkEdgeWithThresholds(edge)) {
-                    if (!expandedNodes.has(source) && !expandedNodes.has(end)) {
-                        clusterNodeSizeDict[source] = clusterNodeSizeDict[source] || 0;
-                        clusterNodeSizeDict[source]++;
-                    }
-                }
-                else filterEdges.push(edge)
+                filterEdges.push(edge);
+                loopColors.add(edge.color);
                 loopNode = newData[edge.el_id] ? newData[edge.el_id][0] : edge.s;
             }
-            if (filterEdges.length == 1) {
-                edge = filterEdges[0];
-                if (edge.id.indexOf('part') === -1) {
-                    label = edge.len ? 'id ' + edge.name + '\\l' + edge.len + 'k ' + edge.cov +'x' : "";
-                    var s = '"' + loopNode + '" -> "' + loopNode + '" [label="' + label + '",id = "' + edge.el_id + '", color="' + edge.color + '"];';
-                    dotSrcLines.push(s);
+            if (edge.id.indexOf('part') === -1 && filterEdges.length > 0) {
+                var s = "";
+                if (filterEdges.length == 1) {
+                    edge = filterEdges[0];
+                    if (edge.id.indexOf('part') === -1) {
+                        label = edge.len ? 'id ' + edge.name + '\\l' + edge.len + 'k ' + edge.cov + 'x' : "";
+                        s = '"' + loopNode + '" -> "' + loopNode + '" [label="' + label + '",id = "' + edge.el_id + '", color="' + edge.color + '"];';
+                    }
                 }
-            }
-            if (filterEdges.length > 1) {
-                var s = '"' + loopNode + '" -> "' + loopNode + '" [label="",id = "' + edgeId + '", color="black",penwidth=5];';
+                else if (filterEdges.length == 2 && filterEdges[0].name.replace('-', '') === filterEdges[1].name.replace('-', '')) {
+                    edge = filterEdges[0];
+                    label = edge.len ? 'id ' + edge.name.replace('-', '') + '\\l' + edge.len + 'k ' + edge.cov + 'x' : "";
+                    s = '"' + loopNode + '" -> "' + loopNode + '" [label="' + label + '",id = "' + edgeId + '", color="' +
+                        edge.color + '",penwidth=5];';
+                }
+                else {
+                    s = '"' + loopNode + '" -> "' + loopNode + '" [label="",id = "' + edgeId + '", color="' +
+                        (loopColors.size === 1 ? loopColors.values().next().value : "black") + '",penwidth=5];';
+                }
                 dotSrcLines.push(s);
             }
         }

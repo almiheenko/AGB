@@ -35,8 +35,8 @@ class Edge:
     def print_edge_to_dot(self, id=None):
         edge_id = id or self.id
         if self.is_complex_loop:
-            s = '"%s" -> "%s" [label = "", id = "%s", color = "black", penwidth=5] ;\n' % \
-                (self.start, self.end, edge_id)
+            s = '"%s" -> "%s" [label = "", id = "%s", color = "%s", penwidth=5] ;\n' % \
+                (self.start, self.end, edge_id, self.color or "black")
         else:
             l = str(self.format_len()) + 'k'
             s = '"%s" -> "%s" [label = id %s\\l%s %dx(%d), id = "%s", color = "%s"] ;\n' % \

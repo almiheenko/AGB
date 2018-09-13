@@ -209,6 +209,7 @@ function changeSplitMethod(method, component) {
     componentN = component || 0;
     if(selectedMethod == 'ref') {
         $('#ref_mode').addClass('active');
+        $('#unbalanced_checkbox').prop('disabled', false);
         $('#unbalanced_checkbox').prop('checked', false);
         $('#unbalanced_checkbox').prop('disabled', true);
         $('#adj_edges_option').show();
@@ -544,8 +545,8 @@ function buildComponentsTable() {
         componentInfo['len'] = 0;
         var dotSrcLines = dotSrc.split('\n');
         var filteredDotLines = [];
-        var loopFound = false;
-        var loopRepeatFound = false;
+        var loopEdges = new Set();
+        var loopRepeatEdges = new Set();
         for (j = 0; j < dotSrcLines.length; j++) {
             var matches = dotSrcLines[j].match(idPattern);
             if(matches && matches.length > 1) {
@@ -554,11 +555,11 @@ function buildComponentsTable() {
                 if (checkEdge(edgeRealId, i)) {
                     if (selectedMethod == "contig" || edgeId[0] === "e") {
                         if (edgeData[edgeRealId].s === edgeData[edgeRealId].e) {
-                            if (edge.unique) loopFound = true;
-                            else loopRepeatFound = true;
+                            if (edgeData[edgeRealId].unique) loopEdges.add(edgeRealId);
+                            else loopRepeatEdges.add(edgeRealId);
                         }
                         else {
-                            if(edgeData[edgeRealId].unique) componentInfo['unique']++;
+                            if (edgeData[edgeRealId].unique) componentInfo['unique']++;
                             else componentInfo['repeat']++;
                         }
 
@@ -571,25 +572,25 @@ function buildComponentsTable() {
                     filteredDotLines.push(dotSrcLines[j]);
                 }
                 else if (baseLoopEdgeDict[edgeId]) {
-                    loopEdges = 0;
+                    var loopEdgesCount = 0;
                     for (var k = 0; k < baseLoopEdgeDict[edgeId].length; k++) {
                         if (checkEdge(baseLoopEdgeDict[edgeId][k], i)) {
-                            loopEdges++;
+                            loopEdgesCount++;
                             edge = edgeData[baseLoopEdgeDict[edgeId][k]];
-                            if (edge.unique) loopFound = true;
-                            else loopRepeatFound = true;
+                            if (edge.unique) loopEdges.add(edgeId);
+                            else loopRepeatEdges.add(edgeId);
                             if (selectedMethod == "contig" || baseLoopEdgeDict[edgeId][k][0] === "e") {
                                 componentInfo['len'] = componentInfo['len'] + edge.len;
                             }
                         }
                     }
-                    if (loopEdges) filteredDotLines.push(dotSrcLines[j]);
+                    if (loopEdgesCount) filteredDotLines.push(dotSrcLines[j]);
                 }
             }
             else filteredDotLines.push(dotSrcLines[j]);
         }
-        if (loopFound) componentInfo['unique']++;
-        if (loopRepeatFound) componentInfo['repeat']++;
+        componentInfo['unique'] = componentInfo['unique'] + loopEdges.size;
+        componentInfo['repeat'] = componentInfo['repeat'] + loopRepeatEdges.size;
         if (selectedMethod == "ref" || selectedMethod == "contig")
             componentInfo['n'] = calculateComponents(toGraph(filteredDotLines));
         componentInfo['enter'] = srcGraphs[i].enters;

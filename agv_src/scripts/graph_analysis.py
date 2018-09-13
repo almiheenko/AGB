@@ -335,6 +335,7 @@ def save_graph(graph, hanging_nodes, connected_nodes, enters, exits, dict_edges,
                 else:
                     edge = Edge(real_id)
                     edge.is_complex_loop = True
+                    colors = set()
                     for loop_e in loop_edges[real_id]:
                         ###!!!!
                         real_id = dict_edges[loop_e].id if loop_e in dict_edges else loop_e
@@ -349,6 +350,9 @@ def save_graph(graph, hanging_nodes, connected_nodes, enters, exits, dict_edges,
                             edges_by_component[loop_e] = i
                             edges_by_component[real_id] = i
                             edge.start, edge.end = modified_dict_edges[loop_e].start, modified_dict_edges[loop_e].start
+                            colors.add(modified_dict_edges[loop_e].color)
+                    if len(colors) == 1:
+                        edge.color = colors.pop()
                 if edge.start is not None:
                     out_f.write(edge.print_edge_to_dot(id=edge_id))
             out_f.write('}`},')

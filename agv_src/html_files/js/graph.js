@@ -897,32 +897,37 @@ function selectEdge(edge, edgeId, edgeLen, edgeCov, edgeMulti) {
     deselectAll();
     selectedEdge = edge;
     console.log(edge);
-    console.log(edgeData)
     selectedMatchEdge = selectedEdge.indexOf("rc") == -1 ? selectedEdge.replace('e', 'rc') : selectedEdge.replace('rc', 'e');
     if (d3.select('#' + selectedMatchEdge).empty()) selectedMatchEdge = null;
     d3.select('#' + selectedEdge).classed('selected', true); 
     if (selectedMatchEdge)
         d3.select('#' + selectedMatchEdge).classed('selected', true);
-    console.log(edgeMappingInfo, edge)
     if (selectedEdge.lastIndexOf('loop', 0) === 0) {
         edgeDescription = '<ul><b>Loop edges:</b>';
         for (var k = 0; k < loopEdgeDict[selectedEdge].length; k++) {
-            if (checkEdge(loopEdgeDict[selectedEdge][k])) {
-                edge = edgeDataFull[loopEdgeDict[selectedEdge][k]];
+            var curLoopEdge = loopEdgeDict[selectedEdge][k];
+            if (checkEdge(curLoopEdge)) {
+                edge = edgeDataFull[curLoopEdge];
 
                 edgeDescription = edgeDescription + 
                         '<li>Edge ID: ' + edge.name +
                         ', length: '  + edge.len +
-                        'kb, coverage: '  + edge.cov + 'x, inferred multiplicity: '  + edge.mult + '.</li>';
+                        'kb, coverage: '  + edge.cov + 'x, inferred multiplicity: '  + edge.mult;
+                if (edgeInfo[curLoopEdge]) {
+                    edgeDescription = edgeDescription + '<br/><b>Contigs:</b>';
+                    for (var i = 0; i < edgeInfo[curLoopEdge].length; i++) {
+                        edgeDescription = edgeDescription + '<li>' + edgeInfo[curLoopEdge][i] + '</li>';
+                    }
+                }
                 if (edgeMappingInfo && edgeMappingInfo[edge.el_id] && edgeMappingInfo[edge.el_id].length) {
                     edgeDescription = edgeDescription + '<br/><b>Reference chromosomes:</b>';
-                    console.log(edgeMappingInfo, edge)
                     for (var i = 0; i < edgeMappingInfo[edge.el_id].length; i++) {
                         chrom = edgeMappingInfo[edge.el_id][i];
                         chromN = chromosomes.indexOf(chrom);
                         edgeDescription = edgeDescription + '<li onclick="changeToChromosome(' + chromN + ')"> ' + chrom + '</li>';
                     }
                 }
+                edgeDescription = edgeDescription + '</li></br>';
                 $('#edgerow' + edge.id).addClass('selected');
             }
         }

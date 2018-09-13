@@ -381,13 +381,24 @@ function buildChromsTable() {
     table = '';
     table += "<table border='1' id='ref_table' class='sortable scroll_table' style='width:" + (leftPanelWidth) + "px'>";
     chromosomesData = {};
+    chromosomesContigs = {};
+    var contigsFound = false;
     var chromLengths = [];
     enableChroms = [];
     for (x in edgeMappingInfo) {
         for (i = 0; i < edgeMappingInfo[x].length; i++) {
             chrom = edgeMappingInfo[x][i];
             chromosomesData[chrom] = chromosomesData[chrom] || [];
-            if (checkEdge(x, chromosomes.indexOf(chrom)) && x[0] == "e") chromosomesData[chrom].push(x);
+            if (checkEdge(x, chromosomes.indexOf(chrom))) {
+                if (x[0] == "e") chromosomesData[chrom].push(x);
+                if (edgeInfo[x]) {
+                    chromosomesContigs[chrom] = chromosomesContigs[chrom] || new Set();
+                    for (var j = 0; j < edgeInfo[x].length; j++) {
+                        chromosomesContigs[chrom].add(edgeInfo[x][j])
+                    }
+                    contigsFound = true;
+                }
+            }
         }
     }
     for (chrom in chrom_lengths) {
@@ -395,10 +406,12 @@ function buildChromsTable() {
     }
     var factor = Math.max.apply(Math, chromLengths) > 100000000 ? 1000000 : 1000;
     var factorText = factor == 1000 ? "Kb" : "Mb";
-    table += "<thead><tr class='header'><th>Chromosome</th><th>Len (" + factorText + ")</th><th># edges</th></tr></thead><tbody>";
+    table += "<thead><tr class='header'><th>Chromosome</th><th>Len (" + factorText + ")</th><th># edges</th>" +
+        (contigsFound ? "<th># contigs</th>" : "") + "</tr></thead><tbody>";
     for (chrom in chrom_lengths) {
         len = Math.round(chrom_lengths[chrom] * 10 / factor) ? Math.round(chrom_lengths[chrom] * 10 / factor) / 10 : Math.round(chrom_lengths[chrom] * 100 / factor) / 100;
-        table += "<tr id='chromrow" + chrom + "'><td>" + chrom + "</td><td>" + len + "</td><td>" + (chromosomesData[chrom] ? chromosomesData[chrom].length : '-') + "</td></tr>";
+        table += "<tr id='chromrow" + chrom + "'><td>" + chrom + "</td><td>" + len + "</td><td>" + (chromosomesData[chrom] ? chromosomesData[chrom].length : '-') +
+            (contigsFound ? ("</td><td>" + (chromosomesContigs[chrom] ? chromosomesContigs[chrom].size : '-')) : "") + "</td></tr>";
         enableChroms.push(chrom);
     }
     table += "</tbody></table>";

@@ -326,11 +326,11 @@ def save_graph(graph, hanging_nodes, connected_nodes, enters, exits, dict_edges,
                 if real_id in dict_edges:
                     if not strict_mapping_info or (strict_mapping_info[real_id] and chrom in strict_mapping_info[real_id]):
                         if suffix == "def":
-                            modified_dict_edges[real_id].component = i
+                            modified_dict_edges[edge_id].component = i
                         elif suffix == "repeat":
-                            modified_dict_edges[real_id].repeat_component = i
+                            modified_dict_edges[edge_id].repeat_component = i
                         elif suffix == "ref":
-                            modified_dict_edges[real_id].ref_component = i
+                            modified_dict_edges[edge_id].ref_component = i
                     edges_by_component[real_id] = i
                 else:
                     edge = Edge(real_id)

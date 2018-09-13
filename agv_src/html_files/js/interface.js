@@ -695,11 +695,11 @@ function selectNode(selectedNode) {
              if (uniqueEdgesDict[edgeId]) {
                 bigEdge = edgeData[edgeId];
                 d3.select('#' + edgeId).classed('node_selected_in', true);
-                if ((selectedMethod != "repeat" && bigEdge.comp == componentN) || ($('#break_checkbox')[0].checked && bigEdge.rep_comp == componentN)) {
+                if ((selectedMethod != "repeat" && bigEdge.comp == componentN) || (selectedMethod == "repeat" && bigEdge.rep_comp == componentN)) {
                     for (var k = 0; k < uniqueEdgesDict[edgeId].length; k++) {
                         if (edgeDataFull[uniqueEdgesDict[edgeId][k]]) {
                             edge = edgeData[uniqueEdgesDict[edgeId][k]];
-                            if ((selectedMethod != "repeat" && edge.comp == componentN) || ($('#break_checkbox')[0].checked && edge.rep_comp == componentN))
+                            if ((selectedMethod != "repeat" && edge.comp == componentN) || (selectedMethod == "repeat" && edge.rep_comp == componentN))
                                 inEdges.push(edge);
                         }
                     }
@@ -708,7 +708,7 @@ function selectNode(selectedNode) {
             else if (edgeData[edgeId]) {
                 edge = edgeData[edgeId];
                 d3.select('#' + edgeId).classed('node_selected_in', true);
-                if ((selectedMethod != "repeat" && edge.comp == componentN) || ($('#break_checkbox')[0].checked && edge.rep_comp == componentN))
+                if ((selectedMethod != "repeat" && edge.comp == componentN) || (selectedMethod == "repeat" && edge.rep_comp == componentN))
                     inEdges.push(edge);
             }
         }
@@ -717,7 +717,7 @@ function selectNode(selectedNode) {
              if (uniqueEdgesDict[edgeId]) {
                 bigEdge = edgeData[edgeId];
                 d3.select('#' + edgeId).classed('node_selected_out', true);
-                if ((selectedMethod != "repeat" && bigEdge.comp == componentN) || ($('#break_checkbox')[0].checked && bigEdge.rep_comp == componentN)) {
+                if ((selectedMethod != "repeat" && bigEdge.comp == componentN) || (selectedMethod == "repeat" && bigEdge.rep_comp == componentN)) {
                     for (var k = 0; k < uniqueEdgesDict[edgeId].length; k++) {
                         if (edgeData[uniqueEdgesDict[edgeId][k]]) {
                             edge = edgeData[uniqueEdgesDict[edgeId][k]];
@@ -729,7 +729,7 @@ function selectNode(selectedNode) {
             else if (edgeData[edgeId]) {
                 edge = edgeData[edgeId];
                 d3.select('#' + edgeId).classed('node_selected_out', true);
-                if ((selectedMethod != "repeat" && edge.comp == componentN) || ($('#break_checkbox')[0].checked && edge.rep_comp == componentN))
+                if ((selectedMethod != "repeat" && edge.comp == componentN) || (selectedMethod == "repeat" && edge.rep_comp == componentN))
                     outEdges.push(edge);
             }
         }

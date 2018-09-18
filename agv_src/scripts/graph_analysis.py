@@ -255,7 +255,9 @@ def split_graph(sub_g, g, undirected_g, dict_edges, modified_dict_edges, loop_ed
                     start, end = e[0], e[1]
                     edges = edges_by_nodes[(start, end)] + two_way_edges[(start, end)]
                     for edge_id in edges:
-                        if start == end or dict_edges[edge_id].repetitive:
+                        if start == end:
+                            continue
+                        if edge_id in subgraph and dict_edges[edge_id].repetitive:
                             continue
                         if edge_id in subgraph:
                             if start != end:
@@ -267,7 +269,9 @@ def split_graph(sub_g, g, undirected_g, dict_edges, modified_dict_edges, loop_ed
                     start, end = e[0], e[1]
                     edges = edges_by_nodes[(start, end)] + two_way_edges[(start, end)]
                     for edge_id in edges:
-                        if start == end or dict_edges[edge_id].repetitive:
+                        if start == end:
+                            continue
+                        if edge_id in subgraph and dict_edges[edge_id].repetitive:
                             continue
                         if edge_id in subgraph:
                             if start != end:

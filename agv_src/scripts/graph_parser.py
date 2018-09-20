@@ -123,7 +123,7 @@ def parse_canu_unitigs_info(input_dirpath, dict_edges):
 def get_edges_from_gfa(input_dirpath, output_dirpath, assembler=None):
     edges_fpath = join(output_dirpath, "edges.fasta")
     gfa_fpath = find_file_by_pattern(input_dirpath, "assembly_graph.gfa")
-    if not is_empty_file(edges_fpath) and not can_reuse(edges_fpath, files_to_check=[gfa_fpath]):
+    if not is_empty_file(gfa_fpath) and not can_reuse(edges_fpath, files_to_check=[gfa_fpath]):
         gfa = gfapy.Gfa.from_file(gfa_fpath,vlevel = 0)
         with open(edges_fpath, "w") as f:
             for edge in gfa.segments:

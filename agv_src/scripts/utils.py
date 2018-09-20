@@ -90,9 +90,9 @@ def can_reuse(fpath, files_to_check=None, dir_to_check=None):
     if is_empty_file(fpath):
         return False
     mod_time = getmtime(fpath)
-    if files_to_check and any([getmtime(f) > mod_time for f in files_to_check]):
+    if files_to_check and any([exists(f) and getmtime(f) > mod_time for f in files_to_check]):
         return False
-    if dir_to_check and any([getmtime(join(dir_to_check, f)) > mod_time for f in listdir(dir_to_check)]):
+    if dir_to_check and any([exists(join(dir_to_check, f)) and getmtime(join(dir_to_check, f)) > mod_time for f in listdir(dir_to_check)]):
         return False
     return True
 

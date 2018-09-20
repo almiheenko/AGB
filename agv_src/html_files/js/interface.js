@@ -107,9 +107,13 @@ function setupInterfaceBtns() {
         else
             d3.selectAll('.edge').selectAll('text').style('display','');
     });
+
+    addColorSelect();
     document.getElementById('color_select').onchange = function(event) {
-        if (document.getElementById('color_select').selectedIndex != 2) document.getElementById('repeat_info').style.display = 'none';
-        else document.getElementById('repeat_info').style.display = '';
+        document.getElementById('repeat_info').style.display = 'none';
+        document.getElementById('errors_info').style.display = 'none';
+        if (document.getElementById('color_select').selectedIndex == 2) document.getElementById('errors_info').style.display = '';
+        if (document.getElementById('color_select').selectedIndex == 3) document.getElementById('repeat_info').style.display = '';
         hideEdgesByThresholds(false, false, false);
     };
 
@@ -193,6 +197,16 @@ function addModeSwitch(){
         div += '</div>';
     }
      document.getElementById('div_switch').innerHTML = div;
+}
+
+function addColorSelect(){
+    var selectOptions = '<option value="0" selected>repeated edges</option>';
+    if (Object.keys(edgeDataRef).length) {
+        selectOptions += '<option value="1">edges mapping to reference</option>';
+        selectOptions += '<option value="2">erroneous edges</option>';
+    }
+    selectOptions += '<option value="3">high covered edges</option>';
+    document.getElementById("color_select").innerHTML = selectOptions;
 }
 
 function infoPopUpShow(){
@@ -318,14 +332,18 @@ function buildContigsTable() {
         document.getElementById("contig_tab").style.display="none";
         return;
     }
+    var showAssemblyErrors = chromosomes.length > 0;
     table = '';
     table += "<table border='1' id='contig_table' class='sortable scroll_table' style='width:" + (leftPanelWidth) + "px'>";
-    table += "<thead><tr class='header'><th>Contig</th><th>Len (Kb)</th><th>Cov</th><th># edges</th></tr></thead><tbody>";
+    table += "<thead><tr class='header'><th>Contig</th><th>Len (Kb)</th><th>Cov</th><th># edges</th>" +
+        (showAssemblyErrors ? "<th># errors</th>" : "") + "</tr></thead><tbody>";
     enableContigs = [];
     for (x in contigInfo) {
         contigLen = contigInfo[x].length;
         contigLen = contigLen < 10000 ? Math.round(contigLen / 100) / 10 : Math.round(contigLen / 1000);
         edgesN = 0;
+        errorsN = 0;
+        if (misassembledContigs && misassembledContigs[x]) errorsN = misassembledContigs[x].length;
         for (i = 0; i < contigInfo[x].edges.length; i++) {
             edge = contigInfo[x].edges[i];
             if (edge != "*" && edge != "??") {
@@ -333,12 +351,14 @@ function buildContigsTable() {
                 //edgeId = getEdgeElement(edgeData[edgeElId]);
                 if (checkEdge(edgeElId)) {
                      edgesN++;
+                     errorsN = errorsN + edgeData[edgeElId].errors.length;
                 }
             }
         }
         if (edgesN) {
             enableContigs.push(x);
-            table += "<tr id='contigrow" + x + "'><td>" + x + "</td><td>" + contigLen + "</td><td>" + contigInfo[x].cov + "</td><td>" + (edgesN ? edgesN : '-') + "</td></tr>";
+            table += "<tr id='contigrow" + x + "'><td>" + x + "</td><td>" + contigLen + "</td><td>" + contigInfo[x].cov +
+                "</td><td>" + (edgesN ? edgesN : "-") + (showAssemblyErrors ? "</td><td>" + (errorsN ? errorsN : "-") : "") + "</td>" + "</tr>";
         }
         //table += "<tr id='contigrow" + x + "'><td>" + x + "</td><td>" + contigLen + "</td><td>" + contigInfo[x].cov + "</td><td>" + contigInfo[x].n_edges + "</td></tr>";
     }
@@ -373,7 +393,7 @@ function buildContigsTable() {
     sorttable.makeSortable(document.getElementById("contig_table"));
 }
 
-function buildChromsTable() {
+function buildRefTable() {
     if (chromosomes.length == 0) {
         document.getElementById("ref_tab").style.display="none";
         return;
@@ -513,7 +533,8 @@ function buildVertexTable() {
             }
         }
         nodeInfo['balance'] = Math.abs(nodeInfo['out_mult'] - nodeInfo['in_mult']);
-        if (nodeInfo['balance'] > 0) unbalancedNodes.add(node);
+        if (nodeInfo['balance'] / (nodeInfo['out_mult'] + nodeInfo['in_mult']) > 0.05)
+            unbalancedNodes.add(node);
         nodeInfo['size'] = clusterNodeSizeDict[node] || 0;
         if (!adjEdges[node]) adjEdges[node] = edgeId;
         if (node.indexOf('part') === -1)
@@ -818,7 +839,10 @@ function changeComponent(component, doRefreshTables) {
     else $('#partition_warning').show();
     document.getElementById('component_n').innerHTML = componentN + 1;
     document.getElementById('component_total').innerHTML = srcGraphs.length;
-    document.getElementById('component_chromosome').innerHTML = srcGraphs[componentN].chrom ? '(' + srcGraphs[componentN].chrom + ')' : "";
+    var chromName = srcGraphs[componentN].chrom ? '(' + srcGraphs[componentN].chrom + ')' : "";
+    if (chromName.length > 30)
+        chromName = chromName.substr(0, 15) + '...' + chromName.substr(chromName.length-10, chromName.length);
+    document.getElementById('component_chromosome').innerHTML = chromName;
     $("#ref_table tbody tr").removeClass('selected');
     deselectAll();
     deselectEdge();

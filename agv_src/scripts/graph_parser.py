@@ -1,11 +1,13 @@
 import re
+from os.path import join
 from collections import defaultdict
 
 import gfapy
 import networkx as nx
 
 from agv_src.scripts.edge import Edge
-from agv_src.scripts.utils import get_edge_agv_id, calculate_mean_cov, get_edge_num, find_file_by_pattern, is_empty_file
+from agv_src.scripts.utils import get_edge_agv_id, calculate_median_cov, get_edge_num, find_file_by_pattern, \
+    is_empty_file, can_reuse
 
 repeat_colors = ["red", "darkgreen", "blue", "goldenrod", "cadetblue1", "darkorchid", "aquamarine1",
                  "darkgoldenrod1", "deepskyblue1", "darkolivegreen3"]
@@ -113,9 +115,22 @@ def parse_canu_unitigs_info(input_dirpath, dict_edges):
                     if fs[repeat_col] == "yes":
                         dict_edges[edge_id].repetitive = True
                         dict_edges[rc_edge_id].repetitive = True
-                else:
-                    print("Warning! Edge %s is not found!" % edge_id)
+                # else:
+                #    print("Warning! Edge %s is not found!" % edge_id)
     return dict_edges
+
+
+def get_edges_from_gfa(input_dirpath, output_dirpath, assembler=None):
+    edges_fpath = join(output_dirpath, "edges.fasta")
+    gfa_fpath = find_file_by_pattern(input_dirpath, "assembly_graph.gfa")
+    if not is_empty_file(edges_fpath) and not can_reuse(edges_fpath, files_to_check=[gfa_fpath]):
+        gfa = gfapy.Gfa.from_file(gfa_fpath,vlevel = 0)
+        with open(edges_fpath, "w") as f:
+            for edge in gfa.segments:
+                f.write(">%s\n" % get_edge_agv_id(get_edge_num(edge.name)))
+                f.write(edge.sequence)
+                f.write("\n")
+    return edges_fpath
 
 
 def parse_gfa(input_dirpath, gfa_fpath, assembler=None):
@@ -163,9 +178,9 @@ def parse_gfa(input_dirpath, gfa_fpath, assembler=None):
 
 
 def calculate_multiplicities(dict_edges):
-    mean_cov = calculate_mean_cov(dict_edges)
+    median_cov = calculate_median_cov(dict_edges)
     for name in dict_edges:
-        multiplicity = dict_edges[name].cov / mean_cov
+        multiplicity = dict_edges[name].cov / median_cov
         dict_edges[name].multiplicity = max(1, round(multiplicity))
         if multiplicity > 1:
             dict_edges[name].repetitive = True

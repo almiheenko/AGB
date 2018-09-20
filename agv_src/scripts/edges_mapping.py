@@ -1,37 +1,122 @@
+import json
 import subprocess
-from os.path import exists
+from collections import defaultdict, OrderedDict
 
 from agv_src.scripts.config import *
-from agv_src.scripts.info_parser import parse_mapping_info
-from agv_src.scripts.utils import can_reuse, is_empty_file, find_file_by_pattern
+from agv_src.scripts.graph_parser import get_edges_from_gfa
+from agv_src.scripts.utils import can_reuse, is_empty_file, natural_sort
 
 
-def get_contigs_fpath(assembler, input_dirpath):
-    if assembler.lower() == ABYSS_NAME.lower():
-        return find_file_by_pattern(input_dirpath, "-contigs.fa")
-    if assembler.lower() == CANU_NAME.lower():
-        return find_file_by_pattern(input_dirpath, ".contigs.fasta")
+def get_edges_fpath(assembler, input_dirpath, output_dirpath):
     if assembler.lower() == FLYE_NAME.lower():
-        return join(input_dirpath, "contigs.fasta")
-    if assembler.lower() == SPADES_NAME.lower():
-        return join(input_dirpath, "contigs.fasta")
+        return get_edges_from_gfa(input_dirpath, output_dirpath)
 
 
-def map_edges_to_ref(assembler, input_dirpath, output_dirpath, json_output_dir, reference_fpath, threads, dict_edges, contig_edges):
+def map_edges_to_ref(input_fpath, output_dirpath, reference_fpath, threads):
     mapping_fpath = join(output_dirpath, "mapping.paf")
     if reference_fpath:
-        if not can_reuse(mapping_fpath, files_to_check=[reference_fpath], dir_to_check=input_dirpath):
-            input_fpath = get_contigs_fpath(assembler, input_dirpath)
-            if exists(input_fpath):
-                print("Aligning contigs to the reference...")
-                cmdline = ["minimap2", "-c", "-x", "asm20", "--cs", "--mask-level", "0.9", "-t", str(threads),
+        if not can_reuse(mapping_fpath, files_to_check=[input_fpath, reference_fpath]):
+            if not is_empty_file(input_fpath):
+                print("Aligning graph edges to the reference...")
+                cmdline = ["minimap2", "-x", "asm10", "--score-N", "0",
+                           "--min-occ-floor", "200", "-N", "200", "--mask-level", "0.95", "-t", str(threads),
                            reference_fpath, input_fpath]
                 return_code = subprocess.call(cmdline,
                               stdout=open(mapping_fpath, "w"), stderr=open(join(output_dirpath, "minimap.log"), "w"))
                 if return_code != 0 or is_empty_file(mapping_fpath):
                     print("Warning! Minimap2 failed aligning edges to the reference")
             else:
-                print("Warning! File with contigs was not found, failed aligning edges to the reference")
-    strict_mapping_info, chrom_names, edge_by_chrom = parse_mapping_info(output_dirpath, json_output_dir, contig_edges, dict_edges)
-    return strict_mapping_info, chrom_names, edge_by_chrom
+                print("Warning! File with edge sequences was not found, failed aligning edges to the reference")
+    return mapping_fpath
 
+
+def parse_mapping_edges_info(output_dirpath):
+    contig_edges = defaultdict(list)
+
+    mapping_fpath = join(output_dirpath, "edges_mapping.paf")
+    if is_empty_file(mapping_fpath):
+        print("No information about mapping graph edges to scaffolds")
+        return contig_edges
+
+    with open(mapping_fpath) as f:
+        for line in f:
+            # contig_1        257261  14      160143  -       chr13   924431  196490  356991  147365  161095  60      tp:A:P  cm:i:14049      s1:i:147260     s2:i:4375       dv:f:0.0066
+            fs = line.split()
+            start, end = int(fs[7]), int(fs[8])
+            edge_id, scaffold = fs[0], fs[5]
+            contig_edges[scaffold].append((str(start), str(end), edge_id))
+    return contig_edges
+
+
+def parse_mapping_info(mapping_fpath, json_output_dir, contig_edges, dict_edges):
+    mapping_info = defaultdict(set)
+    strict_mapping_info = defaultdict(set)
+
+    chrom_lengths = dict()
+    edge_mappings = defaultdict(lambda: defaultdict(list))
+    edge_lengths = dict()
+    with open(mapping_fpath) as f:
+        for line in f:
+            # contig_1        257261  14      160143  -       chr13   924431  196490  356991  147365  161095  60      tp:A:P  cm:i:14049      s1:i:147260     s2:i:4375       dv:f:0.0066
+            fs = line.split()
+            edge_id = fs[0]
+            start, end = int(fs[2]), int(fs[3])
+            edge_lengths[edge_id] = int(fs[1])
+            chrom, chrom_len = fs[5], int(fs[6])
+            chrom_lengths[chrom] = chrom_len
+            edge_mappings[edge_id][chrom].append((start, end))
+
+    chroms_by_edge = defaultdict(set)
+    edge_by_chrom = defaultdict(set)
+    chrom_names = set()
+    for edge_id in edge_mappings:
+        len_threshold = max(500, 0.9 * edge_lengths[edge_id])
+        for chrom, mappings in edge_mappings[edge_id].items():
+            mappings.sort(key=lambda x: (x[0], -x[1]), reverse=False)
+        for chrom, mappings in edge_mappings[edge_id].items():
+            covered_len = 0
+            last_pos = 0
+            for (start, end) in mappings:
+                start = max(start, last_pos)
+                covered_len += max(0, end - start + 1)
+                last_pos = max(last_pos, end + 1)
+            if covered_len >= len_threshold:
+                chroms_by_edge[edge_id].add(chrom)
+                chrom_names.add(chrom)
+                edge_by_chrom[chrom].add(edge_id)
+
+    chrom_len_dict = OrderedDict((chrom, chrom_lengths[chrom]) for i, chrom in enumerate(list(natural_sort(chrom_names))))
+    non_alt_chroms = [c for c in chrom_names if 'alt' not in c and 'random' not in c and 'chrUn' not in c]
+    chrom_order = OrderedDict((chrom, i) for i, chrom in enumerate(list(natural_sort(non_alt_chroms))))
+    color_list = ['#e6194b', '#3cb44b', '#ffe119', '#1792d4', '#f58231', '#911eb4', '#46f0f0', '#f032e6', '#d2f53c',
+                  '#fabebe', '#00dbb1', '#dba2ff', '#aa6e28', '#83360e', '#800000', '#003bff', '#808000', '#8d73d4',
+                  '#000080', '#806680', '#51205a', '#558859', '#d1a187', '#87a1d1', '#87a1d1', '#afd187']
+
+    for edge_id, chroms in chroms_by_edge.items():
+        match_edge_id = edge_id.replace('rc', 'e') if edge_id.startswith('rc') else edge_id.replace('e', 'rc')
+        for chrom in chroms:
+            mapping_info[edge_id].add(chrom)
+            strict_mapping_info[edge_id].add(chrom)
+            if match_edge_id in dict_edges:
+                mapping_info[match_edge_id].add(chrom)
+                edge_by_chrom[chrom].add(match_edge_id)
+
+    for edge_id, chroms in mapping_info.items():
+        mapping_info[edge_id] = list(chroms)
+        if len(chroms) == 1:
+            chrom = chroms.pop()
+            color = color_list[chrom_order[chrom]] if chrom in chrom_order else '#808080'
+            dict_edges[edge_id].chrom = color
+        elif chroms:
+            colors = set()
+            for chrom in chroms:
+                color = color_list[chrom_order[chrom]] if chrom in chrom_order else '#808080'
+                colors.add(color)
+            if len(colors) <= 4:
+                dict_edges[edge_id].chrom = ':white:'.join(list(colors))
+            else:
+                dict_edges[edge_id].chrom = 'red:black:red:black'
+    with open(join(json_output_dir, "reference.json"), 'w') as handle:
+        handle.write("chrom_lengths='" + json.dumps(chrom_len_dict) + "';\n")
+        handle.write("mapping_info='" + json.dumps(mapping_info) + "';\n")
+    return strict_mapping_info, non_alt_chroms, edge_by_chrom

@@ -110,7 +110,7 @@ function render(doRefresh, doAnimate, doRefreshTables) {
         buildContigsTable();
         if (doRefreshTables) {
             buildEdgesTable();
-            buildChromsTable();
+            buildRefTable();
             buildComponentsTable();
         }
         setupAutocompleteSearch();
@@ -658,7 +658,7 @@ function hideEdgesByThresholds(doRefresh, doAnimate, doRefreshTables) {
                     edge = filterEdges[0];
                     if (edge.id.indexOf('part') === -1) {
                         label = edge.len ? 'id ' + edge.name + '\\l' + edge.len + 'k ' + edge.cov + 'x' : "";
-                        s = '"' + loopNode + '" -> "' + loopNode + '" [label="' + label + '",id = "' + edge.el_id + '", color="' + edge.color + '"];';
+                        s = '"' + loopNode + '" -> "' + loopNode + '" [label="' + label + '",id = "' + edgeId + '", color="' + edge.color + '"];';
                     }
                 }
                 else if (filterEdges.length == 2 && filterEdges[0].name.replace('-', '') === filterEdges[1].name.replace('-', '')) {
@@ -677,7 +677,9 @@ function hideEdgesByThresholds(doRefresh, doAnimate, doRefreshTables) {
     }
     dotSrcLines.push('}');
     var colorChromEdges = document.getElementById('color_select').selectedIndex == 1;
-    var colorCovEdges = document.getElementById('color_select').selectedIndex == 2;
+    var colorErrorEdges = document.getElementById('color_select').selectedIndex == 2;
+    var colorCovEdges = document.getElementById('color_select').selectedIndex == 3;
+
     //components = calculateComponents(toGraph(dotSrcLines));
     var filteredNodes = new Set();
     for (i = 0; i < dotSrcLines.length;) {
@@ -744,7 +746,7 @@ function hideEdgesByThresholds(doRefresh, doAnimate, doRefreshTables) {
             edge_len = parseFloat(matches[1]);
             coverage = parseInt(matches[2]);
             var edge_width = 2;
-            var multiplicity = Math.max(1, Math.round(coverage / mean_cov));
+            var multiplicity = Math.max(1, Math.round(coverage / median_cov));
             if (multiplicity > 1) edge_width = 5;
             //else edge_width = multiplicity;
             dotSrcLines[i] = dotSrcLines[i].replace("]", ", penwidth=" + edge_width + " ]");
@@ -771,6 +773,24 @@ function hideEdgesByThresholds(doRefresh, doAnimate, doRefreshTables) {
                     dotSrcLines[i] = dotSrcLines[i].replace(oldColor[1], color + ':white:' + color);
                 }
                 else dotSrcLines[i] = dotSrcLines[i].replace(oldColor[1], color);
+            }
+            else if (colorErrorEdges) {
+                var color = "green";
+                var matches = dotSrcLines[i].match(idPattern);
+                edgeId = matches[1];
+                edgeRealId = (edgeInfo[edgeId] || !edgeData[edgeId]) ? edgeId : edgeData[edgeId].el_id;
+                if (edgeData[edgeRealId] && edgeData[edgeRealId].errors.length > 0)
+                    color = "#b90000:white:#b90000";
+                else if (edgeInfo[edgeRealId]) {
+                    for (var j=0;j<edgeInfo[edgeRealId].length;j++)
+                        if (misassembledContigs && misassembledContigs[edgeInfo[edgeRealId][j]]) {
+                            color = "red";
+                            break;
+                        }
+                }
+
+                var oldColor = dotSrcLines[i].match(colorPattern);
+                dotSrcLines[i] = dotSrcLines[i].replace(oldColor[0], 'color="' + color + '"');
             }
         }
     }
@@ -914,18 +934,20 @@ function selectEdge(edge, edgeId, edgeLen, edgeCov, edgeMulti) {
                         ', length: '  + edge.len +
                         'kb, coverage: '  + edge.cov + 'x, inferred multiplicity: '  + edge.mult;
                 if (edgeInfo[curLoopEdge]) {
-                    edgeDescription = edgeDescription + '<br/><b>Contigs:</b>';
+                    edgeDescription = edgeDescription + '<ul><b>Contigs:</b>';
                     for (var i = 0; i < edgeInfo[curLoopEdge].length; i++) {
                         edgeDescription = edgeDescription + '<li>' + edgeInfo[curLoopEdge][i] + '</li>';
                     }
+                    edgeDescription = edgeDescription + '</ul>';
                 }
-                if (edgeMappingInfo && edgeMappingInfo[edge.el_id] && edgeMappingInfo[edge.el_id].length) {
-                    edgeDescription = edgeDescription + '<br/><b>Reference chromosomes:</b>';
-                    for (var i = 0; i < edgeMappingInfo[edge.el_id].length; i++) {
-                        chrom = edgeMappingInfo[edge.el_id][i];
+                if (edgeMappingInfo && edgeMappingInfo[curLoopEdge] && edgeMappingInfo[curLoopEdge].length) {
+                    edgeDescription = edgeDescription + '<ul><b>Reference chromosomes:</b>';
+                    for (var i = 0; i < edgeMappingInfo[curLoopEdge].length; i++) {
+                        chrom = edgeMappingInfo[curLoopEdge][i];
                         chromN = chromosomes.indexOf(chrom);
                         edgeDescription = edgeDescription + '<li onclick="changeToChromosome(' + chromN + ')"> ' + chrom + '</li>';
                     }
+                    edgeDescription = edgeDescription + '</ul>';
                 }
                 edgeDescription = edgeDescription + '</li></br>';
                 $('#edgerow' + edge.id).addClass('selected');

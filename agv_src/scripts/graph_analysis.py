@@ -8,7 +8,7 @@ import networkx as nx
 
 from agv_src.scripts.config import MAX_NODES, MAX_SUB_NODES
 from agv_src.scripts.edge import Edge
-from agv_src.scripts.utils import print_dot_header, natural_sort, calculate_mean_cov
+from agv_src.scripts.utils import print_dot_header, natural_sort
 from agv_src.scripts.viewer_data import ViewerData
 
 
@@ -189,9 +189,7 @@ def split_graph(sub_g, g, undirected_g, dict_edges, modified_dict_edges, loop_ed
                             parts_info['part' + str(link_component)]['out'].add(new_edge_id)
                         else:
                             parts_info['part' + str(link_component)]['in'].add(new_edge_id)
-                        new_edge = Edge(edge.id, edge.name, edge.length, edge.cov, edge.multiplicity, edge.color,
-                                        edge.chrom, edge.repetitive, element_id=edge.id)
-                        new_edge.start, new_edge.end = start, end
+                        new_edge = edge.create_copy(start, end)
                         modified_dict_edges[new_edge_id] = new_edge
                         subgraph.append(new_edge_id)
                 elif start != end or len(edges) < 2:
@@ -201,9 +199,7 @@ def split_graph(sub_g, g, undirected_g, dict_edges, modified_dict_edges, loop_ed
                         if edges_count[edge.id]:
                             new_edge_id = edge.id + '_' + str(edges_count[edge.id])
                         edges_count[edge.id] += 1
-                        new_edge = Edge(edge.id, edge.name, edge.length, edge.cov, edge.multiplicity, edge.color,
-                                        edge.chrom, edge.repetitive, element_id=edge.id)
-                        new_edge.start, new_edge.end = start, end
+                        new_edge = edge.create_copy(start, end)
                         modified_dict_edges[new_edge_id] = new_edge
                         subgraph.append(new_edge_id)
                 else:

@@ -2,14 +2,15 @@
 
 import os
 import sys
-from os.path import exists
 from optparse import OptionParser
+from os.path import exists
 
 from agv_src.scripts.config import *
-from agv_src.scripts.edges_mapping import map_edges_to_ref
+from agv_src.scripts.edges_mapping import get_edges_fpath
 from agv_src.scripts.info_parser import parse_abyss_output, parse_canu_output, parse_flye_output, parse_spades_output
+from agv_src.scripts.quast_runner import find_errors
+from agv_src.scripts.utils import embed_css_and_scripts, get_scaffolds_fpath
 from agv_src.scripts.viewer_builder import build_jsons
-from agv_src.scripts.utils import embed_css_and_scripts
 
 
 def parse_assembler_output(assembler_name, input_dirpath):
@@ -52,13 +53,16 @@ def main():
     if not exists(opts.output_dir):
         os.makedirs(opts.output_dir)
     dict_edges, contig_edges = parse_assembler_output(opts.assembler, opts.input_dir)
-    json_output_dir = join(opts.output_dir, "data")
-    if not exists(json_output_dir):
-        os.makedirs(json_output_dir)
+    json_output_dirpath = join(opts.output_dir, "data")
+    if not exists(json_output_dirpath):
+        os.makedirs(json_output_dirpath)
 
-    strict_mapping_info, chrom_names, edge_by_chrom = \
-        map_edges_to_ref(opts.assembler, opts.input_dir, opts.output_dir, json_output_dir, opts.reference, opts.threads, dict_edges, contig_edges)
-    build_jsons(dict_edges, opts.input_dir, json_output_dir, strict_mapping_info, chrom_names, edge_by_chrom, contig_edges)
+    find_errors(get_scaffolds_fpath(opts.assembler, opts.input_dir), opts.reference,
+                opts.output_dir, json_output_dirpath, opts.threads, contig_edges)
+    strict_mapping_info, chrom_names, edge_by_chrom, dict_edges = find_errors(get_edges_fpath(opts.assembler, opts.input_dir, opts.output_dir),
+                                  opts.reference, opts.output_dir, json_output_dirpath, opts.threads, contig_edges, dict_edges)
+
+    build_jsons(dict_edges, opts.input_dir, json_output_dirpath, strict_mapping_info, chrom_names, edge_by_chrom, contig_edges)
     output_fpath = join(opts.output_dir, HTML_NAME)
     with open(TEMPLATE_PATH) as f: html = f.read()
     html = embed_css_and_scripts(html)

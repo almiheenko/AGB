@@ -17,12 +17,13 @@ class Edge:
         self.component = None
         self.ref_component = None
         self.repeat_component = None
+        self.errors = []
 
     def as_dict(self):
         return {'id': self.id, 'el_id': self.element_id, 'name': self.name, 'len': self.format_len(), 'cov': self.cov,
                 's': self.start, 'e': self.end, 'mult': self.multiplicity, 'color': self.color, 'unique': not self.repetitive,
                 'chrom': self.chrom, 'comp': self.component, 'rep_comp': self.repeat_component,
-                'ref_comp': self.ref_component}
+                'ref_comp': self.ref_component, 'errors': self.errors}
 
     def format_len(self):
         if not self.length:
@@ -42,3 +43,9 @@ class Edge:
             s = '"%s" -> "%s" [label = id %s\\l%s %dx(%d), id = "%s", color = "%s"] ;\n' % \
                 (self.start, self.end, self.id, l, self.cov, self.multiplicity, edge_id, self.color)
         return s
+
+    def create_copy(self, start, end):
+        edge = Edge(self.id, self.name, self.length, self.cov, self.multiplicity, self.color,
+                    self.chrom, self.repetitive, element_id=self.id)
+        edge.start, edge.end, edge.errors = start, end, self.errors
+        return edge

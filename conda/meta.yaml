@@ -20,6 +20,7 @@ requirements:
     - cython
     - minimap2
     - nxmetis
+    - quast >=5.0
 
   run:
     - python
@@ -29,6 +30,7 @@ requirements:
     - gfapy
     - minimap2
     - nxmetis
+    - quast >=5.0
 
 test:
   import:

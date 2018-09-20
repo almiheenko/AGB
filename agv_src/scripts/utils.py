@@ -1,17 +1,27 @@
 import math
 import os
 import re
-
 from os import listdir
-from os.path import exists, getmtime, join, getsize, abspath, basename
+from os.path import exists, getmtime, getsize, basename, splitext
 
-from agv_src.scripts.config import CSS_DIR, JS_DIR
+from agv_src.scripts.config import *
 
 
 def is_osx():
     from sys import platform
     if platform == "darwin":
         return True
+
+
+def get_scaffolds_fpath(assembler, input_dirpath):
+    if assembler.lower() == ABYSS_NAME.lower():
+        return find_file_by_pattern(input_dirpath, "-contigs.fa")
+    if assembler.lower() == CANU_NAME.lower():
+        return find_file_by_pattern(input_dirpath, ".contigs.fasta")
+    if assembler.lower() == FLYE_NAME.lower():
+        return join(input_dirpath, "scaffolds.fasta")
+    if assembler.lower() == SPADES_NAME.lower():
+        return join(input_dirpath, "scaffolds.fasta")
 
 
 def print_dot(dot_fpath, dict_edges):
@@ -22,7 +32,7 @@ def print_dot(dot_fpath, dict_edges):
         out_f.write('}')
 
 
-def calc_median(arr):
+def get_median(arr):
     if len(arr) % 2:
         return arr[len(arr)//2 + 1]
     else:
@@ -69,11 +79,11 @@ def get_canu_id(edge_name):
     return "tig%s%s" % ('0' * (CANU_ID_LEN - len(str(edge_name))), edge_name)
 
 
-def calculate_mean_cov(dict_edges):
+def calculate_median_cov(dict_edges):
     coverages = []
     for edge in dict_edges.values():
         coverages.extend([edge.cov] * int(edge.length / 100))
-    return sum(coverages) / len(coverages)
+    return get_median(coverages)
 
 
 def can_reuse(fpath, files_to_check=None, dir_to_check=None):
@@ -89,6 +99,10 @@ def can_reuse(fpath, files_to_check=None, dir_to_check=None):
 
 def is_empty_file(fpath):
     return not fpath or not exists(fpath) or getsize(fpath) < 10
+
+
+def get_filename(fpath):
+    return splitext(basename(fpath))[0]
 
 
 def find_file_by_pattern(dir, pattern):

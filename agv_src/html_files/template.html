@@ -41,6 +41,7 @@
 <script type="text/javascript" src="data/def_node_info.json"></script>
 <script type="text/javascript" src="data/def_partition_info.json"></script>
 <script type="text/javascript" src="data/edges_base_info.json"></script>
+<script type="text/javascript" src="data/errors.json"></script>
 <script type="text/javascript" src="data/ref_edges_data.json"></script>
 <script type="text/javascript" src="data/ref_graph.json"></script>
 <script type="text/javascript" src="data/ref_partition_info.json"></script>
@@ -144,10 +145,10 @@
                     and longer than <input class="textBox" id="len_max_threshold" type="text" size="5" style="text-align: right"/> kb</p>
                 <p>Use color to highlight
                 <select id="color_select">
-                    <option value="0" selected>repeated edges</option>
-                    <option value="1">edges mapping to reference</option>
-                    <option value="2">high covered edges</option>
-                </select></p><p><span id='repeat_info' class='gray_text' style='margin-left: 5px; display: none;'>Note: repeated edges are represented with parallel edges</span></p>
+                </select></p>
+                  <p><span id='repeat_info' class='gray_text' style='display: none;'>Note: repeated edges are represented with parallel edges</span></p>
+                  <p><span id='errors_info' class='gray_text' style='display: none;'>Edges of misassembled contigs are represented with red lines,
+                  two parallel red lines mean that an edge itself contains an assembly error.</span></p>
 
                 <div>
                     <input id="unbalanced_checkbox" type="checkbox" checked><label for="unbalanced_checkbox">Mark <span id="unbalanced_toooltip" data-toggle="tooltip" class='tooltip_link' title="Nodes where incoming/outgoing multiplicities do not balance">unbalanced nodes</span> as red</label>
@@ -342,7 +343,8 @@ var edgeDataRef = JSON.parse(ref_edge_data);
 var edgeDataContig = JSON.parse(contig_edge_data);
 var edgeDataRepeat = JSON.parse(repeat_edge_data);
 var edgeData = edgeDataFull;
-    
+
+var misassembledContigs = misassembled_contigs ? JSON.parse(misassembled_contigs) : {};
 var chromosomes = chromosomes ? JSON.parse(chromosomes) : [];
 var chrom_lengths = chrom_lengths ? JSON.parse(chrom_lengths) : [];
 var newData;

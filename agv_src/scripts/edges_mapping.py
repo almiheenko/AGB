@@ -4,12 +4,17 @@ from collections import defaultdict, OrderedDict
 
 from agv_src.scripts.config import *
 from agv_src.scripts.graph_parser import get_edges_from_gfa
-from agv_src.scripts.utils import can_reuse, is_empty_file, natural_sort
+from agv_src.scripts.utils import can_reuse, is_empty_file, natural_sort, get_edge_agv_id, get_edge_num, \
+    find_file_by_pattern
 
 
-def get_edges_fpath(assembler, input_dirpath, output_dirpath):
+def get_edges_fpath(assembler, input_dirpath, output_dirpath, fasta_fpath=None):
+    if not is_empty_file(fasta_fpath):
+        return fasta_fpath
+
     if assembler.lower() == FLYE_NAME.lower():
-        return get_edges_from_gfa(input_dirpath, output_dirpath)
+        gfa_fpath = find_file_by_pattern(input_dirpath, "assembly_graph.gfa")
+        return get_edges_from_gfa(gfa_fpath, output_dirpath)
 
 
 def map_edges_to_ref(input_fpath, output_dirpath, reference_fpath, threads):
@@ -18,8 +23,8 @@ def map_edges_to_ref(input_fpath, output_dirpath, reference_fpath, threads):
         if not can_reuse(mapping_fpath, files_to_check=[input_fpath, reference_fpath]):
             if not is_empty_file(input_fpath):
                 print("Aligning graph edges to the reference...")
-                cmdline = ["minimap2", "-x", "asm10", "--score-N", "0",
-                           "--min-occ-floor", "200", "-N", "200", "--mask-level", "0.95", "-t", str(threads),
+                cmdline = ["minimap2", "-x", "asm20", "--score-N", "0", "-E", "1,0",
+                           "-N", "200", "-p", "0.5", "-f", "200", "-t", str(threads),
                            reference_fpath, input_fpath]
                 return_code = subprocess.call(cmdline,
                               stdout=open(mapping_fpath, "w"), stderr=open(join(output_dirpath, "minimap.log"), "w"))
@@ -50,16 +55,15 @@ def parse_mapping_edges_info(output_dirpath):
 
 def parse_mapping_info(mapping_fpath, json_output_dir, contig_edges, dict_edges):
     mapping_info = defaultdict(set)
-    strict_mapping_info = defaultdict(set)
 
-    chrom_lengths = dict()
     edge_mappings = defaultdict(lambda: defaultdict(list))
     edge_lengths = dict()
+    chrom_lengths = dict()
     with open(mapping_fpath) as f:
         for line in f:
             # contig_1        257261  14      160143  -       chr13   924431  196490  356991  147365  161095  60      tp:A:P  cm:i:14049      s1:i:147260     s2:i:4375       dv:f:0.0066
             fs = line.split()
-            edge_id = fs[0]
+            edge_id = get_edge_agv_id(get_edge_num(fs[0]))
             start, end = int(fs[2]), int(fs[3])
             edge_lengths[edge_id] = int(fs[1])
             chrom, chrom_len = fs[5], int(fs[6])
@@ -96,9 +100,8 @@ def parse_mapping_info(mapping_fpath, json_output_dir, contig_edges, dict_edges)
         match_edge_id = edge_id.replace('rc', 'e') if edge_id.startswith('rc') else edge_id.replace('e', 'rc')
         for chrom in chroms:
             mapping_info[edge_id].add(chrom)
-            strict_mapping_info[edge_id].add(chrom)
+            mapping_info[match_edge_id].add(chrom)
             if match_edge_id in dict_edges:
-                mapping_info[match_edge_id].add(chrom)
                 edge_by_chrom[chrom].add(match_edge_id)
 
     for edge_id, chroms in mapping_info.items():
@@ -106,7 +109,8 @@ def parse_mapping_info(mapping_fpath, json_output_dir, contig_edges, dict_edges)
         if len(chroms) == 1:
             chrom = chroms.pop()
             color = color_list[chrom_order[chrom]] if chrom in chrom_order else '#808080'
-            dict_edges[edge_id].chrom = color
+            if edge_id in dict_edges:
+                dict_edges[edge_id].chrom = color
         elif chroms:
             colors = set()
             for chrom in chroms:
@@ -119,4 +123,4 @@ def parse_mapping_info(mapping_fpath, json_output_dir, contig_edges, dict_edges)
     with open(join(json_output_dir, "reference.json"), 'w') as handle:
         handle.write("chrom_lengths='" + json.dumps(chrom_len_dict) + "';\n")
         handle.write("mapping_info='" + json.dumps(mapping_info) + "';\n")
-    return strict_mapping_info, non_alt_chroms, edge_by_chrom
+    return mapping_info, non_alt_chroms, edge_by_chrom

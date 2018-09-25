@@ -13,7 +13,7 @@ from agv_src.scripts.viewer_data import ViewerData
 
 
 def process_graph(g, undirected_g, dict_edges, edges_by_nodes, two_way_edges, output_dirpath, suffix,
-                  base_graph=None, contig_edges=None, chrom_names=None, edge_by_chrom=None, strict_mapping_info=None):
+                  base_graph=None, contig_edges=None, chrom_names=None, edge_by_chrom=None, mapping_info=None):
     last_idx = 0
     parts_info = dict()
     graph = []
@@ -36,7 +36,7 @@ def process_graph(g, undirected_g, dict_edges, edges_by_nodes, two_way_edges, ou
                 ref_g.add_edge(dict_edges[edge_id].start, dict_edges[edge_id].end)
             viewer_data, last_idx, sub_complex_component = \
                 split_graph(ref_g, g, undirected_g, dict_edges, modified_dict_edges, loop_edges, edges_by_nodes,
-                            two_way_edges, last_idx, parts_info, strict_mapping_info=strict_mapping_info, chrom=chrom)
+                            two_way_edges, last_idx, parts_info, mapping_info=mapping_info, chrom=chrom)
             parts_info = viewer_data.parts_info
             graph.extend(viewer_data.g)
             for i in range(len(viewer_data.g)):
@@ -91,12 +91,12 @@ def process_graph(g, undirected_g, dict_edges, edges_by_nodes, two_way_edges, ou
     edges_by_component = save_graph(graph, hanging_nodes, connected_nodes, enters, exits, dict_edges, modified_dict_edges,
                                     loop_edges, parts_info, output_dirpath, suffix,
                                     complex_component=complex_component,
-                                    strict_mapping_info=strict_mapping_info, chrom_list=chrom_list, contig_list=contig_list)
+                                    mapping_info=mapping_info, chrom_list=chrom_list, contig_list=contig_list)
     return edges_by_component
 
 
 def split_graph(sub_g, g, undirected_g, dict_edges, modified_dict_edges, loop_edges, edges_by_nodes, two_way_edges, last_idx, parts_info,
-                  is_repeat_graph=False, fake_edges=None, find_hanging_nodes=False, strict_mapping_info=None, chrom=None, contig_edges=None):
+                  is_repeat_graph=False, fake_edges=None, find_hanging_nodes=False, mapping_info=None, chrom=None, contig_edges=None):
     graphs = []
     hanging_nodes = []
     connected_nodes = []
@@ -107,7 +107,7 @@ def split_graph(sub_g, g, undirected_g, dict_edges, modified_dict_edges, loop_ed
     if len(sub_g) > MAX_NODES:
         complex_component = True
         target_graph_parts = int(math.ceil(len(sub_g.nodes()) / MAX_SUB_NODES))
-        options = nxmetis.MetisOptions(ncuts=5, niter=100, ufactor=2, objtype=1, contig=not strict_mapping_info, minconn=True)
+        options = nxmetis.MetisOptions(ncuts=5, niter=100, ufactor=2, objtype=1, contig=not mapping_info, minconn=True)
         edgecuts, parts = nxmetis.partition(sub_g.to_undirected(), target_graph_parts, options=options)
         graph_partition_dict = dict()
         for part_id, nodes in enumerate(parts):
@@ -129,9 +129,8 @@ def split_graph(sub_g, g, undirected_g, dict_edges, modified_dict_edges, loop_ed
     edges_count = defaultdict(int)
 
     def is_flanking_edge(edge_id):
-        if strict_mapping_info:
-            match_edge_id = edge_id.replace('rc', 'e') if edge_id.startswith('rc') else edge_id.replace('e', 'rc')
-            return chrom not in strict_mapping_info[edge_id] and chrom not in strict_mapping_info[match_edge_id]
+        if mapping_info:
+            return chrom not in mapping_info[edge_id]
         if is_repeat_graph:
             return not dict_edges[edge_id].repetitive
         if contig_edges:
@@ -291,7 +290,7 @@ def split_graph(sub_g, g, undirected_g, dict_edges, modified_dict_edges, loop_ed
 
 def save_graph(graph, hanging_nodes, connected_nodes, enters, exits, dict_edges, modified_dict_edges,
                loop_edges, parts_info, output_dirpath, suffix,
-               strict_mapping_info=None, complex_component=False, chrom_list=None, contig_list=None):
+               mapping_info=None, complex_component=False, chrom_list=None, contig_list=None):
     if not complex_component:
         if connected_nodes:
             sorted_graph = sorted(zip(graph, hanging_nodes, connected_nodes, enters, exits), key=lambda pair: pair[0], reverse=True)
@@ -324,7 +323,7 @@ def save_graph(graph, hanging_nodes, connected_nodes, enters, exits, dict_edges,
                 edge = modified_dict_edges[edge_id] if edge_id in modified_dict_edges else None
                 real_id = edge.id if edge else edge_id
                 if real_id in dict_edges:
-                    if not strict_mapping_info or (strict_mapping_info[real_id] and chrom in strict_mapping_info[real_id]):
+                    if not mapping_info or (mapping_info[real_id] and chrom in mapping_info[real_id]):
                         if suffix == "def":
                             modified_dict_edges[edge_id].component = i
                         elif suffix == "repeat":
@@ -339,7 +338,7 @@ def save_graph(graph, hanging_nodes, connected_nodes, enters, exits, dict_edges,
                     for loop_e in loop_edges[real_id]:
                         ###!!!!
                         real_id = dict_edges[loop_e].id if loop_e in dict_edges else loop_e
-                        if not strict_mapping_info or (strict_mapping_info[real_id] and chrom in strict_mapping_info[real_id]):
+                        if not mapping_info or (mapping_info[real_id] and chrom in mapping_info[real_id]):
                             if suffix == "def":
                                 modified_dict_edges[loop_e].component = i
                             elif suffix == "repeat":

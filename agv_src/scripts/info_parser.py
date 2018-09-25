@@ -3,7 +3,7 @@ import sys
 from collections import defaultdict
 from os.path import join, abspath
 
-from agv_src.scripts.graph_parser import parse_abyss_dot, parse_flye_dot, parse_gfa
+from agv_src.scripts.graph_parser import parse_abyss_dot, parse_flye_dot, parse_gfa, get_edges_from_gfa
 from agv_src.scripts.utils import get_edge_agv_id, is_empty_file, find_file_by_pattern, is_osx, get_edge_num, \
     get_canu_id
 
@@ -15,36 +15,43 @@ def parse_abyss_output(input_dirpath):
         sys.exit(1)
     dict_edges = parse_abyss_dot(dot_fpath)
     contig_edges = []
-    return dict_edges, contig_edges
+    edges_fpath = None
+    if not is_empty_file(find_file_by_pattern(input_dirpath, "-scaffolds.fa")):
+        edges_fpath = find_file_by_pattern(input_dirpath, "-scaffolds.fa")
+    return dict_edges, contig_edges, edges_fpath
 
 
-def parse_canu_output(input_dirpath):
+def parse_canu_output(input_dirpath, output_dirpath):
     gfa_fpath = find_file_by_pattern(input_dirpath, ".contigs.gfa")
     if not gfa_fpath:
         print("ERROR! GFA file is not found in %s! Please check the options" % abspath(input_dirpath))
         sys.exit(1)
     cmd = ["sed", "-i"] + (["''"] if is_osx() else []) + ["1s/bogart.edges/1.0/", gfa_fpath]
     subprocess.call(cmd)
-    dict_edges = parse_gfa(input_dirpath, gfa_fpath, assembler="canu")
+    dict_edges = parse_gfa(gfa_fpath, input_dirpath, assembler="canu")
     contig_edges = parse_canu_assembly_info(input_dirpath, dict_edges)
-    return dict_edges, contig_edges
+    edges_fpath = get_edges_from_gfa(gfa_fpath, output_dirpath)
+    return dict_edges, contig_edges, edges_fpath
 
 
-def parse_flye_output(input_dirpath):
+def parse_flye_output(input_dirpath, output_dirpath):
     dot_fpath = find_file_by_pattern(input_dirpath, "assembly_graph.gv")
     if not dot_fpath:
         print("ERROR! File %s is not found in %s! Please check the options" % (dot_fpath, abspath(input_dirpath)))
         sys.exit(1)
     dict_edges = parse_flye_dot(dot_fpath)
     contig_edges = parse_flye_assembly_info(input_dirpath, dict_edges)
-    return dict_edges, contig_edges
+    gfa_fpath = find_file_by_pattern(input_dirpath, "assembly_graph.gfa")
+    edges_fpath = get_edges_from_gfa(gfa_fpath, output_dirpath)
+    return dict_edges, contig_edges, edges_fpath
 
 
-def parse_spades_output(input_dirpath):
-    gfa_fpath = find_file_by_pattern(input_dirpath, ".contigs.gfa")
-    dict_edges = parse_gfa(input_dirpath, gfa_fpath)
+def parse_spades_output(input_dirpath, output_dirpath):
+    gfa_fpath = find_file_by_pattern(input_dirpath, "assembly_graph.gfa")
+    dict_edges = parse_gfa(gfa_fpath, input_dirpath)
     contig_edges = []
-    return dict_edges, contig_edges
+    edges_fpath = get_edges_from_gfa(gfa_fpath, output_dirpath)
+    return dict_edges, contig_edges, edges_fpath
 
 
 def parse_canu_assembly_info(input_dirpath, dict_edges):

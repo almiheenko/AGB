@@ -1,13 +1,16 @@
 import re
-from os.path import join
+import sys
+import subprocess
+from os.path import join, basename
 from collections import defaultdict
 
 import gfapy
 import networkx as nx
 
+from agv_src.scripts.config import *
 from agv_src.scripts.edge import Edge
 from agv_src.scripts.utils import get_edge_agv_id, calculate_median_cov, get_edge_num, find_file_by_pattern, \
-    is_empty_file, can_reuse
+    is_empty_file, can_reuse, is_osx
 
 repeat_colors = ["red", "darkgreen", "blue", "goldenrod", "cadetblue1", "darkorchid", "aquamarine1",
                  "darkgoldenrod1", "deepskyblue1", "darkolivegreen3"]
@@ -120,9 +123,8 @@ def parse_canu_unitigs_info(input_dirpath, dict_edges):
     return dict_edges
 
 
-def get_edges_from_gfa(input_dirpath, output_dirpath, assembler=None):
+def get_edges_from_gfa(gfa_fpath, output_dirpath):
     edges_fpath = join(output_dirpath, "edges.fasta")
-    gfa_fpath = find_file_by_pattern(input_dirpath, "assembly_graph.gfa")
     if not is_empty_file(gfa_fpath) and not can_reuse(edges_fpath, files_to_check=[gfa_fpath]):
         gfa = gfapy.Gfa.from_file(gfa_fpath,vlevel = 0)
         with open(edges_fpath, "w") as f:
@@ -133,7 +135,48 @@ def get_edges_from_gfa(input_dirpath, output_dirpath, assembler=None):
     return edges_fpath
 
 
-def parse_gfa(input_dirpath, gfa_fpath, assembler=None):
+def format_edges_file(input_fpath, output_dirpath):
+    if is_empty_file(input_fpath):
+        return None
+    edges_fpath = join(output_dirpath, "edges.fasta")
+    if not can_reuse(edges_fpath, files_to_check=[input_fpath]):
+        with open(input_fpath) as f:
+            with open(edges_fpath, "w") as out_f:
+                for line in f:
+                    if line.startswith('>'):
+                        edge_id = get_edge_agv_id(get_edge_num(line[1:]))
+                        out_f.write(">%s\n" % edge_id)
+                    else:
+                        out_f.write(line)
+    return edges_fpath
+
+
+def fastg_to_gfa(input_fpath, output_dirpath, assembler):
+    k8_exec = join(TOOLS_DIR, "k8-darwin") if is_osx() else join(TOOLS_DIR, "k8-linux")
+    gfatools_exec = join(TOOLS_DIR, "gfatools.js")
+    if gfatools_exec and k8_exec:
+        output_fpath = join(output_dirpath, basename(input_fpath).replace("fastg", "gfa"))
+        cmd = None
+        if assembler.lower == SPADES_NAME.lower():
+            cmd = "spades2gfa"
+        elif assembler.lower == ABYSS_NAME.lower():
+            cmd = "abyss2gfa"
+        elif assembler.lower == SGA_NAME.lower():
+            cmd = "sga2gfa"
+        elif assembler.lower == SOAP_NAME.lower():
+            cmd = "soap2gfa"
+        elif assembler.lower == VELVET_NAME.lower():
+            cmd = "velvet2gfa"
+        if not cmd:
+            sys.exit("FASTG files produced by " + assembler + " are not supported. Supported assemblers: " +
+                     ' '.join([ABYSS_NAME, SGA_NAME, SOAP_NAME, SPADES_NAME, VELVET_NAME]) + " or use files in GFA format.")
+        cmdline = [k8_exec, gfatools_exec, cmd, input_fpath]
+        subprocess.call(cmdline, stdout=output_fpath, stderr=open("/dev/null", "w"))
+        if not is_empty_file(output_fpath):
+            return output_fpath
+
+
+def parse_gfa(gfa_fpath, input_dirpath=None, assembler=None):
     gfa = gfapy.Gfa.from_file(gfa_fpath,vlevel = 0)
     links = []
     with open(gfa_fpath) as f:
@@ -171,7 +214,7 @@ def parse_gfa(input_dirpath, gfa_fpath, assembler=None):
         rc_edge = Edge(rc_edge_id, -get_edge_num(n.name), n.length, cov, element_id=rc_edge_id)
         dict_edges[rc_edge_id] = rc_edge
 
-    if assembler == "canu":
+    if assembler == "canu" and input_dirpath:
         dict_edges = parse_canu_unitigs_info(input_dirpath, dict_edges)
     dict_edges = construct_graph(dict_edges, predecessors, successors)
     return dict_edges
@@ -181,8 +224,8 @@ def calculate_multiplicities(dict_edges):
     median_cov = calculate_median_cov(dict_edges)
     for name in dict_edges:
         multiplicity = dict_edges[name].cov / median_cov
-        dict_edges[name].multiplicity = max(1, round(multiplicity))
-        if multiplicity > 1:
+        dict_edges[name].multiplicity = 1 if multiplicity <= 1.75 else round(multiplicity)
+        if dict_edges[name].multiplicity > 1:
             dict_edges[name].repetitive = True
     return dict_edges
 

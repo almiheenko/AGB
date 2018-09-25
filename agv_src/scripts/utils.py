@@ -1,6 +1,7 @@
 import math
 import os
 import re
+import sys
 from os import listdir
 from os.path import exists, getmtime, getsize, basename, splitext
 
@@ -14,14 +15,18 @@ def is_osx():
 
 
 def get_scaffolds_fpath(assembler, input_dirpath):
-    if assembler.lower() == ABYSS_NAME.lower():
-        return find_file_by_pattern(input_dirpath, "-contigs.fa")
-    if assembler.lower() == CANU_NAME.lower():
-        return find_file_by_pattern(input_dirpath, ".contigs.fasta")
-    if assembler.lower() == FLYE_NAME.lower():
-        return join(input_dirpath, "scaffolds.fasta")
-    if assembler.lower() == SPADES_NAME.lower():
-        return join(input_dirpath, "scaffolds.fasta")
+    scaffolds_fpath = None
+    if input_dirpath:
+        if assembler.lower() == ABYSS_NAME.lower():
+            scaffolds_fpath = find_file_by_pattern(input_dirpath, "-scaffolds.fa")
+        elif assembler.lower() == CANU_NAME.lower():
+            scaffolds_fpath = find_file_by_pattern(input_dirpath, ".contigs.fasta")
+        elif assembler.lower() == FLYE_NAME.lower():
+            scaffolds_fpath = join(input_dirpath, "scaffolds.fasta")
+        elif assembler.lower() == SPADES_NAME.lower():
+            scaffolds_fpath = join(input_dirpath, "scaffolds.fasta")
+    if not is_empty_file(scaffolds_fpath):
+        return scaffolds_fpath
 
 
 def print_dot(dot_fpath, dict_edges):
@@ -103,6 +108,32 @@ def is_empty_file(fpath):
 
 def get_filename(fpath):
     return splitext(basename(fpath))[0]
+
+
+def get_quast_filename(fpath):
+    fname = splitext(basename(fpath))[0]
+    fname = re.sub(r'[^\w\._\-+|]', '_', fname.strip())
+    fname = re.sub(r'[\.+]$', '', fname)
+    return slugify(re.sub(r"[\|\+\-=\/]", '_', fname))
+
+
+def slugify(value):
+    """
+    Prepare string to use in file names: normalizes string,
+    removes non-alpha characters, and converts spaces to hyphens.
+    """
+    import unicodedata
+    value = unicodedata.normalize('NFKD', convert_to_unicode(value)).encode('ascii', 'ignore').decode('utf-8')
+    value = convert_to_unicode(re.sub('[^\w\s-]', '-', value).strip())
+    value = convert_to_unicode(re.sub('[-\s]+', '-', value))
+    return str(value)
+
+
+def convert_to_unicode(value):
+    if sys.version_info[0] < 3:  ## python 2
+        return unicode(value)
+    else:
+        return str(value)
 
 
 def find_file_by_pattern(dir, pattern):

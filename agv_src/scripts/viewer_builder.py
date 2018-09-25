@@ -8,7 +8,7 @@ from agv_src.scripts.graph_analysis import process_graph
 from agv_src.scripts.utils import print_dot_header, get_edge_agv_id, calculate_median_cov, is_empty_file
 
 
-def build_jsons(dict_edges, input_dirpath, output_dirpath, strict_mapping_info, chrom_names, edge_by_chrom, contig_edges):
+def build_jsons(dict_edges, input_dirpath, output_dirpath, mapping_info, chrom_names, edge_by_chrom, contig_edges):
     edges_by_nodes = defaultdict(list)
     two_way_edges = defaultdict(list)
 
@@ -35,11 +35,10 @@ def build_jsons(dict_edges, input_dirpath, output_dirpath, strict_mapping_info, 
                                               output_dirpath, 'repeat', base_graph=g)
     edges_by_ref_component = process_graph(g, undirected_g, dict_edges, edges_by_nodes, two_way_edges,
                                            output_dirpath, 'ref', chrom_names=chrom_names,
-                                           edge_by_chrom=edge_by_chrom, strict_mapping_info=strict_mapping_info)
+                                           edge_by_chrom=edge_by_chrom, mapping_info=mapping_info)
     edges_by_contig_component = process_graph(g, undirected_g, dict_edges, edges_by_nodes, two_way_edges,
                                               output_dirpath, 'contig', contig_edges=contig_edges)
-    create_contig_info(dict_edges, input_dirpath, output_dirpath,
-                       edges_by_component, edges_by_repeat_component, edges_by_ref_component)
+    create_contig_info(dict_edges, input_dirpath, output_dirpath, edges_by_component, edges_by_repeat_component, edges_by_ref_component)
     with open(join(output_dirpath, 'title.json'), 'w') as handle:
         handle.write("title='yeast';\n")
 
@@ -48,7 +47,7 @@ def create_contig_info(dict_edges, input_dirpath, output_dirpath,
                        edges_by_component, edges_by_repeat_component, edges_by_ref_component):
     contig_info = dict()
     edge_contigs = defaultdict(list)
-    if not is_empty_file(join(input_dirpath, 'assembly_info.txt')):
+    if input_dirpath and not is_empty_file(join(input_dirpath, 'assembly_info.txt')):
         with open(join(input_dirpath, 'assembly_info.txt')) as f:
             for i, line in enumerate(f):
                 if i == 0:
@@ -83,4 +82,5 @@ def create_contig_info(dict_edges, input_dirpath, output_dirpath,
     with open(join(output_dirpath, 'edges_base_info.json'), 'w') as handle:
         handle.write("edge_info='" + json.dumps(edge_contigs) + "';")
         handle.write("median_cov='" + json.dumps(calculate_median_cov(dict_edges)) + "';\n")
+    return edge_contigs
 

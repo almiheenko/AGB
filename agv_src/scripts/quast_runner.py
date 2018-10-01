@@ -16,6 +16,10 @@ def get_alignments_fpath(quast_output_dir, input_fpath):
     return join(quast_output_dir, "contigs_reports", "all_alignments_%s.tsv" % get_quast_filename(input_fpath))
 
 
+def get_mis_report_fpath(quast_output_dir, input_fpath):
+    return join(quast_output_dir, "contigs_reports", "contigs_report_%s.mis_contigs.info" % get_quast_filename(input_fpath))
+
+
 def get_minimap_out_fpath(quast_output_dir, input_fpath):
     return join(quast_output_dir, "contigs_reports", "minimap_output", "%s.coords_tmp" % get_quast_filename(input_fpath))
 
@@ -35,7 +39,7 @@ def find_errors(input_fpath, reference_fpath, output_dirpath, json_output_dirpat
     ms_out_fpath = None
     if input_fpath and reference_fpath:
         quast_output_dir = join(output_dirpath, "quast_output" if not dict_edges else "quast_edge_output")
-        ms_out_fpath = get_minimap_out_fpath(quast_output_dir, input_fpath)
+        ms_out_fpath = get_mis_report_fpath(quast_output_dir, input_fpath)
         ms_out_fpath = run(input_fpath, reference_fpath, ms_out_fpath, quast_output_dir, threads)
     if not ms_out_fpath:
         if not is_empty_file(input_fpath) and not is_empty_file(reference_fpath):

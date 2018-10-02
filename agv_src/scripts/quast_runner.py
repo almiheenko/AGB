@@ -1,7 +1,7 @@
 import json
 import os
 import re
-from os.path import join, exists
+from os.path import join, exists, getsize
 import subprocess
 
 from collections import defaultdict
@@ -28,7 +28,8 @@ def run(input_fpath, reference_fpath, out_fpath, output_dirpath, threads):
     if not exists(output_dirpath):
         os.makedirs(output_dirpath)
     if not can_reuse(out_fpath, files_to_check=[input_fpath, reference_fpath]):
-        cmdline = ["quast.py", "--large", "--agv", input_fpath, "-r", reference_fpath, "-t", str(threads), "-o", output_dirpath]
+        cmdline = ["quast.py", "--fast",  "--agv", input_fpath, "-r", reference_fpath,
+                   "-t", str(threads), "-o", output_dirpath, "--min-contig", "0"] + (["--large"] if getsize(input_fpath) > 100 * 1024 * 1024 else [])
         subprocess.call(cmdline, stdout=open("/dev/null", "w"), stderr=open("/dev/null", "w"))
     if is_empty_file(out_fpath) or not can_reuse(out_fpath, files_to_check=[input_fpath, reference_fpath]):
         return None
@@ -37,7 +38,7 @@ def run(input_fpath, reference_fpath, out_fpath, output_dirpath, threads):
 
 def find_errors(input_fpath, reference_fpath, output_dirpath, json_output_dirpath, threads, contig_edges, dict_edges=None):
     ms_out_fpath = None
-    if input_fpath and reference_fpath:
+    if not is_empty_file(input_fpath) and not is_empty_file(reference_fpath):
         quast_output_dir = join(output_dirpath, "quast_output" if not dict_edges else "quast_edge_output")
         ms_out_fpath = get_mis_report_fpath(quast_output_dir, input_fpath)
         ms_out_fpath = run(input_fpath, reference_fpath, ms_out_fpath, quast_output_dir, threads)

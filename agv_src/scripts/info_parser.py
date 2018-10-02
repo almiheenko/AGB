@@ -35,7 +35,7 @@ def parse_canu_output(input_dirpath, output_dirpath):
 
 
 def parse_flye_output(input_dirpath, output_dirpath):
-    dot_fpath = find_file_by_pattern(input_dirpath, "assembly_graph.gv")
+    dot_fpath = find_file_by_pattern(input_dirpath, "assembly_graph.gv") or find_file_by_pattern(input_dirpath, "assembly_graph.dot")
     if not dot_fpath:
         print("ERROR! File %s is not found in %s! Please check the options" % (dot_fpath, abspath(input_dirpath)))
         sys.exit(1)

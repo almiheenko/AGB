@@ -964,7 +964,7 @@ function selectEdge(edge, edgeId, edgeLen, edgeCov, edgeMulti) {
                     edgeDescription = edgeDescription + '</ul>';
                 }
                 edgeDescription = edgeDescription + '</li></br>';
-                $('#edgerow' + edge.id).addClass('selected');
+                $('#edgerow' + edge.name.replace('-', '')).addClass('selected');
             }
         }
     }
@@ -987,8 +987,10 @@ function selectEdge(edge, edgeId, edgeLen, edgeCov, edgeMulti) {
         edgeDescription = 'Edge ID: ' + edgeName + ', length: ' + edgeLen + 'kb, coverage: ' + edgeCov + 'x, inferred multiplicity: ' + edgeMulti + '.';
         var row = $('#edgerow' + edgeName.replace('-', ''));
         if (row.length){
+            $('#collapse_edge_table').collapse('show');
             row.addClass('selected');
-            $('#edge_table_div').scrollTop( row.offset().top );
+            var firstOffset = $('#collapse_edge_table').find('tbody tr:first').offset();
+            $('#edge_table_div').scrollTop( row.offset().top - firstOffset.top);
         }
         selectedEdge = edgeInfo[selectedEdge] ? selectedEdge : edgeData[selectedEdge].el_id;
         if (edgeInfo[selectedEdge]) {

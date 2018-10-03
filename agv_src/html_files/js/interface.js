@@ -463,7 +463,7 @@ function buildEdgesTable() {
     });
     for (i = 0; i < enableEdges.length; i++) {
         if (enableEdges[i]['id'].indexOf('part') == -1 && enableEdges[i]['id'].indexOf('uedge') == -1)
-            table += "<tr id='edgerow" + enableEdges[i]['id'] + "'><td>" + enableEdges[i].name + "</td><td>" + enableEdges[i].len + "</td><td>" + enableEdges[i].cov + "</td><td>" + enableEdges[i].mult + "</td></tr>";
+            table += "<tr id='edgerow" + enableEdges[i].name.replace('-', '') + "'><td>" + enableEdges[i].name + "</td><td>" + enableEdges[i].len + "</td><td>" + enableEdges[i].cov + "</td><td>" + enableEdges[i].mult + "</td></tr>";
     }
     table += "</tbody></table>";
     document.getElementById("edge_table_div").innerHTML = table;

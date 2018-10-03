@@ -38,6 +38,7 @@ def print_dot(dot_fpath, dict_edges):
 
 
 def get_median(arr):
+    arr.sort()
     if len(arr) % 2:
         return arr[len(arr)//2 + 1]
     else:
@@ -79,9 +80,10 @@ def get_edge_agv_id(edge_id):
         return 'rc%d' % abs(int(edge_id)) if int(edge_id) < 0 else 'e%d' % int(edge_id)
 
 
-def get_canu_id(edge_name):
+def get_canu_id(edge_id):
+    edge_id = str(get_edge_num(edge_id))
     CANU_ID_LEN = 8
-    return "tig%s%s" % ('0' * (CANU_ID_LEN - len(str(edge_name))), edge_name)
+    return "tig%s%s" % ('0' * (CANU_ID_LEN - len(edge_id)), edge_id)
 
 
 def calculate_median_cov(dict_edges):

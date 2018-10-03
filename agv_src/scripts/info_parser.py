@@ -1,3 +1,4 @@
+import shlex
 import subprocess
 import sys
 from collections import defaultdict
@@ -22,12 +23,12 @@ def parse_abyss_output(input_dirpath):
 
 
 def parse_canu_output(input_dirpath, output_dirpath):
-    gfa_fpath = find_file_by_pattern(input_dirpath, ".contigs.gfa")
+    gfa_fpath = find_file_by_pattern(input_dirpath, ".unitigs.gfa")
     if not gfa_fpath:
         print("ERROR! GFA file is not found in %s! Please check the options" % abspath(input_dirpath))
         sys.exit(1)
-    cmd = ["sed", "-i"] + (["''"] if is_osx() else []) + ["1s/bogart.edges/1.0/", gfa_fpath]
-    subprocess.call(cmd)
+    cmd = "sed -i " + ("''" if is_osx() else "") + ' "1s/bogart.edges/1.0/" ' + gfa_fpath
+    subprocess.call(shlex.split(cmd))
     dict_edges = parse_gfa(gfa_fpath, input_dirpath, assembler="canu")
     contig_edges = parse_canu_assembly_info(input_dirpath, dict_edges)
     edges_fpath = get_edges_from_gfa(gfa_fpath, output_dirpath)
@@ -63,9 +64,10 @@ def parse_canu_assembly_info(input_dirpath, dict_edges):
         for line in f:
             fs = line.strip().split()
             contig, start, end, unitig = fs[:4]
-            edge_id = get_canu_id(get_edge_num(contig))
+            edge_id = get_edge_agv_id(get_edge_num(unitig))
             if edge_id in dict_edges:
-                contig_edges[unitig].append((start, end, edge_id))
+                contig_id = get_canu_id(contig)
+                contig_edges[contig_id].append((start, end, edge_id))
     return contig_edges
 
 

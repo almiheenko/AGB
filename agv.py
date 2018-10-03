@@ -103,7 +103,7 @@ def main():
     mapping_info, chrom_names, edge_by_chrom, dict_edges = \
         find_errors(edges_fpath, opts.reference, opts.output_dir, json_output_dirpath, opts.threads, contig_edges, dict_edges)
 
-    build_jsons(dict_edges, opts.input_dir, json_output_dirpath, mapping_info, chrom_names, edge_by_chrom, contig_edges)
+    build_jsons(dict_edges, opts.input_dir, json_output_dirpath, mapping_info, chrom_names, edge_by_chrom, contig_edges, opts.assembler)
     output_fpath = join(opts.output_dir, HTML_NAME)
     with open(TEMPLATE_PATH) as f: html = f.read()
     html = embed_css_and_scripts(html)

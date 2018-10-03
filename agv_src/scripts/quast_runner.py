@@ -7,7 +7,7 @@ import subprocess
 from collections import defaultdict
 
 from agv_src.scripts.edges_mapping import map_edges_to_ref, parse_mapping_info
-from agv_src.scripts.utils import is_empty_file, can_reuse, get_quast_filename
+from agv_src.scripts.utils import is_empty_file, can_reuse, get_quast_filename, get_edge_num, get_edge_agv_id
 
 align_pattern = "between (?P<start1>\d+) (?P<end1>\d+) and (?P<start2>\d+) (?P<end2>\d+)"
 
@@ -28,7 +28,11 @@ def run(input_fpath, reference_fpath, out_fpath, output_dirpath, threads):
     if not exists(output_dirpath):
         os.makedirs(output_dirpath)
     if not can_reuse(out_fpath, files_to_check=[input_fpath, reference_fpath]):
-        cmdline = ["quast.py", "--fast",  "--agv", input_fpath, "-r", reference_fpath,
+        quast_exec_path = "quast.py"
+        if is_empty_file(quast_exec_path):
+            print("QUAST is not found!")
+            return None
+        cmdline = [quast_exec_path, "--fast",  "--agv", input_fpath, "-r", reference_fpath,
                    "-t", str(threads), "-o", output_dirpath, "--min-contig", "0"] + (["--large"] if getsize(input_fpath) > 100 * 1024 * 1024 else [])
         subprocess.call(cmdline, stdout=open("/dev/null", "w"), stderr=open("/dev/null", "w"))
     if is_empty_file(out_fpath) or not can_reuse(out_fpath, files_to_check=[input_fpath, reference_fpath]):
@@ -63,7 +67,8 @@ def find_errors(input_fpath, reference_fpath, output_dirpath, json_output_dirpat
                     continue
                 start1, end1, start2, end2 = match.group('start1'), match.group('end1'), match.group('start2'), match.group('end2')
                 if dict_edges:
-                    dict_edges[seq_id].errors.append((end1, start2))
+                    edge_id = get_edge_agv_id(get_edge_num(seq_id))
+                    dict_edges[edge_id].errors.append((end1, start2))
                 else:
                     misassembled_seqs[seq_id].append((end1, start2))
                 ## add misassembl edge

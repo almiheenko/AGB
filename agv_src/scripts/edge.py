@@ -3,7 +3,7 @@ class Edge:
                  color=None, chrom=None, repetitive=False, element_id=None):
         self.id = id
         self.element_id = element_id
-        self.name = name
+        self.name = str(name)
         self.length = length
         self.cov = coverage
         self.start = None

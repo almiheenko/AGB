@@ -35,24 +35,6 @@ def map_edges_to_ref(input_fpath, output_dirpath, reference_fpath, threads):
     return mapping_fpath
 
 
-def parse_mapping_edges_info(output_dirpath):
-    contig_edges = defaultdict(list)
-
-    mapping_fpath = join(output_dirpath, "edges_mapping.paf")
-    if is_empty_file(mapping_fpath):
-        print("No information about mapping graph edges to scaffolds")
-        return contig_edges
-
-    with open(mapping_fpath) as f:
-        for line in f:
-            # contig_1        257261  14      160143  -       chr13   924431  196490  356991  147365  161095  60      tp:A:P  cm:i:14049      s1:i:147260     s2:i:4375       dv:f:0.0066
-            fs = line.split()
-            start, end = int(fs[7]), int(fs[8])
-            edge_id, scaffold = fs[0], fs[5]
-            contig_edges[scaffold].append((str(start), str(end), edge_id))
-    return contig_edges
-
-
 def parse_mapping_info(mapping_fpath, json_output_dir, contig_edges, dict_edges):
     mapping_info = defaultdict(set)
 

@@ -97,7 +97,7 @@ def parse_flye_dot(dot_fpath):
 
 
 def parse_canu_unitigs_info(input_dirpath, dict_edges):
-    tiginfo_fpath = find_file_by_pattern(input_dirpath, ".contigs.layout.tigInfo")
+    tiginfo_fpath = find_file_by_pattern(input_dirpath, ".unitigs.layout.tigInfo")
     if not is_empty_file(tiginfo_fpath):
         with open(tiginfo_fpath) as f:
             for i, line in enumerate(f):
@@ -124,15 +124,18 @@ def parse_canu_unitigs_info(input_dirpath, dict_edges):
 
 
 def get_edges_from_gfa(gfa_fpath, output_dirpath):
-    edges_fpath = join(output_dirpath, "edges.fasta")
+    input_edges_fpath = gfa_fpath.replace("gfa", "fasta")
+    edges_fpath = join(output_dirpath, basename(input_edges_fpath))
     if not is_empty_file(gfa_fpath) and not can_reuse(edges_fpath, files_to_check=[gfa_fpath]):
-        gfa = gfapy.Gfa.from_file(gfa_fpath,vlevel = 0)
+        gfa = gfapy.Gfa.from_file(gfa_fpath, vlevel=0)
         with open(edges_fpath, "w") as f:
             for edge in gfa.segments:
-                f.write(">%s\n" % get_edge_agv_id(get_edge_num(edge.name)))
-                f.write(edge.sequence)
-                f.write("\n")
-    return edges_fpath
+                if edge.sequence:
+                    f.write(">%s\n" % get_edge_agv_id(get_edge_num(edge.name)))
+                    f.write(edge.sequence)
+                    f.write("\n")
+    if is_empty_file(edges_fpath) and not is_empty_file(gfa_fpath) and not is_empty_file(input_edges_fpath):
+        return input_edges_fpath
 
 
 def format_edges_file(input_fpath, output_dirpath):
@@ -236,50 +239,57 @@ def construct_graph(dict_edges, predecessors, successors):
     ### construct graph
     node_id = 1
     graph = defaultdict(set)
-    for edge_name in dict_edges.keys():
+    for edge_id in dict_edges.keys():
         start_node = None
-        for prev_e in predecessors[edge_name]:
+        for prev_e in predecessors[edge_id]:
             if dict_edges[prev_e].end:
                 start_node = dict_edges[prev_e].end
-            if dict_edges[edge_name].repetitive and dict_edges[prev_e].repetitive:
-                graph[edge_name].add(prev_e)
-        for prev_e in predecessors[edge_name]:
+            if dict_edges[edge_id].repetitive and dict_edges[prev_e].repetitive:
+                graph[edge_id].add(prev_e)
+        for prev_e in predecessors[edge_id]:
             for next_e in successors[prev_e]:
                 if dict_edges[next_e].start:
                     start_node = dict_edges[next_e].start
-                if dict_edges[edge_name].repetitive and dict_edges[next_e].repetitive:
-                    graph[edge_name].add(next_e)
+                if dict_edges[edge_id].repetitive and dict_edges[next_e].repetitive:
+                    graph[edge_id].add(next_e)
         if not start_node:
             start_node = node_id
             node_id += 1
         end_node = None
-        for next_e in successors[edge_name]:
+        for next_e in successors[edge_id]:
             if dict_edges[next_e].start:
                 end_node = dict_edges[next_e].start
-            if dict_edges[edge_name].repetitive and dict_edges[next_e].repetitive:
-                graph[edge_name].add(next_e)
-        for next_e in successors[edge_name]:
+            if dict_edges[edge_id].repetitive and dict_edges[next_e].repetitive:
+                graph[edge_id].add(next_e)
+        for next_e in successors[edge_id]:
             for prev_e in predecessors[next_e]:
                 if dict_edges[prev_e].end:
                     end_node = dict_edges[prev_e].end
-                if dict_edges[edge_name].repetitive and dict_edges[prev_e].repetitive:
-                    graph[edge_name].add(prev_e)
+                if dict_edges[edge_id].repetitive and dict_edges[prev_e].repetitive:
+                    graph[edge_id].add(prev_e)
         if not end_node:
             end_node = node_id
             node_id += 1
-        dict_edges[edge_name].start = start_node
-        dict_edges[edge_name].end = end_node
+        dict_edges[edge_id].start = start_node
+        dict_edges[edge_id].end = end_node
 
     ### color repeat edges
     colored_edges = set()
     color_idx = 0
-    for edge_name in dict_edges.keys():
-        if not dict_edges[edge_name].repetitive:
+    for edge_id in dict_edges.keys():
+        if not dict_edges[edge_id].repetitive:
             continue
-        if edge_name in colored_edges:
+        if edge_id in colored_edges:
             continue
-        for e in dfs_color(graph, edge_name):
-            dict_edges[e].color = repeat_colors[color_idx % len(repeat_colors)]
+        edges = dfs_color(graph, edge_id)
+        color = repeat_colors[color_idx % len(repeat_colors)]
+        for e in edges:
+            match_edge = e.replace('rc', 'e') if e.startswith('rc') else e.replace('e', 'rc')
+            if dict_edges[match_edge].color != "black":
+                color = dict_edges[match_edge].color
+                break
+        for e in edges:
+            dict_edges[e].color = color
             colored_edges.add(e)
         color_idx += 1
     return dict_edges

@@ -587,7 +587,7 @@ function buildComponentsTable() {
                 edgeId = matches[1];
                 edgeRealId = edgeInfo[edgeId] ? edgeId : (edgeData[edgeId] ? edgeData[edgeId].el_id : edgeId);
                 if (checkEdge(edgeRealId, i)) {
-                    if (selectedMethod == "contig" || edgeId[0] === "e") {
+                    if (edgeId[0] === "e") {
                         if (edgeData[edgeRealId].s === edgeData[edgeRealId].e) {
                             if (edgeData[edgeRealId].unique) loopEdges.add(edgeRealId);
                             else loopRepeatEdges.add(edgeRealId);
@@ -613,7 +613,7 @@ function buildComponentsTable() {
                             edge = edgeData[baseLoopEdgeDict[edgeId][k]];
                             if (edge.unique) loopEdges.add(edgeId);
                             else loopRepeatEdges.add(edgeId);
-                            if (selectedMethod == "contig" || edge.id[0] === "e") {
+                            if (edge.id[0] === "e") {
                                 componentInfo['len'] = componentInfo['len'] + edge.len;
                             }
                         }

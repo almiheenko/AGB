@@ -50,6 +50,9 @@ def process_graph(g, undirected_g, dict_edges, edges_by_nodes, two_way_edges, ou
             edge_ids = set()
             for edge in edges:
                 _, _, edge_id = edge
+                edge_ids.add(edge_id)
+                edge_ids.add(edge_id.replace("e", "rc") if edge_id[0] == "e" else edge_id.replace("rc", "e"))
+            for edge_id in edge_ids:
                 contig_g.add_edge(dict_edges[edge_id].start, dict_edges[edge_id].end)
                 edge_ids.add(edge_id)
             viewer_data, last_idx, sub_complex_component = \

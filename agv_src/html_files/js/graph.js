@@ -788,6 +788,18 @@ function hideEdgesByThresholds(doRefresh, doAnimate, doRefreshTables) {
                             break;
                         }
                 }
+                if (color === "green") {
+                    edgeRealId = edgeRealId[0] == "e" ? edgeRealId.replace("e", "rc") : edgeRealId.replace("rc", "e");
+                    if (edgeData[edgeRealId] && edgeData[edgeRealId].errors.length > 0)
+                        color = "#b90000:white:#b90000";
+                    else if (edgeInfo[edgeRealId]) {
+                        for (var j=0;j<edgeInfo[edgeRealId].length;j++)
+                            if (misassembledContigs && misassembledContigs[edgeInfo[edgeRealId][j]]) {
+                                color = "red";
+                                break;
+                            }
+                    }
+                }
 
                 var oldColor = dotSrcLines[i].match(colorPattern);
                 dotSrcLines[i] = dotSrcLines[i].replace(oldColor[0], 'color="' + color + '"');
@@ -855,7 +867,9 @@ function selectEdgeByLabel(edgeLabel) {
 }
 
 function checkContigEdge(edge) {
-    return !edge || contigInfo[contigs[componentN]].edges.indexOf(edge.name) !== -1;
+    if (!edge) return false;
+    var matchEdge = edge.name[0] === '-' ? edge.name.replace('-', '') : '-' + edge.name;
+    return contigInfo[contigs[componentN]].edges.indexOf(edge.name) !== -1 || contigInfo[contigs[componentN]].edges.indexOf(matchEdge) !== -1;
 }
 
 function checkChromEdge(edgeId) {

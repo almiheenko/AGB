@@ -10,7 +10,8 @@ from agv_src.scripts.graph_parser import parse_gfa, parse_abyss_dot, parse_flye_
     format_edges_file
 from agv_src.scripts.info_parser import parse_abyss_output, parse_canu_output, parse_flye_output, parse_spades_output
 from agv_src.scripts.quast_runner import find_errors
-from agv_src.scripts.utils import embed_css_and_scripts, get_scaffolds_fpath, is_empty_file
+from agv_src.scripts.utils import embed_css_and_scripts, get_scaffolds_fpath, is_empty_file, is_abyss, is_canu, is_flye, \
+    is_spades
 from agv_src.scripts.viewer_builder import build_jsons
 
 
@@ -26,9 +27,8 @@ def parse_assembler_output(assembler_name, input_dirpath, input_fpath, output_di
             dict_edges = parse_gfa(input_fpath)
             edges_fpath = get_edges_from_gfa(input_fpath, output_dirpath)
         elif input_fpath.endswith("dot") or input_fpath.endswith("gv"):
-            assembler_name = assembler_name.lower()
             edges_fpath = format_edges_file(input_fasta_fpath, output_dirpath)
-            if assembler_name == ABYSS_NAME.lower():
+            if is_abyss(assembler_name):
                 dict_edges = parse_abyss_dot(input_fpath)
             else:
                 try:
@@ -36,14 +36,13 @@ def parse_assembler_output(assembler_name, input_dirpath, input_fpath, output_di
                 except:
                     sys.exit("ERROR! Failed parsing " + input_fpath + " file.")
     else:
-        assembler_name = assembler_name.lower()
-        if assembler_name == ABYSS_NAME.lower():
+        if is_abyss(assembler_name):
             dict_edges, contig_edges, edges_fpath = parse_abyss_output(input_dirpath)
-        elif assembler_name == CANU_NAME.lower():
+        elif is_canu(assembler_name):
             dict_edges, contig_edges, edges_fpath = parse_canu_output(input_dirpath, output_dirpath)
-        elif assembler_name == FLYE_NAME.lower():
+        elif is_flye(assembler_name):
             dict_edges, contig_edges, edges_fpath = parse_flye_output(input_dirpath, output_dirpath)
-        elif assembler_name == SPADES_NAME.lower():
+        elif is_spades(assembler_name):
             dict_edges, contig_edges, edges_fpath = parse_spades_output(input_dirpath, output_dirpath)
         else:
             sys.exit("Assembler %s is not supported yet! Supported assemblers: %s. "

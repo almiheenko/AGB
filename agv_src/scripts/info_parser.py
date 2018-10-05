@@ -49,8 +49,8 @@ def parse_flye_output(input_dirpath, output_dirpath):
 
 def parse_spades_output(input_dirpath, output_dirpath):
     gfa_fpath = find_file_by_pattern(input_dirpath, "assembly_graph.gfa")
-    dict_edges = parse_gfa(gfa_fpath, input_dirpath)
-    contig_edges = []
+    dict_edges = parse_gfa(gfa_fpath, input_dirpath, assembler="spades")
+    contig_edges = parse_spades_paths(input_dirpath, dict_edges)
     edges_fpath = get_edges_from_gfa(gfa_fpath, output_dirpath)
     return dict_edges, contig_edges, edges_fpath
 
@@ -92,5 +92,37 @@ def parse_flye_assembly_info(input_dirpath, dict_edges):
                     edge_len = dict_edges[edge_id].length
                     contig_edges[contig].append((str(start), str(start + edge_len), edge_id))
                     start += edge_len
+    return contig_edges
+
+
+def parse_spades_paths(input_dirpath, dict_edges):
+    contig_edges = defaultdict(list)
+    paths_fpath = join(input_dirpath, "scaffolds.paths")
+    if is_empty_file(paths_fpath):
+        print("Warning! %s is not found, information about scaffold paths will not be provided" % paths_fpath)
+    # NODE_1_length_8242890_cov_19.815448
+    # 1893359+,1801779-,1893273-,400678-,1892977+,1869659-,1892443+,272108+,1694470+,1893863+
+    with open(paths_fpath) as f:
+        contig = None
+        start = 0
+        for line in f:
+            if line.strip().endswith("'"):
+                contig = None
+            elif line.startswith("NODE"):
+                contig = line.strip()
+                start = 0
+                continue
+            elif contig:
+                edges = line.strip().replace(';', '').split(',')
+                for edge_name in edges:
+                    edge_num = int(edge_name[:-1])
+                    if edge_name[-1] == '-':
+                        edge_num *= -1
+                    edge_id = get_edge_agv_id(edge_num)
+                    if edge_id in dict_edges:
+                        edge_len = dict_edges[edge_id].length
+                        contig_edges[contig].append((str(start), str(start + edge_len), edge_id))
+                        start += edge_len
+                start += 10  # NNNNNNNNNN
     return contig_edges
 

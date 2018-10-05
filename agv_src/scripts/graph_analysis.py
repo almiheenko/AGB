@@ -8,7 +8,7 @@ import networkx as nx
 
 from agv_src.scripts.config import MAX_NODES, MAX_SUB_NODES
 from agv_src.scripts.edge import Edge
-from agv_src.scripts.utils import print_dot_header, natural_sort
+from agv_src.scripts.utils import print_dot_header, natural_sort, get_match_edge_id
 from agv_src.scripts.viewer_data import ViewerData
 
 
@@ -51,7 +51,7 @@ def process_graph(g, undirected_g, dict_edges, edges_by_nodes, two_way_edges, ou
             for edge in edges:
                 _, _, edge_id = edge
                 edge_ids.add(edge_id)
-                edge_ids.add(edge_id.replace("e", "rc") if edge_id[0] == "e" else edge_id.replace("rc", "e"))
+                edge_ids.add(get_match_edge_id(edge_id))
             for edge_id in edge_ids:
                 contig_g.add_edge(dict_edges[edge_id].start, dict_edges[edge_id].end)
                 edge_ids.add(edge_id)
@@ -62,13 +62,15 @@ def process_graph(g, undirected_g, dict_edges, edges_by_nodes, two_way_edges, ou
             for i in range(len(viewer_data.g)):
                 contig_list.append(contig)
             graph.extend(viewer_data.g)
+        with open(join(output_dirpath, 'contig_info.json'), 'w') as handle:
+            handle.write("contigs='" + json.dumps(contig_list) + "';\n")
     elif suffix == "repeat" or suffix == "def":
         ## combine reverse complement edges
         fake_edges = []
         for edge_id, edge in dict_edges.items():
             if edge_id.startswith("rc"): continue
             if suffix == "repeat" and not edge.repetitive: continue
-            match_edge_id = edge_id.replace("e", "rc")
+            match_edge_id = get_match_edge_id(edge_id)
             if match_edge_id not in dict_edges: continue
             match_edge_nodes = [dict_edges[match_edge_id].start, dict_edges[match_edge_id].end]
             if not any([e in undirected_g.neighbors(edge.start) for e in match_edge_nodes]) and not \

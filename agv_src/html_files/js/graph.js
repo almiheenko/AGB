@@ -292,7 +292,7 @@ function highlightContigEdges() {
                         graphPath = prevEdge + graphPath;
                     } 
                     else graphPath = prevEdge + ' (' + edgeCount + ' times)' + graphPath;
-                    if (i > 0) graphPath = ' &#8209;> ' + graphPath;
+                    if (i > 0 && graphEdges.length > 1) graphPath = ' &#8209;> ' + graphPath;
                     edgeCount = 1;
                 }
                 if (prevEdge != edge && i == 0) graphPath = edge + ' &#8209;> ' + graphPath;
@@ -555,7 +555,7 @@ function hideEdgesByThresholds(doRefresh, doAnimate, doRefreshTables) {
     for (node in collapsedEdges)
         clusterNodeSizeDict[node] = collapsedEdges[node].size;
 
-    dotSrcLines = ['digraph {','graph [pad="0.5", ranksep=1,nodesep=0.5];', 'node [shape = circle, label = "", height = 0.25];'];
+    dotSrcLines = ['digraph {','graph [pad="0.5", ranksep=1,nodesep=0.5];', 'node [shape = circle, label = "", height = 0.15];'];
     newEdges = new Set();
     loopEdges = {};
     for (node in graph) {
@@ -869,7 +869,8 @@ function selectEdgeByLabel(edgeLabel) {
 function checkContigEdge(edge) {
     if (!edge) return false;
     var matchEdge = edge.name[0] === '-' ? edge.name.replace('-', '') : '-' + edge.name;
-    return contigInfo[contigs[componentN]].edges.indexOf(edge.name) !== -1 || contigInfo[contigs[componentN]].edges.indexOf(matchEdge) !== -1;
+    var contigName = srcGraphs[componentN].contig;
+    return contigInfo[contigName].edges.indexOf(edge.name) !== -1 || contigInfo[contigName].edges.indexOf(matchEdge) !== -1;
 }
 
 function checkChromEdge(edgeId) {

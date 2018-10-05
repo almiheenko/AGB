@@ -1,13 +1,13 @@
 import json
+import re
 from collections import defaultdict
-from os.path import join
 
 import networkx as nx
 
 from agv_src.scripts.config import *
 from agv_src.scripts.graph_analysis import process_graph
 from agv_src.scripts.utils import print_dot_header, get_edge_agv_id, calculate_median_cov, is_empty_file, \
-    find_file_by_pattern, get_edge_num, get_canu_id
+    find_file_by_pattern, get_edge_num, get_canu_id, get_scaffolds_fpath, is_flye, is_canu, is_spades, edge_id_to_name
 
 
 def build_jsons(dict_edges, input_dirpath, output_dirpath, mapping_info, chrom_names, edge_by_chrom, contig_edges, assembler):
@@ -40,14 +40,15 @@ def build_jsons(dict_edges, input_dirpath, output_dirpath, mapping_info, chrom_n
                                            edge_by_chrom=edge_by_chrom, mapping_info=mapping_info)
     edges_by_contig_component = process_graph(g, undirected_g, dict_edges, edges_by_nodes, two_way_edges,
                                               output_dirpath, 'contig', contig_edges=contig_edges)
-    create_contig_info(dict_edges, input_dirpath, output_dirpath, edges_by_component, edges_by_repeat_component, edges_by_ref_component, assembler)
+    create_contig_info(dict_edges, input_dirpath, output_dirpath, contig_edges,
+                       edges_by_component, edges_by_repeat_component, edges_by_ref_component, assembler)
     with open(join(output_dirpath, 'title.json'), 'w') as handle:
         handle.write("title='yeast';\n")
 
 
 def parse_canu_contigs_info(input_dirpath):
     contig_info = dict()
-    contig_edges = defaultdict(list)
+    edges_by_contig = defaultdict(list)
     unitigs_info_fpath = find_file_by_pattern(input_dirpath, "unitigs.bed")
     if input_dirpath and not is_empty_file(unitigs_info_fpath):
         with open(unitigs_info_fpath) as f:
@@ -57,7 +58,7 @@ def parse_canu_contigs_info(input_dirpath):
                 strand = fs[-1]
                 edge_name = get_edge_num(unitig) if strand == "+" else -get_edge_num(unitig)
                 contig_id = get_canu_id(contig)
-                contig_edges[contig_id].append(str(edge_name))
+                edges_by_contig[contig_id].append(str(edge_name))
     contigs_info_fpath = find_file_by_pattern(input_dirpath, "contigs.layout.tigInfo")
     if input_dirpath and not is_empty_file(contigs_info_fpath):
         len_col = None
@@ -75,9 +76,9 @@ def parse_canu_contigs_info(input_dirpath):
                 length = int(float(fs[len_col]))
                 coverage = int(float(fs[cov_col]))
                 contig_id = get_canu_id(fs[0])
-                if contig_id in contig_edges:
+                if contig_id in edges_by_contig:
                     contig_info[contig_id] = {'length': length, 'cov': coverage, 'mult': 1}
-    for contig_id, edges in contig_edges.items():
+    for contig_id, edges in edges_by_contig.items():
         contig_info[contig_id]['edges'] = edges
     return contig_info
 
@@ -100,13 +101,36 @@ def parse_flye_contigs_info(input_dirpath):
     return contig_info
 
 
-def create_contig_info(dict_edges, input_dirpath, output_dirpath,
+def parse_spades_contigs_info(input_dirpath, contig_edges):
+    contig_info = dict()
+    node_pattern = '_length_(?P<length>\d+)_cov_(?P<cov>\d+\.?\d*)'
+    scaffolds_fpath = get_scaffolds_fpath(SPADES_NAME, input_dirpath)
+    if scaffolds_fpath:
+        with open(scaffolds_fpath) as f:
+            for line in f:
+                if line.startswith('>'):
+                    contig = line.strip()[1:]
+                    match = re.search(node_pattern, line)
+                    if not match or len(match.groups()) < 2:
+                        continue
+                    length = int(match.group('length'))
+                    cov = int(float(match.group('cov')))
+                    edges = []
+                    if contig in contig_edges:
+                        edges = [edge_id_to_name(x[-1]) for x in contig_edges[contig]]
+                    contig_info[contig] = {'edges': edges, 'length': length, 'cov': cov, 'mult': 1}
+    return contig_info
+
+
+def create_contig_info(dict_edges, input_dirpath, output_dirpath, contig_edges,
                        edges_by_component, edges_by_repeat_component, edges_by_ref_component, assembler):
     contig_info = None
-    if assembler.lower() == CANU_NAME.lower():
+    if is_canu(assembler):
         contig_info = parse_canu_contigs_info(input_dirpath)
-    elif assembler.lower() == FLYE_NAME.lower():
+    elif is_flye(assembler):
         contig_info = parse_flye_contigs_info(input_dirpath)
+    elif is_spades(assembler):
+        contig_info = parse_spades_contigs_info(input_dirpath, contig_edges)
     if not contig_info:
         with open(join(output_dirpath, 'contig_info.json'), 'w') as handle:
             handle.write("contig_info='" + json.dumps([]) + "';\n")
@@ -136,7 +160,7 @@ def create_contig_info(dict_edges, input_dirpath, output_dirpath,
         data['num_edges'] = str(len(edges))
         contig_info[contig] = data
 
-    with open(join(output_dirpath, 'contig_info.json'), 'w') as handle:
+    with open(join(output_dirpath, 'contig_info.json'), 'a') as handle:
         handle.write("contig_info='" + json.dumps(contig_info) + "';\n")
 
     with open(join(output_dirpath, 'edges_base_info.json'), 'w') as handle:

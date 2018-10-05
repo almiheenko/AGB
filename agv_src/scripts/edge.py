@@ -5,7 +5,7 @@ class Edge:
         self.element_id = element_id
         self.name = str(name)
         self.length = length
-        self.cov = coverage
+        self.cov = round(coverage) if coverage else None
         self.start = None
         self.end = None
         self.is_complex_loop = False

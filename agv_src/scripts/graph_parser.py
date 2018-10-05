@@ -1,7 +1,7 @@
 import re
 import sys
 import subprocess
-from os.path import join, basename
+from os.path import basename
 from collections import defaultdict
 
 import gfapy
@@ -10,7 +10,7 @@ import networkx as nx
 from agv_src.scripts.config import *
 from agv_src.scripts.edge import Edge
 from agv_src.scripts.utils import get_edge_agv_id, calculate_median_cov, get_edge_num, find_file_by_pattern, \
-    is_empty_file, can_reuse, is_osx
+    is_empty_file, can_reuse, is_osx, is_abyss, is_spades, is_velvet, is_soap, is_sga, get_match_edge_id
 
 repeat_colors = ["red", "darkgreen", "blue", "goldenrod", "cadetblue1", "darkorchid", "aquamarine1",
                  "darkgoldenrod1", "deepskyblue1", "darkolivegreen3"]
@@ -136,6 +136,7 @@ def get_edges_from_gfa(gfa_fpath, output_dirpath):
                     f.write("\n")
     if is_empty_file(edges_fpath) and not is_empty_file(gfa_fpath) and not is_empty_file(input_edges_fpath):
         return input_edges_fpath
+    return edges_fpath
 
 
 def format_edges_file(input_fpath, output_dirpath):
@@ -154,24 +155,24 @@ def format_edges_file(input_fpath, output_dirpath):
     return edges_fpath
 
 
-def fastg_to_gfa(input_fpath, output_dirpath, assembler):
+def fastg_to_gfa(input_fpath, output_dirpath, assembler_name):
     k8_exec = join(TOOLS_DIR, "k8-darwin") if is_osx() else join(TOOLS_DIR, "k8-linux")
     gfatools_exec = join(TOOLS_DIR, "gfatools.js")
     if gfatools_exec and k8_exec:
         output_fpath = join(output_dirpath, basename(input_fpath).replace("fastg", "gfa"))
         cmd = None
-        if assembler.lower == SPADES_NAME.lower():
-            cmd = "spades2gfa"
-        elif assembler.lower == ABYSS_NAME.lower():
+        if is_abyss(assembler_name):
             cmd = "abyss2gfa"
-        elif assembler.lower == SGA_NAME.lower():
+        elif is_spades(assembler_name):
+            cmd = "spades2gfa"
+        elif is_sga(assembler_name):
             cmd = "sga2gfa"
-        elif assembler.lower == SOAP_NAME.lower():
+        elif is_soap(assembler_name):
             cmd = "soap2gfa"
-        elif assembler.lower == VELVET_NAME.lower():
+        elif is_velvet(assembler_name):
             cmd = "velvet2gfa"
         if not cmd:
-            sys.exit("FASTG files produced by " + assembler + " are not supported. Supported assemblers: " +
+            sys.exit("FASTG files produced by " + assembler_name + " are not supported. Supported assemblers: " +
                      ' '.join([ABYSS_NAME, SGA_NAME, SOAP_NAME, SPADES_NAME, VELVET_NAME]) + " or use files in GFA format.")
         cmdline = [k8_exec, gfatools_exec, cmd, input_fpath]
         subprocess.call(cmdline, stdout=output_fpath, stderr=open("/dev/null", "w"))
@@ -204,10 +205,16 @@ def parse_gfa(gfa_fpath, input_dirpath=None, assembler=None):
             predecessors[edge2].append(edge1)
             successors[edge1].append(edge2)
         g.add_edge(edge1, edge2)
+        if is_spades(assembler):
+            edge1, edge2 = get_match_edge_id(edge2), get_match_edge_id(edge1)
+            if edge1 != edge2:
+                predecessors[edge2].append(edge1)
+                successors[edge1].append(edge2)
+            g.add_edge(edge1, edge2)
 
     for i, n in enumerate(gfa.segments):
         if n.KC:
-            cov = n.KC / n.length  ## k-mer count / edge length
+            cov = max(1, n.KC / n.length)  ## k-mer count / edge length
         else:
             cov = 1
         edge_id = get_edge_agv_id(get_edge_num(n.name))

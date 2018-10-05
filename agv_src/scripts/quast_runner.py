@@ -68,9 +68,9 @@ def find_errors(input_fpath, reference_fpath, output_dirpath, json_output_dirpat
                 start1, end1, start2, end2 = match.group('start1'), match.group('end1'), match.group('start2'), match.group('end2')
                 if dict_edges:
                     edge_id = get_edge_agv_id(get_edge_num(seq_id))
-                    dict_edges[edge_id].errors.append((end1, start2))
+                    dict_edges[edge_id].errors.append((start1, end1, start2, end2))
                 else:
-                    misassembled_seqs[seq_id].append((end1, start2))
+                    misassembled_seqs[seq_id].append((start1, end1, start2, end2))
                 ## add misassembl edge
             else:
                 seq_id = line.strip()

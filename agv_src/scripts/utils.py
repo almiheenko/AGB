@@ -14,16 +14,44 @@ def is_osx():
         return True
 
 
+def is_abyss(assembler):
+    return assembler and assembler.lower() == ABYSS_NAME.lower()
+
+
+def is_canu(assembler):
+    return assembler and assembler.lower() == CANU_NAME.lower()
+
+
+def is_flye(assembler):
+    return assembler and assembler.lower() == FLYE_NAME.lower()
+
+
+def is_spades(assembler):
+    return assembler and assembler.lower() == SPADES_NAME.lower()
+
+
+def is_sga(assembler):
+   return assembler and assembler.lower() == SGA_NAME.lower()
+
+
+def is_soap(assembler):
+   return assembler and assembler.lower() == SOAP_NAME.lower()
+
+
+def is_velvet(assembler):
+   return assembler and assembler.lower() == VELVET_NAME.lower()
+
+
 def get_scaffolds_fpath(assembler, input_dirpath):
     scaffolds_fpath = None
     if input_dirpath:
-        if assembler.lower() == ABYSS_NAME.lower():
+        if is_abyss(assembler):
             scaffolds_fpath = find_file_by_pattern(input_dirpath, "-scaffolds.fa")
-        elif assembler.lower() == CANU_NAME.lower():
+        elif is_canu(assembler):
             scaffolds_fpath = find_file_by_pattern(input_dirpath, ".contigs.fasta")
-        elif assembler.lower() == FLYE_NAME.lower():
+        elif is_flye(assembler):
             scaffolds_fpath = join(input_dirpath, "scaffolds.fasta")
-        elif assembler.lower() == SPADES_NAME.lower():
+        elif is_spades(assembler):
             scaffolds_fpath = join(input_dirpath, "scaffolds.fasta")
     if not is_empty_file(scaffolds_fpath):
         return scaffolds_fpath
@@ -78,6 +106,14 @@ def get_edge_num(edge_id):
 def get_edge_agv_id(edge_id):
     if edge_id != "*" and edge_id != "??":
         return 'rc%d' % abs(int(edge_id)) if int(edge_id) < 0 else 'e%d' % int(edge_id)
+
+
+def get_match_edge_id(edge_id):
+    return edge_id.replace("e", "rc") if edge_id[0] == "e" else edge_id.replace("rc", "e")
+
+
+def edge_id_to_name(edge_id):
+    return str(get_edge_num(edge_id)) if edge_id[0] == "e" else str(get_edge_num(edge_id) * (-1))
 
 
 def get_canu_id(edge_id):

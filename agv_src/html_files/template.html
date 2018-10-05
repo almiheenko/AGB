@@ -353,10 +353,8 @@ var graph = parseGraph(full_graph.split('\n'));
 var full_diGraph = parseDirectedGraph(full_graph.split('\n'));
 var full_graph = parseGraph(full_graph.split('\n'));
 var contigInfo = JSON.parse(contig_info);
-var contigs = [];
-for (x in contigInfo) {
-    contigs.push(x);
-}
+var contigs = contigs ? JSON.parse(contigs) : [];
+
 var clusterNodeSizeDict = {};
 var newEdgesDict = {};
 

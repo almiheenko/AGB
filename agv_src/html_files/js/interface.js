@@ -175,27 +175,25 @@ function addModeSwitch(){
     var divWidth = 120;
     if (Object.keys(edgeDataRef).length) divWidth += 70;
     if (Object.keys(edgeDataContig).length) divWidth += 50;
-    if (Object.keys(edgeDataRef).length || Object.keys(edgeDataContig).length) {
-        div += '<div style="padding-top:-30px; width:' + divWidth + 'px; text-align:center">Mode</div>';
-        div += '<div class="btn-group btn-group-toggle" data-toggle="buttons">';
-        div += '<label class="btn btn-info active option_mode" id="default_mode">';
-        div += '<input type="radio" name="mode" autocomplete="off" checked> default';
+    div += '<div style="padding-top:-30px; width:' + divWidth + 'px; text-align:center">Mode</div>';
+    div += '<div class="btn-group btn-group-toggle" data-toggle="buttons">';
+    div += '<label class="btn btn-info active option_mode" id="default_mode">';
+    div += '<input type="radio" name="mode" autocomplete="off" checked> default';
+    div += '</label>';
+    div += '<label class="btn btn-info option_mode" id="repeat_mode">';
+    div += '<input type="radio" name="mode" autocomplete="off" checked> repeat';
+    div += '</label>';
+    if (Object.keys(edgeDataRef).length) {
+        div += '<label class="btn btn-info option_mode" id="ref_mode">';
+        div += '<input type="radio" name="mode" autocomplete="off" val="ref"> reference';
         div += '</label>';
-        div += '<label class="btn btn-info option_mode" id="repeat_mode">';
-        div += '<input type="radio" name="mode" autocomplete="off" checked> repeat';
-        div += '</label>';
-        if (Object.keys(edgeDataRef).length) {
-            div += '<label class="btn btn-info option_mode" id="ref_mode">';
-            div += '<input type="radio" name="mode" autocomplete="off" val="ref"> reference';
-            div += '</label>';
-        }
-        if (Object.keys(edgeDataContig).length) {
-            div += '<label class="btn btn-info option_mode" id="contig_mode">';
-            div += '<input type="radio" name="mode" autocomplete="off" val="contig"> contig';
-            div += '</label>';
-        }
-        div += '</div>';
     }
+    if (Object.keys(edgeDataContig).length) {
+        div += '<label class="btn btn-info option_mode" id="contig_mode">';
+        div += '<input type="radio" name="mode" autocomplete="off" val="contig"> contig';
+        div += '</label>';
+    }
+    div += '</div>';
      document.getElementById('div_switch').innerHTML = div;
 }
 
@@ -355,11 +353,11 @@ function buildContigsTable() {
                 }
             }
         }
-        if (edgesN) {
+        // if (edgesN) {
             enableContigs.push(x);
             table += "<tr id='contigrow" + x + "'><td>" + x + "</td><td>" + contigLen + "</td><td>" + contigInfo[x].cov +
                 "</td><td>" + (edgesN ? edgesN : "-") + (showAssemblyErrors ? "</td><td>" + (errorsN ? errorsN : "-") : "") + "</td>" + "</tr>";
-        }
+        // }
         //table += "<tr id='contigrow" + x + "'><td>" + x + "</td><td>" + contigLen + "</td><td>" + contigInfo[x].cov + "</td><td>" + contigInfo[x].n_edges + "</td></tr>";
     }
     table += "</tbody></table>";

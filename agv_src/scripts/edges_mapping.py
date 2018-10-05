@@ -3,18 +3,7 @@ import subprocess
 from collections import defaultdict, OrderedDict
 
 from agv_src.scripts.config import *
-from agv_src.scripts.graph_parser import get_edges_from_gfa
-from agv_src.scripts.utils import can_reuse, is_empty_file, natural_sort, get_edge_agv_id, get_edge_num, \
-    find_file_by_pattern
-
-
-def get_edges_fpath(assembler, input_dirpath, output_dirpath, fasta_fpath=None):
-    if not is_empty_file(fasta_fpath):
-        return fasta_fpath
-
-    if assembler.lower() == FLYE_NAME.lower():
-        gfa_fpath = find_file_by_pattern(input_dirpath, "assembly_graph.gfa")
-        return get_edges_from_gfa(gfa_fpath, output_dirpath)
+from agv_src.scripts.utils import can_reuse, is_empty_file, natural_sort, get_edge_agv_id, get_edge_num
 
 
 def map_edges_to_ref(input_fpath, output_dirpath, reference_fpath, threads):

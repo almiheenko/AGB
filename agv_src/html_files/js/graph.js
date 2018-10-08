@@ -960,7 +960,8 @@ function selectEdge(edge, edgeId, edgeLen, edgeCov, edgeMulti) {
                     for (var i = 0; i < edgeMappingInfo[curLoopEdge].length; i++) {
                         chrom = edgeMappingInfo[curLoopEdge][i];
                         chromN = chromosomes.indexOf(chrom);
-                        edgeDescription = edgeDescription + '<li onclick="changeToChromosome(' + chromN + ')"> ' + chrom + '</li>';
+                        chromPos = edge.aligns && edge.aligns[chrom] ? edge.aligns[chrom] : chrom;
+                        edgeDescription = edgeDescription + '<li onclick="changeToChromosome(' + chromN + ')"> ' + chromPos + '</li>';
                     }
                     edgeDescription = edgeDescription + '</ul>';
                 }
@@ -1005,8 +1006,10 @@ function selectEdge(edge, edgeId, edgeLen, edgeCov, edgeMulti) {
             for (var i = 0; i < edgeMappingInfo[selectedEdge].length; i++) {
                 chrom = edgeMappingInfo[selectedEdge][i];
                 chromN = chromosomes.indexOf(chrom);
-                edgeDescription = edgeDescription + '<li onclick="changeToChromosome(' + chromN + ')"> ' + chrom + '</li>';
+                chromPos = edgeData[selectedEdge].aligns && edgeData[selectedEdge].aligns[chrom] ? edgeData[selectedEdge].aligns[chrom] : chrom;
+                edgeDescription = edgeDescription + '<li onclick="changeToChromosome(' + chromN + ')"> ' + chromPos + '</li>';
             }
+            if (edgeData[selectedEdge].aligns) edgeDescription = edgeDescription + "Note: maximum top 3 alignments per chromosome are shown.<br/>";
         }
         if (edgeData[selectedEdge] && edgeData[selectedEdge].errors.length > 0) {
             edgeDescription = edgeDescription + '<br/><b>Misassembly breakpoints:</b>';

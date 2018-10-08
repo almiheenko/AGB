@@ -100,6 +100,15 @@ def natural_sort(l):
     return sorted(l, key = alphanum_key)
 
 
+def format_pos(number):
+    s = '%d' % number
+    groups = []
+    while s and s[-1].isdigit():
+        groups.append(s[-3:])
+        s = s[:-3]
+    return s + ' '.join(reversed(groups))
+
+
 def get_edge_num(edge_id):
     return int(''.join(x for x in edge_id if x.isdigit()))
 

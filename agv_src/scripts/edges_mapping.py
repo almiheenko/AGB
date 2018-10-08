@@ -3,7 +3,8 @@ import subprocess
 from collections import defaultdict, OrderedDict
 
 from agv_src.scripts.config import *
-from agv_src.scripts.utils import can_reuse, is_empty_file, natural_sort, get_edge_agv_id, get_edge_num
+from agv_src.scripts.utils import can_reuse, is_empty_file, natural_sort, get_edge_agv_id, get_edge_num, \
+    get_match_edge_id, format_pos
 
 
 def map_edges_to_ref(input_fpath, output_dirpath, reference_fpath, threads):
@@ -38,20 +39,25 @@ def parse_mapping_info(mapping_fpath, json_output_dir, contig_edges, dict_edges)
             start, end = int(fs[2]), int(fs[3])
             edge_lengths[edge_id] = int(fs[1])
             chrom, chrom_len = fs[5], int(fs[6])
+            ref_start, ref_end = int(fs[7]), int(fs[8])
             chrom_lengths[chrom] = chrom_len
-            edge_mappings[edge_id][chrom].append((start, end))
+            edge_mappings[edge_id][chrom].append((start, end, ref_start, ref_end))
 
     chroms_by_edge = defaultdict(set)
     edge_by_chrom = defaultdict(set)
     chrom_names = set()
     for edge_id in edge_mappings:
         len_threshold = max(500, 0.9 * edge_lengths[edge_id])
+        gap_threshold = min(5000, 0.05 * edge_lengths[edge_id])
         for chrom, mappings in edge_mappings[edge_id].items():
             mappings.sort(key=lambda x: (x[0], -x[1]), reverse=False)
         for chrom, mappings in edge_mappings[edge_id].items():
+            aligns = []
             covered_len = 0
             last_pos = 0
-            for (start, end) in mappings:
+            last_ref_pos = 0
+            align_s, align_e = 0, 0
+            for (start, end, ref_start, ref_end) in mappings:
                 start = max(start, last_pos)
                 covered_len += max(0, end - start + 1)
                 last_pos = max(last_pos, end + 1)
@@ -59,6 +65,25 @@ def parse_mapping_info(mapping_fpath, json_output_dir, contig_edges, dict_edges)
                 chroms_by_edge[edge_id].add(chrom)
                 chrom_names.add(chrom)
                 edge_by_chrom[chrom].add(edge_id)
+                mappings.sort(key=lambda x: (x[2], -x[3]), reverse=False)
+                for (start, end, ref_start, ref_end) in mappings:
+                    ref_start = max(ref_start, last_ref_pos)
+                    last_ref_pos = max(last_ref_pos, ref_end + 1)
+                    if not align_s:
+                        align_s = ref_start
+                    if align_e and ref_start - align_e >= gap_threshold:
+                        if align_e - align_s >= 500:
+                            aligns.append((chrom, align_s, align_e))
+                        align_s = ref_start
+                    align_e = ref_end - 1
+                if align_e and align_e - align_s >= 500:
+                    aligns.append((chrom, align_s, align_e))
+                aligns.sort(reverse=True, key=lambda x: x[2] - x[1])
+                edge_alignment = chrom + ":"
+                for align in aligns[:3]:
+                    edge_alignment += " %s-%s," % (format_pos(align[1]), format_pos(align[2]))
+                dict_edges[edge_id].aligns[chrom] = edge_alignment[:-1]
+                dict_edges[get_match_edge_id(edge_id)].aligns[chrom] = edge_alignment[:-1]
 
     chrom_len_dict = OrderedDict((chrom, chrom_lengths[chrom]) for i, chrom in enumerate(list(natural_sort(chrom_names))))
     non_alt_chroms = [c for c in chrom_names if 'alt' not in c and 'random' not in c and 'chrUn' not in c]

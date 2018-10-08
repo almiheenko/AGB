@@ -1008,6 +1008,26 @@ function selectEdge(edge, edgeId, edgeLen, edgeCov, edgeMulti) {
                 edgeDescription = edgeDescription + '<li onclick="changeToChromosome(' + chromN + ')"> ' + chrom + '</li>';
             }
         }
+        if (edgeData[selectedEdge] && edgeData[selectedEdge].errors.length > 0) {
+            edgeDescription = edgeDescription + '<br/><b>Misassembly breakpoints:</b>';
+            for (var i = 0; i < edgeData[selectedEdge].errors.length; i++) {
+                error = edgeData[selectedEdge].errors[i];
+                edgeDescription = edgeDescription + '<li> between ' + error[0] + ' ' + error[1] + ' and ' + error[2] + ' ' + error[3] + '</li>';
+            }
+        }
+        if (edgeData[selectedEdge] && edgeData[selectedEdge].overlaps.length > 0) {
+            var overlapsText = '<br/><b>Overlaps:</b>';
+            var overlapsN = 0;
+            for (var i = 0; i < edgeData[selectedEdge].overlaps.length; i++) {
+                overlap = edgeData[selectedEdge].overlaps[i];
+                overlapEdgeName = overlap[0]; overlapEdgeId = overlap[1]; overlapLen = overlap[2];
+                if (checkEdge(overlapEdgeId)) {
+                    overlapsText = overlapsText + '<li> ' + overlapEdgeName + ' (' + overlapLen + ')</li>';
+                    overlapsN++;
+                }
+            }
+            if (overlapsN) edgeDescription = edgeDescription + overlapsText;
+        }
     }
     document.getElementById('node_info').innerHTML = edgeDescription;
     $('#collapse_edge_table').collapse('show');

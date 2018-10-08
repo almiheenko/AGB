@@ -10,13 +10,14 @@ import networkx as nx
 from agv_src.scripts.config import *
 from agv_src.scripts.edge import Edge
 from agv_src.scripts.utils import get_edge_agv_id, calculate_median_cov, get_edge_num, find_file_by_pattern, \
-    is_empty_file, can_reuse, is_osx, is_abyss, is_spades, is_velvet, is_soap, is_sga, get_match_edge_id
+    is_empty_file, can_reuse, is_osx, is_abyss, is_spades, is_velvet, is_soap, is_sga, get_match_edge_id, \
+    edge_id_to_name
 
 repeat_colors = ["red", "darkgreen", "blue", "goldenrod", "cadetblue1", "darkorchid", "aquamarine1",
                  "darkgoldenrod1", "deepskyblue1", "darkolivegreen3"]
 
 
-def parse_abyss_dot(dot_fpath):
+def parse_abyss_dot(dot_fpath, min_edge_len):
     '''digraph adj {
     graph [k=50]
     edge [d=-49]
@@ -44,8 +45,9 @@ def parse_abyss_dot(dot_fpath):
                 if match and len(match.groups()) == 2:
                     cov = max(1, int(match.group('edge_cov')))
                     edge_len = max(1, int(float(match.group('edge_len'))))
-                    edge = Edge(edge_id, edge_name, edge_len, cov, element_id=edge_id)
-                    dict_edges[edge_id] = edge
+                    if edge_len >= min_edge_len:
+                        edge = Edge(edge_id, edge_name, edge_len, cov, element_id=edge_id)
+                        dict_edges[edge_id] = edge
             if '->' in line:
                 #  "3+" -> "157446-" [d=-45]
                 match = re.search(link_pattern, line)
@@ -61,7 +63,7 @@ def parse_abyss_dot(dot_fpath):
     return dict_edges
 
 
-def parse_flye_dot(dot_fpath):
+def parse_flye_dot(dot_fpath, min_edge_len):
     dict_edges = dict()
 
     pattern = '"?(?P<start>\d+)"? -> "?(?P<end>\d+)"? \[(?P<info>.+)]'
@@ -84,6 +86,8 @@ def parse_flye_dot(dot_fpath):
                     edge_id = get_edge_agv_id(match.group('edge_id'))
                     cov = max(1, int(match.group('coverage')))
                     edge_len = max(1, int(float(match.group('edge_len')) * 1000))
+                    if edge_len < min_edge_len:
+                        continue
                     edge = Edge(edge_id, match.group('edge_id'), edge_len, cov, element_id=edge_id)
                     edge.color = color
                     if edge.color != "black":
@@ -123,14 +127,14 @@ def parse_canu_unitigs_info(input_dirpath, dict_edges):
     return dict_edges
 
 
-def get_edges_from_gfa(gfa_fpath, output_dirpath):
+def get_edges_from_gfa(gfa_fpath, output_dirpath, min_edge_len):
     input_edges_fpath = gfa_fpath.replace("gfa", "fasta")
     edges_fpath = join(output_dirpath, basename(input_edges_fpath))
     if not is_empty_file(gfa_fpath) and not can_reuse(edges_fpath, files_to_check=[gfa_fpath]):
         gfa = gfapy.Gfa.from_file(gfa_fpath, vlevel=0)
         with open(edges_fpath, "w") as f:
             for edge in gfa.segments:
-                if edge.sequence:
+                if edge.sequence and len(edge.sequence) >= min_edge_len:
                     f.write(">%s\n" % get_edge_agv_id(get_edge_num(edge.name)))
                     f.write(edge.sequence)
                     f.write("\n")
@@ -180,15 +184,30 @@ def fastg_to_gfa(input_fpath, output_dirpath, assembler_name):
             return output_fpath
 
 
-def parse_gfa(gfa_fpath, input_dirpath=None, assembler=None):
-    gfa = gfapy.Gfa.from_file(gfa_fpath,vlevel = 0)
+def parse_gfa(gfa_fpath, min_edge_len, input_dirpath=None, assembler=None):
+    gfa = gfapy.Gfa.from_file(gfa_fpath, vlevel = 0)
     links = []
+    edge_overlaps = defaultdict(dict)
     with open(gfa_fpath) as f:
         for line in f:
             if line[0] != 'L':
                 continue
             _, from_name, from_orient, to_name, to_orient = line.split()[:5]
-            links.append((from_name, from_orient, to_name, to_orient))
+            edge1 = get_edge_agv_id(get_edge_num(from_name))
+            edge2 = get_edge_agv_id(get_edge_num(to_name))
+            if from_orient == '-': edge1 = get_match_edge_id(edge1)
+            if to_orient == '-': edge2 = get_match_edge_id(edge2)
+            overlap = 0
+            overlap_operations = re.split('(\d+)', line.split()[-1].strip())
+            for i in range(0, len(overlap_operations) - 1, 1):
+                if not overlap_operations[i]:
+                    continue
+                if overlap_operations[i+1] == 'M' or overlap_operations[i+1] == 'I':
+                    overlap += int(overlap_operations[i])
+            links.append((from_name, from_orient, to_name, to_orient, overlap))
+            if overlap:
+                edge_overlaps[edge1][edge2] = overlap
+                edge_overlaps[edge2][edge1] = overlap
 
     dict_edges = dict()
     predecessors = defaultdict(list)
@@ -196,16 +215,16 @@ def parse_gfa(gfa_fpath, input_dirpath=None, assembler=None):
     g = nx.DiGraph()
     ### gfa retains only canonical links
     for link in links:
-        from_name, from_orient, to_name, to_orient = link
+        from_name, from_orient, to_name, to_orient, overlap = link
         edge1 = get_edge_agv_id(get_edge_num(from_name))
         edge2 = get_edge_agv_id(get_edge_num(to_name))
-        if from_orient == '-': edge1 = 'rc' + edge1[1:]
-        if to_orient == '-': edge2 = 'rc' + edge2[1:]
+        if from_orient == '-': edge1 = get_match_edge_id(edge1)
+        if to_orient == '-': edge2 = get_match_edge_id(edge2)
         if edge1 != edge2:
             predecessors[edge2].append(edge1)
             successors[edge1].append(edge2)
         g.add_edge(edge1, edge2)
-        if is_spades(assembler):
+        if is_spades(assembler) or is_abyss(assembler):
             edge1, edge2 = get_match_edge_id(edge2), get_match_edge_id(edge1)
             if edge1 != edge2:
                 predecessors[edge2].append(edge1)
@@ -217,12 +236,17 @@ def parse_gfa(gfa_fpath, input_dirpath=None, assembler=None):
             cov = max(1, n.KC / n.length)  ## k-mer count / edge length
         else:
             cov = 1
-        edge_id = get_edge_agv_id(get_edge_num(n.name))
-        edge = Edge(edge_id, get_edge_num(n.name), n.length, cov, element_id=edge_id)
-        dict_edges[edge_id] = edge
-        rc_edge_id = get_edge_agv_id(-get_edge_num(n.name))
-        rc_edge = Edge(rc_edge_id, -get_edge_num(n.name), n.length, cov, element_id=rc_edge_id)
-        dict_edges[rc_edge_id] = rc_edge
+        if not n.length or n.length >= min_edge_len:
+            edge_id = get_edge_agv_id(get_edge_num(n.name))
+            edge = Edge(edge_id, get_edge_num(n.name), n.length, cov, element_id=edge_id)
+            dict_edges[edge_id] = edge
+            for overlapped_edge, overlap in edge_overlaps[edge_id].items():
+                dict_edges[edge_id].overlaps.append((edge_id_to_name(overlapped_edge), overlapped_edge, overlap))
+            rc_edge_id = get_edge_agv_id(-get_edge_num(n.name))
+            rc_edge = Edge(rc_edge_id, -get_edge_num(n.name), n.length, cov, element_id=rc_edge_id)
+            dict_edges[rc_edge_id] = rc_edge
+            for overlapped_edge, overlap in edge_overlaps[rc_edge_id].items():
+                dict_edges[edge_id].overlaps.append((edge_id_to_name(overlapped_edge), overlapped_edge, overlap))
 
     if assembler == "canu" and input_dirpath:
         dict_edges = parse_canu_unitigs_info(input_dirpath, dict_edges)

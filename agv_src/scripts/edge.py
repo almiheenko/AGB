@@ -18,12 +18,13 @@ class Edge:
         self.ref_component = None
         self.repeat_component = None
         self.errors = []
+        self.overlaps = []
 
     def as_dict(self):
         return {'id': self.id, 'el_id': self.element_id, 'name': self.name, 'len': self.format_len(), 'cov': self.cov,
                 's': self.start, 'e': self.end, 'mult': self.multiplicity, 'color': self.color, 'unique': not self.repetitive,
                 'chrom': self.chrom, 'comp': self.component, 'rep_comp': self.repeat_component,
-                'ref_comp': self.ref_component, 'errors': self.errors}
+                'ref_comp': self.ref_component, 'errors': self.errors, 'overlaps': self.overlaps}
 
     def format_len(self):
         if not self.length:
@@ -47,5 +48,5 @@ class Edge:
     def create_copy(self, start, end):
         edge = Edge(self.id, self.name, self.length, self.cov, self.multiplicity, self.color,
                     self.chrom, self.repetitive, element_id=self.id)
-        edge.start, edge.end, edge.errors = start, end, self.errors
+        edge.start, edge.end, edge.errors, edge.overlaps = start, end, self.errors, self.overlaps
         return edge

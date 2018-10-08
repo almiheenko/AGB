@@ -8,11 +8,11 @@ import networkx as nx
 
 from agv_src.scripts.config import MAX_NODES, MAX_SUB_NODES
 from agv_src.scripts.edge import Edge
-from agv_src.scripts.utils import print_dot_header, natural_sort, get_match_edge_id
+from agv_src.scripts.utils import print_dot_header, natural_sort, get_match_edge_id, is_flye
 from agv_src.scripts.viewer_data import ViewerData
 
 
-def process_graph(g, undirected_g, dict_edges, edges_by_nodes, two_way_edges, output_dirpath, suffix,
+def process_graph(g, undirected_g, dict_edges, edges_by_nodes, two_way_edges, output_dirpath, suffix, assembler,
                   base_graph=None, contig_edges=None, chrom_names=None, edge_by_chrom=None, mapping_info=None):
     last_idx = 0
     parts_info = dict()
@@ -65,20 +65,21 @@ def process_graph(g, undirected_g, dict_edges, edges_by_nodes, two_way_edges, ou
         with open(join(output_dirpath, 'contig_info.json'), 'w') as handle:
             handle.write("contigs='" + json.dumps(contig_list) + "';\n")
     elif suffix == "repeat" or suffix == "def":
-        ## combine reverse complement edges
         fake_edges = []
-        for edge_id, edge in dict_edges.items():
-            if edge_id.startswith("rc"): continue
-            if suffix == "repeat" and not edge.repetitive: continue
-            match_edge_id = get_match_edge_id(edge_id)
-            if match_edge_id not in dict_edges: continue
-            match_edge_nodes = [dict_edges[match_edge_id].start, dict_edges[match_edge_id].end]
-            if not any([e in undirected_g.neighbors(edge.start) for e in match_edge_nodes]) and not \
-                    any([e in undirected_g.neighbors(edge.end) for e in match_edge_nodes]):
-                g.add_edge(edge.end, dict_edges[match_edge_id].start)
-                g.add_edge(edge.start, dict_edges[match_edge_id].end)
-                fake_edges.append((edge.start, dict_edges[match_edge_id].end))
-                fake_edges.append((edge.end, dict_edges[match_edge_id].start))
+        if is_flye(assembler):
+            ## combine reverse complement edges
+            for edge_id, edge in dict_edges.items():
+                if edge_id.startswith("rc"): continue
+                if suffix == "repeat" and not edge.repetitive: continue
+                match_edge_id = get_match_edge_id(edge_id)
+                if match_edge_id not in dict_edges: continue
+                match_edge_nodes = [dict_edges[match_edge_id].start, dict_edges[match_edge_id].end]
+                if not any([e in undirected_g.neighbors(edge.start) for e in match_edge_nodes]) and not \
+                        any([e in undirected_g.neighbors(edge.end) for e in match_edge_nodes]):
+                    g.add_edge(edge.end, dict_edges[match_edge_id].start)
+                    g.add_edge(edge.start, dict_edges[match_edge_id].end)
+                    fake_edges.append((edge.start, dict_edges[match_edge_id].end))
+                    fake_edges.append((edge.end, dict_edges[match_edge_id].start))
         connected_components = list(nx.weakly_connected_component_subgraphs(g))
         if fake_edges:
             g.remove_edges_from(fake_edges)

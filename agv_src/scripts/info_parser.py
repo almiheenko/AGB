@@ -9,49 +9,36 @@ from agv_src.scripts.utils import get_edge_agv_id, is_empty_file, find_file_by_p
     get_canu_id
 
 
-def parse_abyss_output(input_dirpath):
-    dot_fpath = find_file_by_pattern(input_dirpath, "-scaffolds.dot")
-    if not dot_fpath:
-        print("ERROR! DOT file is not found in %s! Please check the options" % abspath(input_dirpath))
-        sys.exit(1)
-    dict_edges = parse_abyss_dot(dot_fpath)
-    contig_edges = []
-    edges_fpath = None
-    if not is_empty_file(find_file_by_pattern(input_dirpath, "-scaffolds.fa")):
-        edges_fpath = find_file_by_pattern(input_dirpath, "-scaffolds.fa")
-    return dict_edges, contig_edges, edges_fpath
-
-
-def parse_canu_output(input_dirpath, output_dirpath):
+def parse_canu_output(input_dirpath, output_dirpath, min_edge_len):
     gfa_fpath = find_file_by_pattern(input_dirpath, ".unitigs.gfa")
     if not gfa_fpath:
         print("ERROR! GFA file is not found in %s! Please check the options" % abspath(input_dirpath))
         sys.exit(1)
     cmd = "sed -i " + ("''" if is_osx() else "") + ' "1s/bogart.edges/1.0/" ' + gfa_fpath
     subprocess.call(shlex.split(cmd))
-    dict_edges = parse_gfa(gfa_fpath, input_dirpath, assembler="canu")
+    dict_edges = parse_gfa(gfa_fpath, min_edge_len, input_dirpath, assembler="canu")
     contig_edges = parse_canu_assembly_info(input_dirpath, dict_edges)
-    edges_fpath = get_edges_from_gfa(gfa_fpath, output_dirpath)
+    edges_fpath = get_edges_from_gfa(gfa_fpath, output_dirpath, min_edge_len)
     return dict_edges, contig_edges, edges_fpath
 
 
-def parse_flye_output(input_dirpath, output_dirpath):
+def parse_flye_output(input_dirpath, output_dirpath, min_edge_len):
     dot_fpath = find_file_by_pattern(input_dirpath, "assembly_graph.gv") or find_file_by_pattern(input_dirpath, "assembly_graph.dot")
     if not dot_fpath:
         print("ERROR! File %s is not found in %s! Please check the options" % (dot_fpath, abspath(input_dirpath)))
         sys.exit(1)
-    dict_edges = parse_flye_dot(dot_fpath)
+    dict_edges = parse_flye_dot(dot_fpath, min_edge_len)
     contig_edges = parse_flye_assembly_info(input_dirpath, dict_edges)
     gfa_fpath = find_file_by_pattern(input_dirpath, "assembly_graph.gfa")
-    edges_fpath = get_edges_from_gfa(gfa_fpath, output_dirpath)
+    edges_fpath = get_edges_from_gfa(gfa_fpath, output_dirpath, min_edge_len)
     return dict_edges, contig_edges, edges_fpath
 
 
-def parse_spades_output(input_dirpath, output_dirpath):
+def parse_spades_output(input_dirpath, output_dirpath, min_edge_len):
     gfa_fpath = find_file_by_pattern(input_dirpath, "assembly_graph.gfa")
-    dict_edges = parse_gfa(gfa_fpath, input_dirpath, assembler="spades")
+    dict_edges = parse_gfa(gfa_fpath, min_edge_len, input_dirpath, assembler="spades")
     contig_edges = parse_spades_paths(input_dirpath, dict_edges)
-    edges_fpath = get_edges_from_gfa(gfa_fpath, output_dirpath)
+    edges_fpath = get_edges_from_gfa(gfa_fpath, output_dirpath, min_edge_len)
     return dict_edges, contig_edges, edges_fpath
 
 
@@ -125,4 +112,22 @@ def parse_spades_paths(input_dirpath, dict_edges):
                         start += edge_len
                 start += 10  # NNNNNNNNNN
     return contig_edges
+
+
+'''def parse_abyss_output(input_dirpath, output_dirpath):
+    gfa_fpath = find_file_by_pattern(input_dirpath, "-scaffolds.gfa2") or \
+                find_file_by_pattern(input_dirpath, "-scaffolds.gfa") or \
+                find_file_by_pattern(input_dirpath, "-contigs.gfa2") or \
+                find_file_by_pattern(input_dirpath, "-contigs.gfa")
+    if not is_empty_file(gfa_fpath):
+        dict_edges = parse_gfa(gfa_fpath, input_dirpath)
+    else:
+        dot_fpath = find_file_by_pattern(input_dirpath, "-scaffolds.dot") or \
+                    find_file_by_pattern(input_dirpath, "-scaffolds.gv")
+        if not dot_fpath:
+            print("ERROR! DOT file is not found in %s! Please check the options" % abspath(input_dirpath))
+            sys.exit(1)
+        dict_edges = parse_abyss_dot(dot_fpath)
+    contig_edges = []
+    return dict_edges, contig_edges'''
 

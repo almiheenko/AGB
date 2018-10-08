@@ -8,14 +8,14 @@ from os.path import exists
 from agv_src.scripts.config import *
 from agv_src.scripts.graph_parser import parse_gfa, parse_abyss_dot, parse_flye_dot, fastg_to_gfa, get_edges_from_gfa, \
     format_edges_file
-from agv_src.scripts.info_parser import parse_abyss_output, parse_canu_output, parse_flye_output, parse_spades_output
+from agv_src.scripts.info_parser import parse_canu_output, parse_flye_output, parse_spades_output
 from agv_src.scripts.quast_runner import find_errors
 from agv_src.scripts.utils import embed_css_and_scripts, get_scaffolds_fpath, is_empty_file, is_abyss, is_canu, is_flye, \
     is_spades
 from agv_src.scripts.viewer_builder import build_jsons
 
 
-def parse_assembler_output(assembler_name, input_dirpath, input_fpath, output_dirpath, input_fasta_fpath):
+def parse_assembler_output(assembler_name, input_dirpath, input_fpath, output_dirpath, input_fasta_fpath, min_edge_len):
     edges_fpath = None
     if not is_empty_file(input_fpath):
         contig_edges = []
@@ -24,31 +24,29 @@ def parse_assembler_output(assembler_name, input_dirpath, input_fpath, output_di
         if not input_fpath:
             sys.exit("ERROR! Failed parsing " + input_fpath + " file.")
         if input_fpath.endswith("gfa"):
-            dict_edges = parse_gfa(input_fpath)
-            edges_fpath = get_edges_from_gfa(input_fpath, output_dirpath)
+            dict_edges = parse_gfa(input_fpath, min_edge_len)
+            edges_fpath = get_edges_from_gfa(input_fpath, output_dirpath, min_edge_len)
         elif input_fpath.endswith("dot") or input_fpath.endswith("gv"):
             edges_fpath = format_edges_file(input_fasta_fpath, output_dirpath)
             if is_abyss(assembler_name):
-                dict_edges = parse_abyss_dot(input_fpath)
+                dict_edges = parse_abyss_dot(input_fpath, min_edge_len)
             else:
                 try:
-                    dict_edges = parse_flye_dot(input_fpath)
+                    dict_edges = parse_flye_dot(input_fpath, min_edge_len)
                 except:
                     sys.exit("ERROR! Failed parsing " + input_fpath + " file.")
     else:
-        if is_abyss(assembler_name):
-            dict_edges, contig_edges, edges_fpath = parse_abyss_output(input_dirpath)
-        elif is_canu(assembler_name):
-            dict_edges, contig_edges, edges_fpath = parse_canu_output(input_dirpath, output_dirpath)
+        if is_canu(assembler_name):
+            dict_edges, contig_edges, edges_fpath = parse_canu_output(input_dirpath, output_dirpath, min_edge_len)
         elif is_flye(assembler_name):
-            dict_edges, contig_edges, edges_fpath = parse_flye_output(input_dirpath, output_dirpath)
+            dict_edges, contig_edges, edges_fpath = parse_flye_output(input_dirpath, output_dirpath, min_edge_len)
         elif is_spades(assembler_name):
-            dict_edges, contig_edges, edges_fpath = parse_spades_output(input_dirpath, output_dirpath)
+            dict_edges, contig_edges, edges_fpath = parse_spades_output(input_dirpath, output_dirpath, min_edge_len)
         else:
             sys.exit("Assembler %s is not supported yet! Supported assemblers: %s. "
                      "More assemblers will be added in the next release."
                      "You can specify the assembly graph file in GFA/FASTG/GraphViz formats using --graph option "
-                     "and file with edge sequences using --fasta option" %
+                     "and (optionally) file with edge sequences using --fasta option" %
                      (assembler_name, ', '.join(SUPPORTED_ASSEMBLERS)))
     for edge_id, edge in dict_edges.items():
         dict_edges[edge_id].start, dict_edges[edge_id].end = str(edge.start), str(edge.end)
@@ -67,11 +65,12 @@ def main():
     parser.add_option('-o', dest='output_dir', help='Output directory')
     parser.add_option('-r', dest='reference', help='Path to the reference genome')
     parser.add_option('-t', dest='threads', default=DEFAULT_THREADS)
+    parser.add_option('-m', dest='min_edge_len', help='Minimum edge length', default=MIN_EDGE_LEN)
 
-    parser.set_usage('Usage: \n1) ' + __file__ + ' -i assembler_output_dir -o output_dir [-r path_to_reference_genome]'
-                     ' -a assembler_name (supported assemblers: ' + ', '.join(SUPPORTED_ASSEMBLERS) + ')'
-                     '\n2) ' + __file__ + ' --graph assembly_graph_file (supported formats: GFA, FASTG, GraphViz)'
+    parser.set_usage('Usage: \n1) ' + __file__ + ' --graph assembly_graph_file (supported formats: GFA1.2, FASTG, GraphViz)'
                      ' [--fasta file_with_graph_edge_sequences (in FASTA format)] [-r path_to_reference_genome]'
+                     '\n2) ' + __file__ + ' -i assembler_output_dir -o output_dir [-r path_to_reference_genome]'
+                     ' -a assembler_name (supported assemblers: ' + ', '.join(SUPPORTED_ASSEMBLERS) + ')'
                      ' -o output_dir  -a assembler_name (supported assemblers: ' + ', '.join(SUPPORTED_ASSEMBLERS) + ')')
     opts, args = parser.parse_args()
     if not opts.assembler:
@@ -79,7 +78,7 @@ def main():
         sys.exit(1)
 
     if opts.input_dir and opts.input_file:
-        print('ERROR! You should specify assembly graph file OR assembler output folder')
+        print('ERROR! You should specify an assembly graph file OR assembler output folder')
         parser.print_help(file=sys.stderr)
         sys.exit(1)
 
@@ -90,7 +89,8 @@ def main():
 
     if not exists(opts.output_dir):
         os.makedirs(opts.output_dir)
-    dict_edges, contig_edges, edges_fpath = parse_assembler_output(opts.assembler, opts.input_dir, opts.input_file, opts.output_dir, opts.input_fasta)
+    dict_edges, contig_edges, edges_fpath = parse_assembler_output(opts.assembler, opts.input_dir, opts.input_file,
+                                                                   opts.output_dir, opts.input_fasta, opts.min_edge_len)
     scaffolds_fpath = get_scaffolds_fpath(opts.assembler, opts.input_dir)
     json_output_dirpath = join(opts.output_dir, "data")
     if not exists(json_output_dirpath):

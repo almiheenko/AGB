@@ -32,14 +32,14 @@ def build_jsons(dict_edges, input_dirpath, output_dirpath, mapping_info, chrom_n
 
     undirected_g = g.to_undirected()
     print("Building JSON files...")
-    edges_by_component = process_graph(g, undirected_g, dict_edges, edges_by_nodes, two_way_edges, output_dirpath, 'def')
+    edges_by_component = process_graph(g, undirected_g, dict_edges, edges_by_nodes, two_way_edges, output_dirpath, 'def', assembler)
     edges_by_repeat_component = process_graph(repeat_g, undirected_g, dict_edges, edges_by_nodes, two_way_edges,
-                                              output_dirpath, 'repeat', base_graph=g)
+                                              output_dirpath, 'repeat', assembler, base_graph=g)
     edges_by_ref_component = process_graph(g, undirected_g, dict_edges, edges_by_nodes, two_way_edges,
-                                           output_dirpath, 'ref', chrom_names=chrom_names,
+                                           output_dirpath, 'ref', assembler, chrom_names=chrom_names,
                                            edge_by_chrom=edge_by_chrom, mapping_info=mapping_info)
     edges_by_contig_component = process_graph(g, undirected_g, dict_edges, edges_by_nodes, two_way_edges,
-                                              output_dirpath, 'contig', contig_edges=contig_edges)
+                                              output_dirpath, 'contig', assembler, contig_edges=contig_edges)
     create_contig_info(dict_edges, input_dirpath, output_dirpath, contig_edges,
                        edges_by_component, edges_by_repeat_component, edges_by_ref_component, assembler)
     with open(join(output_dirpath, 'title.json'), 'w') as handle:

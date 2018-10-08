@@ -46,7 +46,8 @@ def get_scaffolds_fpath(assembler, input_dirpath):
     scaffolds_fpath = None
     if input_dirpath:
         if is_abyss(assembler):
-            scaffolds_fpath = find_file_by_pattern(input_dirpath, "-scaffolds.fa")
+            scaffolds_fpath = find_file_by_pattern(input_dirpath, "-scaffolds.fa") or \
+                              find_file_by_pattern(input_dirpath, "-contigs.fa")
         elif is_canu(assembler):
             scaffolds_fpath = find_file_by_pattern(input_dirpath, ".contigs.fasta")
         elif is_flye(assembler):

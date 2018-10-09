@@ -487,6 +487,8 @@ function buildVertexTable() {
         nodeInfo['out'] = 0;
         nodeInfo['in_mult'] = 0;
         nodeInfo['out_mult'] = 0;
+        var inCoverage = 0;
+        var outCoverage = 0;
         nodeInfo['loop'] = 0;
         for (i = 0; i < Object.keys(graph[node]).length; i++) {
             node2 = Object.keys(graph[node])[i];
@@ -509,6 +511,7 @@ function buildVertexTable() {
                         if (edgeData[edgeRealId] && checkEdge(edgeRealId)) {
                             nodeInfo['out']++;
                             nodeInfo['out_mult'] = nodeInfo['out_mult'] + edgeData[edgeRealId].mult;
+                            outCoverage += edgeData[edgeRealId].cov;
                         }
                     }
                 }
@@ -520,6 +523,7 @@ function buildVertexTable() {
                         if (edgeData[edgeRealId] && checkEdge(edgeRealId)) {
                             nodeInfo['in']++;
                             nodeInfo['in_mult'] = nodeInfo['in_mult'] + edgeData[edgeRealId].mult;
+                            inCoverage += edgeData[edgeRealId].cov;
                         }
                     }
                     /*else if (loopEdgeDict[edgeId]) {
@@ -531,7 +535,7 @@ function buildVertexTable() {
             }
         }
         nodeInfo['balance'] = Math.abs(nodeInfo['out_mult'] - nodeInfo['in_mult']);
-        if (nodeInfo['balance'] / (nodeInfo['out_mult'] + nodeInfo['in_mult']) > 0.05)
+        if (inCoverage && outCoverage && Math.abs(1 - (inCoverage / outCoverage)) > 0.1)
             unbalancedNodes.add(node);
         nodeInfo['size'] = clusterNodeSizeDict[node] || 0;
         if (!adjEdges[node]) adjEdges[node] = edgeId;

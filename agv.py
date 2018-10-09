@@ -23,7 +23,7 @@ def parse_assembler_output(assembler_name, input_dirpath, input_fpath, output_di
             input_fpath = fastg_to_gfa(input_fpath, output_dirpath, assembler_name)
         if not input_fpath:
             sys.exit("ERROR! Failed parsing " + input_fpath + " file.")
-        if input_fpath.endswith("gfa"):
+        if input_fpath.endswith("gfa") or input_fpath.endswith("gfa2"):
             dict_edges = parse_gfa(input_fpath, min_edge_len)
             edges_fpath = get_edges_from_gfa(input_fpath, output_dirpath, min_edge_len)
         elif input_fpath.endswith("dot") or input_fpath.endswith("gv"):
@@ -62,16 +62,17 @@ def main():
     parser.add_option('-i', dest='input_dir', help='Assembler output folder')
     parser.add_option('--graph', dest='input_file', help='Assembly graph in GraphViz/GFA/FASTG format')
     parser.add_option('--fasta', dest='input_fasta', help='FASTA file with graph edge sequences')
-    parser.add_option('-o', dest='output_dir', help='Output directory')
+    parser.add_option('-o', dest='output_dir', help='Output directory', default='agb_output')
     parser.add_option('-r', dest='reference', help='Path to the reference genome')
     parser.add_option('-t', dest='threads', default=DEFAULT_THREADS)
     parser.add_option('-m', dest='min_edge_len', help='Minimum edge length', default=MIN_EDGE_LEN)
 
-    parser.set_usage('Usage: \n1) ' + __file__ + ' --graph assembly_graph_file (supported formats: GFA1.2, FASTG, GraphViz)'
+    parser.set_usage('Usage: \n1) ' + __file__ + ' -o output_dir -a assembler_name'
+                     ' --graph assembly_graph_file (supported formats: GFA1/2, FASTG, GraphViz)'
                      ' [--fasta file_with_graph_edge_sequences (in FASTA format)] [-r path_to_reference_genome]'
-                     '\n2) ' + __file__ + ' -i assembler_output_dir -o output_dir [-r path_to_reference_genome]'
+                     '\n2) ' + __file__ + ' -i assembler_output_dir -o output_dir '
                      ' -a assembler_name (supported assemblers: ' + ', '.join(SUPPORTED_ASSEMBLERS) + ')'
-                     ' -o output_dir  -a assembler_name (supported assemblers: ' + ', '.join(SUPPORTED_ASSEMBLERS) + ')')
+                     ' [-r path_to_reference_genome]')
     opts, args = parser.parse_args()
     if not opts.assembler:
         parser.print_help(file=sys.stderr)

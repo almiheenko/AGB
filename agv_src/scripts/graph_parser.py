@@ -11,7 +11,7 @@ from agv_src.scripts.config import *
 from agv_src.scripts.edge import Edge
 from agv_src.scripts.utils import get_edge_agv_id, calculate_median_cov, get_edge_num, find_file_by_pattern, \
     is_empty_file, can_reuse, is_osx, is_abyss, is_spades, is_velvet, is_soap, is_sga, get_match_edge_id, \
-    edge_id_to_name
+    edge_id_to_name, get_filename
 
 repeat_colors = ["red", "darkgreen", "blue", "goldenrod", "cadetblue1", "darkorchid", "aquamarine1",
                  "darkgoldenrod1", "deepskyblue1", "darkolivegreen3"]
@@ -128,7 +128,7 @@ def parse_canu_unitigs_info(input_dirpath, dict_edges):
 
 
 def get_edges_from_gfa(gfa_fpath, output_dirpath, min_edge_len):
-    input_edges_fpath = gfa_fpath.replace("gfa", "fasta")
+    input_edges_fpath = get_filename(gfa_fpath) + ".fasta"
     edges_fpath = join(output_dirpath, basename(input_edges_fpath))
     if not is_empty_file(gfa_fpath) and not can_reuse(edges_fpath, files_to_check=[gfa_fpath]):
         gfa = gfapy.Gfa.from_file(gfa_fpath, vlevel=0)
@@ -185,14 +185,21 @@ def fastg_to_gfa(input_fpath, output_dirpath, assembler_name):
 
 
 def parse_gfa(gfa_fpath, min_edge_len, input_dirpath=None, assembler=None):
+    print("Parsing " + gfa_fpath + "...")
     gfa = gfapy.Gfa.from_file(gfa_fpath, vlevel = 0)
     links = []
     edge_overlaps = defaultdict(dict)
     with open(gfa_fpath) as f:
         for line in f:
-            if line[0] != 'L':
+            if line[0] != 'L' and line[0] != 'E':
                 continue
-            _, from_name, from_orient, to_name, to_orient = line.split()[:5]
+            if line[0] == 'L':
+                _, from_name, from_orient, to_name, to_orient = line.split()[:5]
+            else:
+                # E       *       2+      65397+  21      68$     0       47      47M
+                from_name, to_name = line.split()[2], line.split()[3]
+                from_orient, to_orient = from_name[-1], to_name[-1]
+                from_name, to_name = from_name[:-1], to_name[:-1]
             edge1 = get_edge_agv_id(get_edge_num(from_name))
             edge2 = get_edge_agv_id(get_edge_num(to_name))
             if from_orient == '-': edge1 = get_match_edge_id(edge1)
@@ -273,30 +280,30 @@ def construct_graph(dict_edges, predecessors, successors):
     for edge_id in dict_edges.keys():
         start_node = None
         for prev_e in predecessors[edge_id]:
-            if dict_edges[prev_e].end:
+            if prev_e in dict_edges and dict_edges[prev_e].end:
                 start_node = dict_edges[prev_e].end
-            if dict_edges[edge_id].repetitive and dict_edges[prev_e].repetitive:
+            if prev_e in dict_edges and dict_edges[edge_id].repetitive and dict_edges[prev_e].repetitive:
                 graph[edge_id].add(prev_e)
         for prev_e in predecessors[edge_id]:
             for next_e in successors[prev_e]:
-                if dict_edges[next_e].start:
+                if next_e in dict_edges and dict_edges[next_e].start:
                     start_node = dict_edges[next_e].start
-                if dict_edges[edge_id].repetitive and dict_edges[next_e].repetitive:
+                if next_e in dict_edges and dict_edges[edge_id].repetitive and dict_edges[next_e].repetitive:
                     graph[edge_id].add(next_e)
         if not start_node:
             start_node = node_id
             node_id += 1
         end_node = None
         for next_e in successors[edge_id]:
-            if dict_edges[next_e].start:
+            if next_e in dict_edges and dict_edges[next_e].start:
                 end_node = dict_edges[next_e].start
-            if dict_edges[edge_id].repetitive and dict_edges[next_e].repetitive:
+            if next_e in dict_edges and dict_edges[edge_id].repetitive and dict_edges[next_e].repetitive:
                 graph[edge_id].add(next_e)
         for next_e in successors[edge_id]:
             for prev_e in predecessors[next_e]:
-                if dict_edges[prev_e].end:
+                if prev_e in dict_edges and dict_edges[prev_e].end:
                     end_node = dict_edges[prev_e].end
-                if dict_edges[edge_id].repetitive and dict_edges[prev_e].repetitive:
+                if prev_e in dict_edges and dict_edges[edge_id].repetitive and dict_edges[prev_e].repetitive:
                     graph[edge_id].add(prev_e)
         if not end_node:
             end_node = node_id

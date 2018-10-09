@@ -2,7 +2,7 @@
 
 import os
 import sys
-from optparse import OptionParser
+from optparse import OptionParser, OptionGroup
 from os.path import exists
 
 from agv_src.scripts.config import *
@@ -58,21 +58,25 @@ def main():
         'The program will create interactive assembly graph viewer')
     parser = OptionParser(description=description)
 
-    parser.add_option('-a', '--assembler', dest='assembler', help='Used assembler (ABYSS, Canu, Flye, SPAdes)') #, choices=[ABYSS_NAME, CANU_NAME, FLYE_NAME, SPADES_NAME])
-    parser.add_option('-i', dest='input_dir', help='Assembler output folder')
-    parser.add_option('--graph', dest='input_file', help='Assembly graph in GraphViz/GFA/FASTG format')
-    parser.add_option('--fasta', dest='input_fasta', help='FASTA file with graph edge sequences')
-    parser.add_option('-o', dest='output_dir', help='Output directory', default='agb_output')
-    parser.add_option('-r', dest='reference', help='Path to the reference genome')
-    parser.add_option('-t', dest='threads', default=DEFAULT_THREADS)
-    parser.add_option('-m', dest='min_edge_len', help='Minimum edge length', default=MIN_EDGE_LEN)
+    group = OptionGroup(parser, "Common Options",
+                        "Options that can be used in any mode")
+    group.add_option('-a', '--assembler', dest='assembler', help='Required. Assembler name.') #, choices=[ABYSS_NAME, CANU_NAME, FLYE_NAME, SPADES_NAME])
+    group.add_option('-o', dest='output_dir', help='Output directory [default: agb_output]', default='agb_output')
+    group.add_option('-r', dest='reference', help='Path to the reference genome')
+    group.add_option('-t', dest='threads', help='Maximum number of threads [default: %d]' % DEFAULT_THREADS, default=DEFAULT_THREADS)
+    group.add_option('-m', dest='min_edge_len', help='Lower threshold for edge length [default: %d]' % MIN_EDGE_LEN, default=MIN_EDGE_LEN)
+    parser.add_option_group(group)
 
-    parser.set_usage('Usage: \n1) ' + __file__ + ' -o output_dir -a assembler_name'
-                     ' --graph assembly_graph_file (supported formats: GFA1/2, FASTG, GraphViz)'
-                     ' [--fasta file_with_graph_edge_sequences (in FASTA format)] [-r path_to_reference_genome]'
-                     '\n2) ' + __file__ + ' -i assembler_output_dir -o output_dir '
-                     ' -a assembler_name (supported assemblers: ' + ', '.join(SUPPORTED_ASSEMBLERS) + ')'
-                     ' [-r path_to_reference_genome]')
+    group = OptionGroup(parser, "Special Options")
+    group.add_option('-i', dest='input_dir', help='Assembler output folder')
+    group.add_option('--graph', dest='input_file', help='Assembly graph in GFA1/GFA2/Graphviz/FASTG format. Cannot be used with -i option')
+    group.add_option('--fasta', dest='input_fasta', help='FASTA file with graph edge sequences. Cannot be used with -i option')
+    parser.add_option_group(group)
+
+    parser.set_usage('Usage: \n1) ' + __file__ + ' [options]'
+                     ' --graph assembly_graph_file [--fasta file_with_graph_edge_sequences]'
+                     '\n2) ' + __file__ + ' [options] -i assembler_output_dir (supported for %s)' % ', '.join(SUPPORTED_ASSEMBLERS))
+
     opts, args = parser.parse_args()
     if not opts.assembler:
         parser.print_help(file=sys.stderr)

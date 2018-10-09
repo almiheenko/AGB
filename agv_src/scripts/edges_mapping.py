@@ -83,7 +83,8 @@ def parse_mapping_info(mapping_fpath, json_output_dir, contig_edges, dict_edges)
                 for align in aligns[:3]:
                     edge_alignment += " %s-%s," % (format_pos(align[1]), format_pos(align[2]))
                 dict_edges[edge_id].aligns[chrom] = edge_alignment[:-1]
-                dict_edges[get_match_edge_id(edge_id)].aligns[chrom] = edge_alignment[:-1]
+                if get_match_edge_id(edge_id) in dict_edges:
+                    dict_edges[get_match_edge_id(edge_id)].aligns[chrom] = edge_alignment[:-1]
 
     chrom_len_dict = OrderedDict((chrom, chrom_lengths[chrom]) for i, chrom in enumerate(list(natural_sort(chrom_names))))
     non_alt_chroms = [c for c in chrom_names if 'alt' not in c and 'random' not in c and 'chrUn' not in c]

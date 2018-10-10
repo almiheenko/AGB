@@ -9,7 +9,7 @@ from os.path import join, relpath
 from setuptools import setup, find_packages
 
 
-package_name = "agv_src"
+package_name = "agb_src"
 def find_package_files(dirpath):
     paths = []
     for (path, dirs, fnames) in os.walk(join(package_name, dirpath)):
@@ -18,17 +18,17 @@ def find_package_files(dirpath):
     return paths
 
 setup(
-    name='AGV',
+    name='AGB',
 
     # Versions should comply with PEP440.  For a discussion on single-sourcing
     # the version across setup.py and the project code, see
     # https://packaging.python.org/en/latest/single_source_version.html
     version="0.1",
 
-    description='Assembly Graph Viewer',
+    description='Assembly Graph Browser',
 
     # The project's main homepage.
-    url='https://github.com/almiheenko/AGV',
+    url='https://github.com/almiheenko/AGB',
 
     # Author details
     author='Alla Mikheenko',

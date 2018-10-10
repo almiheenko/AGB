@@ -109,6 +109,10 @@ def format_pos(number):
     return s + ' '.join(reversed(groups))
 
 
+def is_acgt_seq(seq):
+    return seq[0] in {'A', 'C', 'G', 'T', 'N', 'a', 'c', 'g', 't', 'n'}
+
+
 def get_edge_num(edge_id):
     return int(''.join(x for x in edge_id if x.isdigit()))
 

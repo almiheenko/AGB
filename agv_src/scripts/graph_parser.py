@@ -11,7 +11,7 @@ from agv_src.scripts.config import *
 from agv_src.scripts.edge import Edge
 from agv_src.scripts.utils import get_edge_agv_id, calculate_median_cov, get_edge_num, find_file_by_pattern, \
     is_empty_file, can_reuse, is_osx, is_abyss, is_spades, is_velvet, is_soap, is_sga, get_match_edge_id, \
-    edge_id_to_name, get_filename
+    edge_id_to_name, get_filename, is_acgt_seq
 
 repeat_colors = ["red", "darkgreen", "blue", "goldenrod", "cadetblue1", "darkorchid", "aquamarine1",
                  "darkgoldenrod1", "deepskyblue1", "darkolivegreen3"]
@@ -132,13 +132,20 @@ def get_edges_from_gfa(gfa_fpath, output_dirpath, min_edge_len):
     edges_fpath = join(output_dirpath, basename(input_edges_fpath))
     if not is_empty_file(gfa_fpath) and not can_reuse(edges_fpath, files_to_check=[gfa_fpath]):
         print("Extracting edge sequences from " + gfa_fpath + "...")
-        gfa = gfapy.Gfa.from_file(gfa_fpath, vlevel=0)
-        with open(edges_fpath, "w") as f:
-            for edge in gfa.segments:
-                if edge.sequence and len(edge.sequence) >= min_edge_len:
-                    f.write(">%s\n" % get_edge_agv_id(get_edge_num(edge.name)))
-                    f.write(edge.sequence)
-                    f.write("\n")
+        with open(edges_fpath, "w") as out:
+            with open(gfa_fpath) as f:
+                for line in f:
+                    if line.startswith('S'):
+                        fs = line.strip().split()
+                        seq_name = fs[1]
+                        if is_acgt_seq(fs[2]):
+                            seq = fs[2]
+                        elif len(fs) >= 4 and is_acgt_seq(fs[3]):
+                            seq = fs[3]
+                        if seq and len(seq) >= min_edge_len:
+                            out.write(">%s\n" % get_edge_agv_id(get_edge_num(seq_name)))
+                            out.write(seq)
+                            out.write("\n")
     if is_empty_file(edges_fpath) and not is_empty_file(gfa_fpath) and not is_empty_file(input_edges_fpath):
         return input_edges_fpath
     return edges_fpath

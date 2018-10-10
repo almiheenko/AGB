@@ -318,35 +318,12 @@ function highlightChromEdges() {
     $('#uniqueChromEdgesWarning').hide();
     var firstEdge;
     if (!isNaN(parseInt(selectedChrom))) {
-        graphPath = '<b>Edges:</b> '
         selectedEdges = new Set();
         for (i = 0; i < chromEdges.length; i++) {
             var edgeId = chromEdges[i];
             var edgeElId = getEdgeElement(edgeData[edgeId]);
             visEdgeId = d3.select('#' + edgeId).empty() ? edgeElId : edgeId; 
-            if (!d3.select('#' + visEdgeId).empty()) {
-                 if (!firstEdge) firstEdge = edgeId;
-                 if (edgeDataFull[edgeId].unique)
-                    graphPath = graphPath + '<b>' + edgeData[edgeId].id + '</b>';
-                 else
-                    graphPath = graphPath + edgeData[edgeId].id + ' (' + edgeDataFull[edgeId].mult + ')';
-                 d3.select('#' + visEdgeId).selectAll('path')
-                   .filter(function(d) {return d3.select(this).attr('stroke') !== '#ffffff'; }).classed('contig_selected',true);
-                 d3.select('#' + visEdgeId).selectAll('polygon').classed('contig_selected',true);
-            }
-            else {
-                 if (edgeDataFull[edgeId].unique)
-                    graphPath = graphPath + '<span class="gray_text"><b>' + edgeData[edgeId].id + '</b></span>';
-                 else
-                    graphPath = graphPath + '<span class="gray_text">' + edgeData[edgeId].id + '</span> (' + edgeDataFull[edgeId].mult + ')';
-                isHiddenEdges = true;
-            }
-            selectedEdges.add(edge);
-            if (i < chromEdges.length - 1) graphPath += ', ';
-        }
-        if (graphPath) {
-            graphPath = graphPath + ' </br><a href="fa2.html?' + Array.from(selectedEdges).join(',') + '" target="blank">Show detailed path</a>';
-            if (isHiddenEdges && $('#uniqueChromEdgesWarning').attr('display') != 'none') $('#wrongOptionsChromWarning').show();
+            if (!d3.select('#' + visEdgeId).empty()) selectedEdges.add(edge);
         }
     }
     document.getElementById("chromPath").innerHTML = graphPath;
@@ -746,8 +723,11 @@ function hideEdgesByThresholds(doRefresh, doAnimate, doRefreshTables) {
             edge_len = parseFloat(matches[1]);
             coverage = parseInt(matches[2]);
             var edge_width = 2;
-            var multiplicity = Math.max(1, Math.round(coverage / median_cov));
-            if (multiplicity > 1) edge_width = 5;
+            var multiplicity = coverage / median_cov;
+            multiplicity = multiplicity < 1.75 ? 1 : Math.round(multiplicity);
+            if (multiplicity > 10) edge_width = 9;
+            else if (multiplicity > 5) edge_width = 7;
+            else if (multiplicity > 1) edge_width = 5;
             //else edge_width = multiplicity;
             dotSrcLines[i] = dotSrcLines[i].replace("]", ", penwidth=" + edge_width + " ]");
             if (colorChromEdges) {

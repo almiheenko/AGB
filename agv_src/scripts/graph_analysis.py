@@ -52,12 +52,14 @@ def process_graph(g, undirected_g, dict_edges, edges_by_nodes, two_way_edges, ou
                 _, _, edge_id = edge
                 edge_ids.add(edge_id)
                 edge_ids.add(get_match_edge_id(edge_id))
+            filtered_edge_ids = set()
             for edge_id in edge_ids:
-                contig_g.add_edge(dict_edges[edge_id].start, dict_edges[edge_id].end)
-                edge_ids.add(edge_id)
+                if edge_id in dict_edges:
+                    contig_g.add_edge(dict_edges[edge_id].start, dict_edges[edge_id].end)
+                    filtered_edge_ids.add(edge_id)
             viewer_data, last_idx, sub_complex_component = \
                 split_graph(contig_g, g, undirected_g, dict_edges, modified_dict_edges, loop_edges, edges_by_nodes,
-                            two_way_edges, last_idx, parts_info, contig_edges=edge_ids)
+                            two_way_edges, last_idx, parts_info, contig_edges=filtered_edge_ids)
             parts_info = viewer_data.parts_info
             for i in range(len(viewer_data.g)):
                 contig_list.append(contig)

@@ -131,6 +131,7 @@ def get_edges_from_gfa(gfa_fpath, output_dirpath, min_edge_len):
     input_edges_fpath = get_filename(gfa_fpath) + ".fasta"
     edges_fpath = join(output_dirpath, basename(input_edges_fpath))
     if not is_empty_file(gfa_fpath) and not can_reuse(edges_fpath, files_to_check=[gfa_fpath]):
+        print("Extracting edge sequences from " + gfa_fpath + "...")
         gfa = gfapy.Gfa.from_file(gfa_fpath, vlevel=0)
         with open(edges_fpath, "w") as f:
             for edge in gfa.segments:
@@ -241,6 +242,8 @@ def parse_gfa(gfa_fpath, min_edge_len, input_dirpath=None, assembler=None):
     for i, n in enumerate(gfa.segments):
         if n.KC:
             cov = max(1, n.KC / n.length)  ## k-mer count / edge length
+        elif n.dp:
+            cov = n.dp  ## coverage depth
         else:
             cov = 1
         if not n.length or n.length >= min_edge_len:

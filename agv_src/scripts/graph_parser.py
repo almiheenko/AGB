@@ -128,6 +128,9 @@ def parse_canu_unitigs_info(input_dirpath, dict_edges):
 
 
 def get_edges_from_gfa(gfa_fpath, output_dirpath, min_edge_len):
+    if is_empty_file(gfa_fpath):
+        return None
+
     input_edges_fpath = get_filename(gfa_fpath) + ".fasta"
     edges_fpath = join(output_dirpath, basename(input_edges_fpath))
     if not is_empty_file(gfa_fpath) and not can_reuse(edges_fpath, files_to_check=[gfa_fpath]):
@@ -138,6 +141,7 @@ def get_edges_from_gfa(gfa_fpath, output_dirpath, min_edge_len):
                     if line.startswith('S'):
                         fs = line.strip().split()
                         seq_name = fs[1]
+                        seq = None
                         if is_acgt_seq(fs[2]):
                             seq = fs[2]
                         elif len(fs) >= 4 and is_acgt_seq(fs[3]):

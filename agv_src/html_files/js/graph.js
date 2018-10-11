@@ -176,6 +176,7 @@ function render(doRefresh, doAnimate, doRefreshTables) {
                 var curEdge = edgeDataFull[edgeId] || edgeDataFull[edgeId];
                 if (curEdge) {
                     tooltipDiv.transition()
+                        .delay(500)
                         .duration(200)
                         .style("opacity", .9);
                     edgeDescription = "<b>Edge:</b> " + curEdge.name + ", <b>length:</b> " + curEdge.len +
@@ -196,7 +197,7 @@ function render(doRefresh, doAnimate, doRefreshTables) {
             .on("mouseleave", function (e) {
                 d3.select(this).classed("focused", false);
                 tooltipDiv.transition()
-                 .duration(500)
+                 .duration(300)
                  .style("opacity", 0);
             });
         edges

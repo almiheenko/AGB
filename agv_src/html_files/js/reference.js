@@ -83,6 +83,7 @@ function updateRefView() {
         })
               .on("mouseover", function(align) {
                    tooltipDiv.transition()
+                       .delay(500)
                      .duration(200)
                      .style("opacity", .9);
                    numMisassemblies = align.ms.length == 0 ? 0 : (align.ms.indexOf(';') !== -1 ? 2 : 1);
@@ -94,7 +95,7 @@ function updateRefView() {
                })
               .on("mouseout", function() {
                    tooltipDiv.transition()
-                     .duration(500)
+                     .duration(300)
                      .style("opacity", 0);
                });
         if (selectedAlign) selectAlign(selectedAlign);

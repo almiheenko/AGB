@@ -72,7 +72,7 @@ def parse_alignments(alignments_fpath, json_output_dirpath):
             if start - prev_end > GAP_THRESHOLD:
                 gaps_info[chrom].append((prev_end, start - 1))
             prev_end = max(prev_end, end)
-            align = {'s': start, 'e': end, 'edge': edge_id, 'ms': ','.join(ms_info[(chrom, start, end)])}
+            align = {'s': start, 'e': end, 'edge': edge_id, 'ms': ';'.join(ms_info[(chrom, start, end)])}
             aligns_by_chroms[chrom].append(align)
     with open(join(json_output_dirpath, 'reference.json'), 'w') as handle:
         handle.write("gaps='" + json.dumps(gaps_info) + "';\n")

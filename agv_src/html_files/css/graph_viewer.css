@@ -239,6 +239,19 @@ path.contig_selected  {
   cursor: move;
   fill: none;
 }
+
+div.tooltip {
+  position: absolute;
+  text-align: center;
+  width: auto;
+  height: 45px;
+  padding: 2px;
+  font: 12px sans-serif;
+  background: rgb(156, 207, 222);
+  border: 0px;
+  border-radius: 8px;
+  pointer-events: none;
+}
 /*!
 * jquery.fixedHeaderTable. The jQuery fixedHeaderTable plugin
 *

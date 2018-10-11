@@ -1,4 +1,4 @@
-var chromosomeView, xAxis, zoom, aligns, selectedAlign, selectedAlignId;
+var chromosomeView, xAxis, zoom, aligns, selectedAlign, selectedAlignId, tooltipDiv;
 var chromHeight = 30;
 
 function addRefView() {
@@ -19,14 +19,17 @@ function addRefView() {
             .attr('height', chromHeight);
         xAxis = chromosomeView.append("g")
           .attr("transform", "translate(0," + chromHeight + ")");
-        // Zoom Function
+
         zoom = d3.zoom()
             .scaleExtent([1, 32])
             .translateExtent([[0, 0], [chromViewWidth, chromHeight]])
             .extent([[0, 0], [chromViewWidth, chromHeight]])
             .on("zoom", zoomFunction);
-
         chromosomeView.call(zoom);
+
+        tooltipDiv = d3.select("body").append("div")
+            .attr("class", "tooltip")
+            .style("opacity", 0);
     }
     else {
         chromosomeView.select('.chromBg')
@@ -72,14 +75,28 @@ function updateRefView() {
                         return 'translate(' + xScale(align.s) + ',0)';
                     })
                     .attr('width', function (align) {
-                        return xScale(align.e - align.s)
+                        return xScale(align.e) - xScale(align.s);
                     })
                     .attr('height', chromHeight);
         aligns.on('click', function (align) {
             selectAlign(align, this);
         })
-        .on('mouseenter', glow)
-        .on('mouseleave', disglow);
+              .on("mouseover", function(align) {
+                   tooltipDiv.transition()
+                     .duration(200)
+                     .style("opacity", .9);
+                   numMisassemblies = align.ms.length == 0 ? 0 : (align.ms.indexOf(';') !== -1 ? 2 : 1);
+                   tooltipDiv.html("<b>Edge:</b> " + edgeData[align.edge].name +
+                       "<br> <b>Aligned to:</b> " + align.s + "-" + align.e +
+                       "<br> " + numMisassemblies + " misassemblies")
+                     .style("left", (d3.event.pageX) + "px")
+                     .style("top", (d3.event.pageY - 28) + "px");
+               })
+              .on("mouseout", function() {
+                   tooltipDiv.transition()
+                     .duration(500)
+                     .style("opacity", 0);
+               });
         if (selectedAlign) selectAlign(selectedAlign);
     }
 }

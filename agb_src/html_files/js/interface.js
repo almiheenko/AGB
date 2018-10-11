@@ -204,7 +204,7 @@ function addColorSelect(){
         selectOptions += '<option value="1">edges mapping to reference</option>';
         selectOptions += '<option value="2">erroneous edges</option>';
     }
-    selectOptions += '<option value="3">high covered edges</option>';
+    // selectOptions += '<option value="3">high covered edges</option>';
     document.getElementById("color_select").innerHTML = selectOptions;
 }
 

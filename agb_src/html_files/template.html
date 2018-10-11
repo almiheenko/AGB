@@ -353,7 +353,7 @@ var refPartitionDict = JSON.parse(ref_parts_info);
 var srcPartDict = partitionDict;
 if (srcPartDict['part' + componentN] && srcPartDict['part' + componentN].big) $('#partition_warning').show();
 
-var selectedMethod;
+var selectedMethod = "default";
 
 var loopEdgeDict = JSON.parse(def_loop_edges);
 var baseLoopEdgeDict = JSON.parse(def_loop_edges);

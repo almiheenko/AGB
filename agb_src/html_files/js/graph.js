@@ -108,8 +108,8 @@ function render(doRefresh, doAnimate, doRefreshTables) {
             .attr("id", function(d) { return "node" + d.key; })
         buildVertexTable();
         buildContigsTable();
+        buildEdgesTable();
         if (doRefreshTables) {
-            buildEdgesTable();
             buildRefTable();
             buildComponentsTable();
         }
@@ -923,6 +923,8 @@ function checkEdge(edgeId, targetChrom) {
     if (!edge)
         return false;
     if (!checkEdgeWithThresholds(edge))
+        return false;
+    if (selectedMethod == "default" && getEdgeComponent(edgeId) !== componentN)
         return false;
     if ($('#collapse_repeats_checkbox')[0].checked && !edgeData[edgeId].unique && !expandedNodes.has(source) && !expandedNodes.has(end))
         return false;

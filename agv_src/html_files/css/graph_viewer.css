@@ -104,12 +104,12 @@ input:disabled+label {
 }
 
 .focused path {
-    stroke-width: 5 !important;
+    stroke-width: 6 !important;
 }
 
 .selected path {
     stroke-dasharray: 10,5;
-    stroke-width: 5 !important;
+    stroke-width: 6 !important;
 }
 
 .selected ellipse {
@@ -244,8 +244,8 @@ div.tooltip {
   position: absolute;
   text-align: center;
   width: auto;
-  height: 45px;
-  padding: 2px;
+  height: auto;
+  padding: 4px;
   font: 12px sans-serif;
   background: rgb(156, 207, 222);
   border: 0px;

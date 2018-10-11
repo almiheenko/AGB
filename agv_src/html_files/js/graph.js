@@ -171,10 +171,33 @@ function render(doRefresh, doAnimate, doRefreshTables) {
         edges = d3.selectAll('.edge');
         edges
             .on("mouseenter", function (e) {
-                d3.select(this).classed("focused", true)
+                d3.select(this).classed("focused", true);
+                var edgeId = d3.select(this).attr('id');
+                var curEdge = edgeDataFull[edgeId] || edgeDataFull[edgeId];
+                if (curEdge) {
+                    tooltipDiv.transition()
+                        .duration(200)
+                        .style("opacity", .9);
+                    edgeDescription = "<b>Edge:</b> " + curEdge.name + ", <b>length:</b> " + curEdge.len +
+                        "kb, <b>coverage:</b> " + curEdge.cov + "x";
+
+                    curEdge = edgeInfo[edgeId] ? edgeId : edgeData[edgeId].el_id;
+                    if (edgeMappingInfo && edgeMappingInfo[curEdge] && edgeMappingInfo[curEdge].length > 0) {
+                        edgeDescription = edgeDescription + '<br/><b>Reference chromosomes: </b>' + edgeMappingInfo[curEdge].join(", ");
+                    }
+                    if (edgeInfo && edgeInfo[curEdge] && edgeInfo[curEdge].length > 0) {
+                        edgeDescription = edgeDescription + '<br/><b>Contigs: </b>' + edgeInfo[curEdge].join(", ");
+                    }
+                    tooltipDiv.html(edgeDescription)
+                        .style("left", (d3.event.pageX + 10) + "px")
+                        .style("top", (d3.event.pageY - 30) + "px");
+                }
             })
             .on("mouseleave", function (e) {
-                d3.select(this).classed("focused", false)
+                d3.select(this).classed("focused", false);
+                tooltipDiv.transition()
+                 .duration(500)
+                 .style("opacity", 0);
             });
         edges
             .on("click", function (e) {

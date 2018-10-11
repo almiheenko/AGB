@@ -648,9 +648,11 @@ function buildComponentsTable() {
         ($('#collapse_repeats_checkbox')[0].checked ? "" : "<th># repeat edges</th>") +
         (selectedMethod == "ref" || selectedMethod == "contig" ? "<th># components</th>" : "") +
         "<th>Total len (" + factorText + ")</th>" + (showExits ? "<th># entrances</th><th># exits</th>" : "") + "</tr></thead><tbody>";
+    var numRows = 0;
     for (i = 0; i < components.length; i++) {
-        if (components[i]['len']) {
+        if (components[i]['len'] && (components.length < 1000 || components[i]['unique'] > 1 || components[i]['repeat'] > 1)) {
             len = Math.round(components[i]['len'] * 10 / factor) ? Math.round(components[i]['len'] * 10 / factor) / 10 : Math.round(components[i]['len'] * 100 / factor) / 100;
+            numRows++;
             table += "<tr id='componentrow" + components[i]['id'] + "'><td>" + (components[i]['id'] + 1) +
                 "</td><td>" + (components[i]['unique'] ? components[i]['unique'] : "-") +
                 ($('#collapse_repeats_checkbox')[0].checked ? "" : "</td><td>" + (components[i]['repeat'] ? components[i]['repeat'] : "-")) + 
@@ -662,14 +664,17 @@ function buildComponentsTable() {
         }
     }
     table += "</tbody></table>";
+    if (numRows < components.length) $('#numberRowsWarning').show();
+    else $('#numberRowsWarning').hide();
     document.getElementById("components_table_div").innerHTML = table;
     $("#components_table tbody tr").click(function(){
         selectedComponent = parseInt($(this).find('td:first').html()) - 1;
         componentN = selectedComponent;
         changeComponent(selectedComponent);
     });
-    if (components.length < 1000)
+    if (numRows < 1000) {
         sorttable.makeSortable(document.getElementById("components_table"));
+    }
 }
 
 function changeToChromosome(chromN) {

@@ -9,7 +9,7 @@ from agv_src.scripts.config import *
 from agv_src.scripts.graph_parser import parse_gfa, parse_abyss_dot, parse_flye_dot, fastg_to_gfa, get_edges_from_gfa, \
     format_edges_file
 from agv_src.scripts.info_parser import parse_canu_output, parse_flye_output, parse_spades_output
-from agv_src.scripts.quast_runner import find_errors
+from agv_src.scripts.quast_runner import run_quast_analysis
 from agv_src.scripts.utils import embed_css_and_scripts, get_scaffolds_fpath, is_empty_file, is_abyss, is_canu, is_flye, \
     is_spades
 from agv_src.scripts.viewer_builder import build_jsons
@@ -71,6 +71,7 @@ def main():
     group.add_option('-i', dest='input_dir', help='Assembler output folder')
     group.add_option('--graph', dest='input_file', help='Assembly graph in GFA1/GFA2/Graphviz/FASTG format. Cannot be used with -i option')
     group.add_option('--fasta', dest='input_fasta', help='FASTA file with graph edge sequences. Cannot be used with -i option')
+    # add options for contigs/scaffolds
     parser.add_option_group(group)
 
     parser.set_usage('Usage: \n1) ' + __file__ + ' [options]'
@@ -103,9 +104,9 @@ def main():
 
     if opts.reference and (scaffolds_fpath or edges_fpath):
         print("Running QUAST...")
-    find_errors(scaffolds_fpath, opts.reference, opts.output_dir, json_output_dirpath, opts.threads, contig_edges)
+    run_quast_analysis(scaffolds_fpath, opts.reference, opts.output_dir, json_output_dirpath, opts.threads, contig_edges)
     mapping_info, chrom_names, edge_by_chrom, dict_edges = \
-        find_errors(edges_fpath, opts.reference, opts.output_dir, json_output_dirpath, opts.threads, contig_edges, dict_edges)
+        run_quast_analysis(edges_fpath, opts.reference, opts.output_dir, json_output_dirpath, opts.threads, contig_edges, dict_edges)
 
     build_jsons(dict_edges, opts.input_dir, json_output_dirpath, mapping_info, chrom_names, edge_by_chrom, contig_edges, opts.assembler)
     output_fpath = join(opts.output_dir, HTML_NAME)

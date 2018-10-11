@@ -25,7 +25,7 @@ def map_edges_to_ref(input_fpath, output_dirpath, reference_fpath, threads):
     return mapping_fpath
 
 
-def parse_mapping_info(mapping_fpath, json_output_dir, contig_edges, dict_edges):
+def parse_mapping_info(mapping_fpath, json_output_dir, dict_edges):
     mapping_info = defaultdict(set)
 
     edge_mappings = defaultdict(lambda: defaultdict(list))
@@ -47,7 +47,7 @@ def parse_mapping_info(mapping_fpath, json_output_dir, contig_edges, dict_edges)
     edge_by_chrom = defaultdict(set)
     chrom_names = set()
     for edge_id in edge_mappings:
-        len_threshold = max(500, 0.9 * edge_lengths[edge_id])
+        len_threshold = 0.9 * edge_lengths[edge_id]
         gap_threshold = min(5000, 0.05 * edge_lengths[edge_id])
         for chrom, mappings in edge_mappings[edge_id].items():
             mappings.sort(key=lambda x: (x[0], -x[1]), reverse=False)
@@ -114,10 +114,10 @@ def parse_mapping_info(mapping_fpath, json_output_dir, contig_edges, dict_edges)
                 color = color_list[chrom_order[chrom]] if chrom in chrom_order else '#808080'
                 colors.add(color)
             if len(colors) <= 4:
-                dict_edges[edge_id].chrom = ':white:'.join(list(colors))
+                dict_edges[edge_id].chrom = ':'.join(list(colors))
             else:
-                dict_edges[edge_id].chrom = 'red:black:red:black'
-    with open(join(json_output_dir, "reference.json"), 'w') as handle:
+                dict_edges[edge_id].chrom = 'white:red:black:red:black:white'
+    with open(join(json_output_dir, "reference.json"), 'a') as handle:
         handle.write("chrom_lengths='" + json.dumps(chrom_len_dict) + "';\n")
         handle.write("mapping_info='" + json.dumps(mapping_info) + "';\n")
     return mapping_info, non_alt_chroms, edge_by_chrom

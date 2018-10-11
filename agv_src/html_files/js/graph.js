@@ -170,6 +170,13 @@ function render(doRefresh, doAnimate, doRefreshTables) {
         });
         edges = d3.selectAll('.edge');
         edges
+            .on("mouseenter", function (e) {
+                d3.select(this).classed("focused", true)
+            })
+            .on("mouseleave", function (e) {
+                d3.select(this).classed("focused", false)
+            });
+        edges
             .on("click", function (e) {
             if (!d3.select(this).select('text').empty()) {
                 var edgeId = d3.select(this).attr('id');
@@ -1011,6 +1018,12 @@ function selectEdge(edge, edgeId, edgeLen, edgeCov, edgeMulti) {
             }
             if (overlapsN) edgeDescription = edgeDescription + overlapsText;
         }
+    }
+    if (selectedMethod == "ref" && aligns) {
+        selectedAlignId = 'align_' + selectedEdge;
+        d3.selectAll('.align').classed("selected", false);
+        d3.selectAll('.' + selectedEdge).classed("selected", true);
+        if (selectedMatchEdge) d3.selectAll('.' + selectedMatchEdge).classed("selected", true);
     }
     document.getElementById('node_info').innerHTML = edgeDescription;
     $('#collapse_edge_table').collapse('show');

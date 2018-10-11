@@ -22,9 +22,9 @@
 .info-popup .info-popup-content{
     margin:40px auto 0px auto;
     width: 800px;
-    height: 450px;
+    height: 550px;
     padding:10px;
-    background-color: #c5c5c5;
+    background-color: #e2e2e2;
     border-radius:5px;
     box-shadow: 0px 0px 10px #000;
     z-index: 101;
@@ -101,6 +101,10 @@ input:disabled+label {
 
 .scroll_table tbody tr:hover {
     background-color: #d6f5ff;
+}
+
+.focused path {
+    stroke-width: 5 !important;
 }
 
 .selected path {
@@ -193,6 +197,48 @@ path.contig_selected  {
     border-radius: 50%;
 }
 
+/*
+ SVG elements
+ */
+
+.chromBg {
+    stroke-width: .3;
+    stroke: #444;
+    fill: #aaaaaa;
+}
+
+.align {
+    stroke-width: .3;
+    stroke: #6f6f6f;
+    opacity: 0.6;
+}
+
+.align.selected {
+    stroke-width: 2;
+    stroke: #000;
+    opacity: 1;
+}
+
+.align.correct {
+    fill: #6dd82d;
+}
+
+.align.correct.selected {
+    fill: #41a500;
+}
+
+.align.wrong {
+    fill: #d23c1d;
+}
+
+.align.wrong.selected {
+    fill: #b92112;
+}
+
+.zoom {
+  cursor: move;
+  fill: none;
+}
 /*!
 * jquery.fixedHeaderTable. The jQuery fixedHeaderTable plugin
 *

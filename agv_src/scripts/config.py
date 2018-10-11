@@ -14,6 +14,8 @@ MIN_EDGE_LEN = 500
 MAX_SUB_NODES = 80
 MAX_NODES = 300
 
+GAP_THRESHOLD = 1000
+
 ROOT_DIR = abspath(dirname(dirname(realpath(__file__))))
 TOOLS_DIR = join(ROOT_DIR, "external_tools")
 HTML_DIR = join(ROOT_DIR, "html_files")

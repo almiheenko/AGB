@@ -151,6 +151,7 @@ function setupInterfaceBtns() {
         var blob = new Blob([dot], {type: "text/plain"});
         saveAs(blob, "graph.dot");
     });
+    addRefView();
     /*document.getElementById("edges_textarea").addEventListener("keypress", submitOnEnter);
     document.getElementById('draw_edges_btn').onclick = function(event) {
         var err_msg = '';
@@ -227,6 +228,7 @@ function changeSplitMethod(method, component) {
         $('#adj_edges_option').show();
         $('#adjEdgesWarning').show();
         $('#numberEdgesWarning').show();
+        $('#refView').show();
         srcGraphs = ref_graphs;
         edgeData = edgeDataRef;
         srcPartDict = refPartitionDict;
@@ -240,6 +242,7 @@ function changeSplitMethod(method, component) {
         $('#adj_edges_option').show();
         $('#adjEdgesWarning').show();
         $('#numberEdgesWarning').hide();
+        $('#refView').hide();
         srcGraphs = contig_graphs;
         edgeData = edgeDataContig;
         srcPartDict = null;
@@ -252,6 +255,7 @@ function changeSplitMethod(method, component) {
         $('#adj_edges_option').hide();
         $('#adjEdgesWarning').hide();
         $('#numberEdgesWarning').show();
+        $('#refView').hide();
         srcGraphs = repeat_graphs;
         srcPartDict = repeatPartitionDict;
         edgeData = edgeDataRepeat;
@@ -265,6 +269,7 @@ function changeSplitMethod(method, component) {
         $('#adj_edges_option').hide();
         $('#adjEdgesWarning').hide();
         $('#numberEdgesWarning').show();
+        $('#refView').hide();
         srcGraphs = def_graphs;
         edgeData = edgeDataFull;
         srcPartDict = partitionDict;
@@ -663,7 +668,8 @@ function buildComponentsTable() {
         componentN = selectedComponent;
         changeComponent(selectedComponent);
     });
-    sorttable.makeSortable(document.getElementById("components_table"));
+    if (components.length < 1000)
+        sorttable.makeSortable(document.getElementById("components_table"));
 }
 
 function changeToChromosome(chromN) {
@@ -861,6 +867,8 @@ function changeComponent(component, doRefreshTables) {
         $("#prev_btn").prop('disabled', false);
     }
     hideEdgesByThresholds(true, false, doRefreshTables);
+    if (selectedMethod == "ref")
+        updateRefView();
 }
  
 function attributer(datum, index, nodes) {
@@ -878,16 +886,18 @@ function attributer(datum, index, nodes) {
         var y = 0;
         var scale = Math.min(1, width/graphWidth);
         document.getElementById("pathDiv").style.width = width + "px";
-        console.log(window.innerWidth,width, graphWidth, height, scale, width/scale)
+        console.log(window.innerWidth,width, graphWidth, height, scale, width/scale);
         selection
             .attr("width", width + "px")
-            .attr("height", height + "px")
+            .attr("height", height + "px");
             //.attr("viewBox", x + " " + y + " " + (width / scale) + " " + (height / scale));
         datum.attributes.width = width + "px";
         datum.attributes.height = height + "px";
         datum.attributes.overflow = "hidden";
-        datum.attributes.preserveAspectRatio="none" 
+        datum.attributes.preserveAspectRatio="none";
         datum.attributes.viewBox = x + " " + y + " " + (width / scale) + " " + (height / scale);
+        chromViewWidth = width - 100;
+        addRefView();
     }
 }
 
@@ -1044,12 +1054,15 @@ function setupAutocompleteSearch(){
 
 function createAutocompleteListItems() {
     var autocompleteItems = [];
-    for (var i = 0; i < enableEdges.length; i++) {
-        autocompleteItems.push({
-            label: enableEdges[i].name,
-            value: 'edge,' + enableEdges[i].name,
-            desc: 'edge: ' + enableEdges[i].name
-        })
+    for (x in edgeData) {
+        if (edgeData[x].name.toString()[0] !== '-' && x.indexOf('_') === -1) {
+            edge = edgeDataFull[x] || edgeData[x];
+            autocompleteItems.push({
+                label: edge.name,
+                value: 'edge,' + edge.name,
+                desc: 'edge: ' + edge.name
+            });
+        }
     }
     for (var i = 0; i < enableContigs.length; i++) {
         autocompleteItems.push({

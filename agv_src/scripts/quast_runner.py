@@ -6,8 +6,10 @@ import subprocess
 
 from collections import defaultdict
 
+from agv_src.scripts.config import GAP_THRESHOLD
 from agv_src.scripts.edges_mapping import map_edges_to_ref, parse_mapping_info
-from agv_src.scripts.utils import is_empty_file, can_reuse, get_quast_filename, get_edge_num, get_edge_agv_id
+from agv_src.scripts.utils import is_empty_file, can_reuse, get_quast_filename, get_edge_num, get_edge_agv_id, \
+    edge_id_to_name, get_match_edge_id
 
 align_pattern = "between (?P<start1>\d+) (?P<end1>\d+) and (?P<start2>\d+) (?P<end2>\d+)"
 
@@ -20,6 +22,10 @@ def get_mis_report_fpath(quast_output_dir, input_fpath):
     return join(quast_output_dir, "contigs_reports", "contigs_report_%s.mis_contigs.info" % get_quast_filename(input_fpath))
 
 
+def get_stdout_fpath(quast_output_dir, input_fpath):
+    return join(quast_output_dir, "contigs_reports", "contigs_report_%s.stdout" % get_quast_filename(input_fpath))
+
+
 def get_minimap_out_fpath(quast_output_dir, input_fpath):
     return join(quast_output_dir, "contigs_reports", "minimap_output", "%s.coords_tmp" % get_quast_filename(input_fpath))
 
@@ -28,7 +34,7 @@ def run(input_fpath, reference_fpath, out_fpath, output_dirpath, threads):
     if not exists(output_dirpath):
         os.makedirs(output_dirpath)
     if not can_reuse(out_fpath, files_to_check=[input_fpath, reference_fpath]):
-        quast_exec_path = "/Users/alla/git/quast/quast.py"
+        quast_exec_path = "quast.py"
         if is_empty_file(quast_exec_path):
             print("QUAST is not found!")
             return None
@@ -40,10 +46,43 @@ def run(input_fpath, reference_fpath, out_fpath, output_dirpath, threads):
     return out_fpath
 
 
-def find_errors(input_fpath, reference_fpath, output_dirpath, json_output_dirpath, threads, contig_edges, dict_edges=None):
+def parse_alignments(alignments_fpath, json_output_dirpath):
+    gaps_info = defaultdict(list)
+    chrom_alignments = defaultdict(list)
+    ms_info = defaultdict(list)
+    aligns_by_chroms = defaultdict(list)
+    # S1      E1      S2      E2      Reference       Contig  IDY     Ambiguous       Best_group
+    with open(alignments_fpath) as f:
+        for i, line in enumerate(f):
+            if i == 0:
+                continue
+            fs = line.split('\t')
+            if len(fs) > 5:
+                start, end, start2, end2, chrom, edge_id = fs[:6]
+                start, end = int(start), int(end)
+                if int(start2) > int(end2):
+                    edge_id = get_match_edge_id(edge_id)
+                chrom_alignments[chrom].append((start, end, edge_id))
+            elif line.startswith("relocation") or line.startswith("transloc") or line.startswith("invers"):
+                ms_info[(chrom, start, end)].append(line.strip())
+    for chrom, alignments in chrom_alignments.items():
+        alignments.sort(key=lambda x: (x[0], x[1]))
+        prev_end = 0
+        for start, end, edge_id in alignments:
+            if start - prev_end > GAP_THRESHOLD:
+                gaps_info[chrom].append((prev_end, start - 1))
+            prev_end = max(prev_end, end)
+            align = {'s': start, 'e': end, 'edge': edge_id, 'ms': ','.join(ms_info[(chrom, start, end)])}
+            aligns_by_chroms[chrom].append(align)
+    with open(join(json_output_dirpath, 'reference.json'), 'w') as handle:
+        handle.write("gaps='" + json.dumps(gaps_info) + "';\n")
+        handle.write("chrom_aligns='" + json.dumps(aligns_by_chroms) + "';\n")
+
+
+def run_quast_analysis(input_fpath, reference_fpath, output_dirpath, json_output_dirpath, threads, contig_edges, dict_edges=None):
     ms_out_fpath = None
+    quast_output_dir = join(output_dirpath, "quast_output" if not dict_edges else "quast_edge_output")
     if not is_empty_file(input_fpath) and not is_empty_file(reference_fpath):
-        quast_output_dir = join(output_dirpath, "quast_output" if not dict_edges else "quast_edge_output")
         ms_out_fpath = get_mis_report_fpath(quast_output_dir, input_fpath)
         ms_out_fpath = run(input_fpath, reference_fpath, ms_out_fpath, quast_output_dir, threads)
     if not ms_out_fpath:
@@ -53,6 +92,8 @@ def find_errors(input_fpath, reference_fpath, output_dirpath, json_output_dirpat
         with open(join(json_output_dirpath, "reference.json"), 'w') as handle:
             handle.write("chrom_lengths='" + json.dumps([]) + "';\n")
             handle.write("mapping_info='" + json.dumps([]) + "';\n")
+            handle.write("gaps='" + json.dumps([]) + "';\n")
+            handle.write("chrom_aligns='" + json.dumps([]) + "';\n")
         with open(join(json_output_dirpath, 'errors.json'), 'w') as handle:
             handle.write("misassembled_contigs='[]';\n")
         return None, None, None, dict_edges
@@ -80,6 +121,7 @@ def find_errors(input_fpath, reference_fpath, output_dirpath, json_output_dirpat
             handle.write("misassembled_contigs='" + json.dumps(misassembled_seqs) + "';\n")
         return None, None, None, dict_edges
     else:
+        parse_alignments(get_alignments_fpath(quast_output_dir, input_fpath), json_output_dirpath)
         mapping_fpath = map_edges_to_ref(input_fpath, output_dirpath, reference_fpath, threads)
-        mapping_info, chrom_names, edge_by_chrom = parse_mapping_info(mapping_fpath, json_output_dirpath, contig_edges, dict_edges)
+        mapping_info, chrom_names, edge_by_chrom = parse_mapping_info(mapping_fpath, json_output_dirpath, dict_edges)
         return mapping_info, chrom_names, edge_by_chrom, dict_edges

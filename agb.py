@@ -5,14 +5,14 @@ import sys
 from optparse import OptionParser, OptionGroup
 from os.path import exists
 
-from agv_src.scripts.config import *
-from agv_src.scripts.graph_parser import parse_gfa, parse_abyss_dot, parse_flye_dot, fastg_to_gfa, get_edges_from_gfa, \
+from agb_src.scripts.config import *
+from agb_src.scripts.graph_parser import parse_gfa, parse_abyss_dot, parse_flye_dot, fastg_to_gfa, get_edges_from_gfa, \
     format_edges_file
-from agv_src.scripts.info_parser import parse_canu_output, parse_flye_output, parse_spades_output
-from agv_src.scripts.quast_runner import run_quast_analysis
-from agv_src.scripts.utils import embed_css_and_scripts, get_scaffolds_fpath, is_empty_file, is_abyss, is_canu, is_flye, \
+from agb_src.scripts.info_parser import parse_canu_output, parse_flye_output, parse_spades_output
+from agb_src.scripts.quast_runner import run_quast_analysis
+from agb_src.scripts.utils import embed_css_and_scripts, get_scaffolds_fpath, is_empty_file, is_abyss, is_canu, is_flye, \
     is_spades
-from agv_src.scripts.viewer_builder import build_jsons
+from agb_src.scripts.viewer_builder import build_jsons
 
 
 def parse_assembler_output(assembler_name, input_dirpath, input_fpath, output_dirpath, input_fasta_fpath, min_edge_len):

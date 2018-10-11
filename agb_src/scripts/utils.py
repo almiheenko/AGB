@@ -5,7 +5,7 @@ import sys
 from os import listdir
 from os.path import exists, getmtime, getsize, basename, splitext
 
-from agv_src.scripts.config import *
+from agb_src.scripts.config import *
 
 
 def is_osx():

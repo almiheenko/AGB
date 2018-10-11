@@ -4,8 +4,8 @@ import sys
 from collections import defaultdict
 from os.path import join, abspath
 
-from agv_src.scripts.graph_parser import parse_abyss_dot, parse_flye_dot, parse_gfa, get_edges_from_gfa
-from agv_src.scripts.utils import get_edge_agv_id, is_empty_file, find_file_by_pattern, is_osx, get_edge_num, \
+from agb_src.scripts.graph_parser import parse_abyss_dot, parse_flye_dot, parse_gfa, get_edges_from_gfa
+from agb_src.scripts.utils import get_edge_agv_id, is_empty_file, find_file_by_pattern, is_osx, get_edge_num, \
     get_canu_id
 
 

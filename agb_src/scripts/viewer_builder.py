@@ -4,9 +4,9 @@ from collections import defaultdict
 
 import networkx as nx
 
-from agv_src.scripts.config import *
-from agv_src.scripts.graph_analysis import process_graph
-from agv_src.scripts.utils import print_dot_header, get_edge_agv_id, calculate_median_cov, is_empty_file, \
+from agb_src.scripts.config import *
+from agb_src.scripts.graph_analysis import process_graph
+from agb_src.scripts.utils import print_dot_header, get_edge_agv_id, calculate_median_cov, is_empty_file, \
     find_file_by_pattern, get_edge_num, get_canu_id, get_scaffolds_fpath, is_flye, is_canu, is_spades, edge_id_to_name
 
 

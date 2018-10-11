@@ -7,9 +7,9 @@ from collections import defaultdict
 import gfapy
 import networkx as nx
 
-from agv_src.scripts.config import *
-from agv_src.scripts.edge import Edge
-from agv_src.scripts.utils import get_edge_agv_id, calculate_median_cov, get_edge_num, find_file_by_pattern, \
+from agb_src.scripts.config import *
+from agb_src.scripts.edge import Edge
+from agb_src.scripts.utils import get_edge_agv_id, calculate_median_cov, get_edge_num, find_file_by_pattern, \
     is_empty_file, can_reuse, is_osx, is_abyss, is_spades, is_velvet, is_soap, is_sga, get_match_edge_id, \
     edge_id_to_name, get_filename, is_acgt_seq
 

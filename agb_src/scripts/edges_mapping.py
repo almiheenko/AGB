@@ -2,8 +2,8 @@ import json
 import subprocess
 from collections import defaultdict, OrderedDict
 
-from agv_src.scripts.config import *
-from agv_src.scripts.utils import can_reuse, is_empty_file, natural_sort, get_edge_agv_id, get_edge_num, \
+from agb_src.scripts.config import *
+from agb_src.scripts.utils import can_reuse, is_empty_file, natural_sort, get_edge_agv_id, get_edge_num, \
     get_match_edge_id, format_pos
 
 

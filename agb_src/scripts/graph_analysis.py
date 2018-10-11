@@ -6,10 +6,10 @@ from collections import defaultdict
 import nxmetis
 import networkx as nx
 
-from agv_src.scripts.config import MAX_NODES, MAX_SUB_NODES
-from agv_src.scripts.edge import Edge
-from agv_src.scripts.utils import print_dot_header, natural_sort, get_match_edge_id, is_flye
-from agv_src.scripts.viewer_data import ViewerData
+from agb_src.scripts.config import MAX_NODES, MAX_SUB_NODES
+from agb_src.scripts.edge import Edge
+from agb_src.scripts.utils import print_dot_header, natural_sort, get_match_edge_id, is_flye
+from agb_src.scripts.viewer_data import ViewerData
 
 
 def process_graph(g, undirected_g, dict_edges, edges_by_nodes, two_way_edges, output_dirpath, suffix, assembler,

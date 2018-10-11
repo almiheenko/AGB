@@ -6,9 +6,9 @@ import subprocess
 
 from collections import defaultdict
 
-from agv_src.scripts.config import GAP_THRESHOLD
-from agv_src.scripts.edges_mapping import map_edges_to_ref, parse_mapping_info
-from agv_src.scripts.utils import is_empty_file, can_reuse, get_quast_filename, get_edge_num, get_edge_agv_id, \
+from agb_src.scripts.config import GAP_THRESHOLD
+from agb_src.scripts.edges_mapping import map_edges_to_ref, parse_mapping_info
+from agb_src.scripts.utils import is_empty_file, can_reuse, get_quast_filename, get_edge_num, get_edge_agv_id, \
     edge_id_to_name, get_match_edge_id
 
 align_pattern = "between (?P<start1>\d+) (?P<end1>\d+) and (?P<start2>\d+) (?P<end2>\d+)"

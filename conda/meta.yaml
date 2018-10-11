@@ -1,13 +1,12 @@
 package:
-  name: "agv"
-  version: "0.1"
+  name: "agb"
+  version: "0.3"
 
 source:
-  git_rev: 8445048
-  git_url: https://github.com/almiheenko/AGV
+  git_url: https://github.com/almiheenko/AGB
 
 build:
-  number: 3
+  number: 0
 
 requirements:
   host:
@@ -37,6 +36,6 @@ test:
     - nxmetis
 
 about:
-  home: https://github.com/almiheenko/AGV
+  home: https://github.com/almiheenko/AGB
   license: BSD3
   license_file: ../LICENSE

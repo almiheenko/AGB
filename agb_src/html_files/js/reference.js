@@ -87,9 +87,19 @@ function updateRefView() {
                      .duration(200)
                      .style("opacity", .9);
                    numMisassemblies = align.ms.length == 0 ? 0 : (align.ms.indexOf(';') !== -1 ? 2 : 1);
+                   misassembliesText = "";
+                   if (align.ms.length > 0) {
+                       misassemblies = align.ms.split(';');
+                       misTypes = [];
+                       for (var i=0; i< misassemblies.length; i++) {
+                           misTypes.push(misassemblies[i].split(',')[0]);
+                       }
+                       misassembliesText = misTypes.join(', ')
+                   }
+                   else misassembliesText = "No misassemblies";
                    tooltipDiv.html("<b>Edge:</b> " + edgeData[align.edge].name +
                        "<br> <b>Aligned to:</b> " + align.s + "-" + align.e +
-                       "<br> " + numMisassemblies + " misassemblies")
+                       "<br> " + misassembliesText)
                      .style("left", (d3.event.pageX) + "px")
                      .style("top", (d3.event.pageY - 28) + "px");
                })

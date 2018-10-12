@@ -34,7 +34,7 @@ def run(input_fpath, reference_fpath, out_fpath, output_dirpath, threads):
     if not exists(output_dirpath):
         os.makedirs(output_dirpath)
     if not can_reuse(out_fpath, files_to_check=[input_fpath, reference_fpath]):
-        quast_exec_path = "/Users/alla/git/quast/quast.py"
+        quast_exec_path = "quast.py"
         if is_empty_file(quast_exec_path):
             print("QUAST is not found!")
             return None

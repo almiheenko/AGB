@@ -93,30 +93,30 @@ def parse_mapping_info(mapping_fpath, json_output_dir, dict_edges):
                   '#fabebe', '#00dbb1', '#dba2ff', '#aa6e28', '#83360e', '#800000', '#003bff', '#808000', '#8d73d4',
                   '#000080', '#806680', '#51205a', '#558859', '#d1a187', '#87a1d1', '#87a1d1', '#afd187']
 
+    edge_chroms = defaultdict(set)
     for edge_id, chroms in chroms_by_edge.items():
         match_edge_id = edge_id.replace('rc', 'e') if edge_id.startswith('rc') else edge_id.replace('e', 'rc')
         for chrom in chroms:
-            mapping_info[edge_id].add(chrom)
-            mapping_info[match_edge_id].add(chrom)
+            edge_chroms[edge_id].add(chrom)
+            edge_chroms[match_edge_id].add(chrom)
             if match_edge_id in dict_edges:
                 edge_by_chrom[chrom].add(match_edge_id)
 
-    for edge_id, chroms in mapping_info.items():
+    for edge_id, chroms in edge_chroms.items():
+        if edge_id not in dict_edges:
+            continue
         mapping_info[edge_id] = list(chroms)
-        if len(chroms) == 1:
-            chrom = chroms.pop()
-            color = color_list[chrom_order[chrom]] if chrom in chrom_order else '#808080'
-            if edge_id in dict_edges:
-                dict_edges[edge_id].chrom = color
-        elif chroms:
-            colors = set()
-            for chrom in chroms:
-                color = color_list[chrom_order[chrom]] if chrom in chrom_order else '#808080'
-                colors.add(color)
-            if len(colors) <= 4:
-                dict_edges[edge_id].chrom = ':'.join(list(colors))
+        colors = set()
+        for chrom in chroms:
+            if chrom in chrom_order:
+                color = color_list[chrom_order[chrom] % len(color_list)]
             else:
-                dict_edges[edge_id].chrom = 'white:red:black:red:black:white'
+                color = '#808080'
+            colors.add(color)
+        if len(colors) <= 4:
+            dict_edges[edge_id].chrom = ':'.join(list(colors))
+        else:
+            dict_edges[edge_id].chrom = 'white:red:black:red:black:white'
     with open(join(json_output_dir, "reference.json"), 'a') as handle:
         handle.write("chrom_lengths='" + json.dumps(chrom_len_dict) + "';\n")
         handle.write("mapping_info='" + json.dumps(mapping_info) + "';\n")

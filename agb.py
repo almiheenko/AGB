@@ -65,6 +65,7 @@ def main():
     group.add_option('-r', dest='reference', help='Path to the reference genome')
     group.add_option('-t', dest='threads', help='Maximum number of threads [default: %d]' % DEFAULT_THREADS, default=DEFAULT_THREADS)
     group.add_option('-m', dest='min_edge_len', help='Lower threshold for edge length [default: %d]' % MIN_EDGE_LEN, default=MIN_EDGE_LEN)
+    group.add_option('--meta', dest='is_meta', action='store_true', help='Use QUAST options for metagenome', default=False)
     parser.add_option_group(group)
 
     group = OptionGroup(parser, "Special Options")
@@ -104,9 +105,11 @@ def main():
 
     if opts.reference and (scaffolds_fpath or edges_fpath):
         print("Running QUAST...")
-    run_quast_analysis(scaffolds_fpath, opts.reference, opts.output_dir, json_output_dirpath, opts.threads, contig_edges)
+    run_quast_analysis(scaffolds_fpath, opts.reference, opts.output_dir, json_output_dirpath, opts.threads, contig_edges,
+                       is_meta=opts.is_meta)
     mapping_info, chrom_names, edge_by_chrom, dict_edges = \
-        run_quast_analysis(edges_fpath, opts.reference, opts.output_dir, json_output_dirpath, opts.threads, contig_edges, dict_edges)
+        run_quast_analysis(edges_fpath, opts.reference, opts.output_dir, json_output_dirpath, opts.threads, contig_edges,
+                           dict_edges, is_meta=opts.is_meta)
 
     build_jsons(dict_edges, opts.input_dir, json_output_dirpath, mapping_info, chrom_names, edge_by_chrom, contig_edges, opts.assembler)
     output_fpath = join(opts.output_dir, HTML_NAME)

@@ -30,7 +30,7 @@ def get_minimap_out_fpath(quast_output_dir, input_fpath):
     return join(quast_output_dir, "contigs_reports", "minimap_output", "%s.coords_tmp" % get_quast_filename(input_fpath))
 
 
-def run(input_fpath, reference_fpath, out_fpath, output_dirpath, threads):
+def run(input_fpath, reference_fpath, out_fpath, output_dirpath, threads, is_meta):
     if not exists(output_dirpath):
         os.makedirs(output_dirpath)
     if not can_reuse(out_fpath, files_to_check=[input_fpath, reference_fpath]):
@@ -39,7 +39,8 @@ def run(input_fpath, reference_fpath, out_fpath, output_dirpath, threads):
             print("QUAST is not found!")
             return None
         cmdline = [quast_exec_path, "--fast",  "--agv", input_fpath, "-r", reference_fpath,
-                   "-t", str(threads), "-o", output_dirpath, "--min-contig", "0"] + (["--large"] if getsize(input_fpath) > 100 * 1024 * 1024 else [])
+                   "-t", str(threads), "-o", output_dirpath, "--min-contig", "0"] + \
+                  (["--large"] if getsize(input_fpath) > 10 * 1024 * 1024 else []) + (["--min-identity", "90"] if is_meta else [])
         subprocess.call(cmdline, stdout=open("/dev/null", "w"), stderr=open("/dev/null", "w"))
     if is_empty_file(out_fpath) or not can_reuse(out_fpath, files_to_check=[input_fpath, reference_fpath]):
         return None
@@ -79,12 +80,12 @@ def parse_alignments(alignments_fpath, json_output_dirpath):
         handle.write("chrom_aligns='" + json.dumps(aligns_by_chroms) + "';\n")
 
 
-def run_quast_analysis(input_fpath, reference_fpath, output_dirpath, json_output_dirpath, threads, contig_edges, dict_edges=None):
+def run_quast_analysis(input_fpath, reference_fpath, output_dirpath, json_output_dirpath, threads, contig_edges, dict_edges=None, is_meta=False):
     ms_out_fpath = None
     quast_output_dir = join(output_dirpath, "quast_output" if not dict_edges else "quast_edge_output")
     if not is_empty_file(input_fpath) and not is_empty_file(reference_fpath):
         ms_out_fpath = get_mis_report_fpath(quast_output_dir, input_fpath)
-        ms_out_fpath = run(input_fpath, reference_fpath, ms_out_fpath, quast_output_dir, threads)
+        ms_out_fpath = run(input_fpath, reference_fpath, ms_out_fpath, quast_output_dir, threads, is_meta)
     if not ms_out_fpath:
         if not is_empty_file(input_fpath) and not is_empty_file(reference_fpath):
             print("QUAST failed!")

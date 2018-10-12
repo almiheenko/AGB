@@ -128,10 +128,10 @@ def parse_canu_unitigs_info(input_dirpath, dict_edges):
 
 
 def get_edges_from_gfa(gfa_fpath, output_dirpath, min_edge_len):
-    if is_empty_file(gfa_fpath):
+    if not gfa_fpath:
         return None
 
-    input_edges_fpath = get_filename(gfa_fpath) + ".fasta"
+    input_edges_fpath = join(dirname(gfa_fpath), get_filename(gfa_fpath) + ".fasta")
     edges_fpath = join(output_dirpath, basename(input_edges_fpath))
     if not is_empty_file(gfa_fpath) and not can_reuse(edges_fpath, files_to_check=[gfa_fpath]):
         print("Extracting edge sequences from " + gfa_fpath + "...")
@@ -150,8 +150,15 @@ def get_edges_from_gfa(gfa_fpath, output_dirpath, min_edge_len):
                             out.write(">%s\n" % get_edge_agv_id(get_edge_num(seq_name)))
                             out.write(seq)
                             out.write("\n")
-    if is_empty_file(edges_fpath) and not is_empty_file(gfa_fpath) and not is_empty_file(input_edges_fpath):
-        return input_edges_fpath
+    if is_empty_file(edges_fpath) and not is_empty_file(input_edges_fpath):
+        with open(edges_fpath, "w") as out:
+            with open(input_edges_fpath) as f:
+                for line in f:
+                    if line.startswith('>'):
+                        seq_name = line.strip().split()[0][1:]
+                        out.write(">%s\n" % get_edge_agv_id(get_edge_num(seq_name)))
+                    else:
+                        out.write(line)
     return edges_fpath
 
 

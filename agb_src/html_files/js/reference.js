@@ -103,6 +103,7 @@ function updateRefView() {
 }
 
 function selectAlign(align, selectedAlign) {
+    deselectEdge();
     if (edgeData[align.edge]) {
         edge = edgeData[align.edge];
         edgeLink = '<a onclick="selectEdgeByLabel(\'' + edge.name + '\')">' + edge.name + '</a>';

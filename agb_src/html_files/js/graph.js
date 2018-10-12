@@ -853,7 +853,6 @@ function getEdgeComponent(edgeId) {
     else if (selectedMethod == "contig")
         edgeComponent =  edgeDataRef[edgeId].contig_comp;
     else edgeComponent = edge.comp;
-    console.log(edge);
     return edgeComponent;
 }
 
@@ -910,12 +909,19 @@ function checkEdgeWithThresholds(edge) {
     return true;
 }
 
-function checkEdge(edgeId, targetChrom) {
+function checkRepeatEdgeId(edgeId) {
     edge = edgeData[edgeId];
     if (edge) {
         source = newData[edgeId] ? newData[edgeId][0] : edge.s;
         end = newData[edgeId] ? newData[edgeId][1] : edge.e;
     }
+    if ($('#collapse_repeats_checkbox')[0].checked && !edgeData[edgeId].unique && !expandedNodes.has(source) && !expandedNodes.has(end))
+        return false;
+    return true;
+}
+
+function checkEdge(edgeId, targetChrom) {
+    edge = edgeData[edgeId];
     targetComponent = NaN;
     if (selectedMethod == "ref" && !isNaN(parseInt(targetChrom))) targetComponent = chromosomes[targetChrom];
     else if (selectedMethod == "contig" && !isNaN(parseInt(targetChrom))) targetComponent = contigs[targetChrom];
@@ -926,7 +932,7 @@ function checkEdge(edgeId, targetChrom) {
         return false;
     if (selectedMethod == "default" && getEdgeComponent(edgeId) !== componentN)
         return false;
-    if ($('#collapse_repeats_checkbox')[0].checked && !edgeData[edgeId].unique && !expandedNodes.has(source) && !expandedNodes.has(end))
+    if (!checkRepeatEdgeId(edgeId))
         return false;
     // if($('#break_checkbox')[0].checked && edgeData[edgeId].unique)
     //    return false;
@@ -935,8 +941,6 @@ function checkEdge(edgeId, targetChrom) {
     if (selectedMethod == "contig" &&
         ((!targetComponent && contigInfo[contigs[componentN]].edges.indexOf(edgeData[edgeId].name) == -1) ||
             (targetComponent && contigInfo[targetComponent].edges.indexOf(edgeData[edgeId].name) == -1)))
-        return false;
-    if ($('#collapse_repeats_checkbox')[0].checked && repeatEdges && repeatEdges.has(edgeId) && !expandedNodes.has(source) && !expandedNodes.has(end))
         return false;
     return true;
 }

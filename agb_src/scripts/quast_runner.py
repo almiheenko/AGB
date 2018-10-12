@@ -38,7 +38,7 @@ def run(input_fpath, reference_fpath, out_fpath, output_dirpath, threads, is_met
         if is_empty_file(quast_exec_path):
             print("QUAST is not found!")
             return None
-        cmdline = [quast_exec_path, "--fast",  "--agv", input_fpath, "-r", reference_fpath,
+        cmdline = [quast_exec_path, "--fast",  "--agb", input_fpath, "-r", reference_fpath,
                    "-t", str(threads), "-o", output_dirpath, "--min-contig", "0"] + \
                   (["--large"] if getsize(input_fpath) > 10 * 1024 * 1024 or is_meta else []) + (["--min-identity", "90"] if is_meta else [])
         subprocess.call(cmdline, stdout=open("/dev/null", "w"), stderr=open("/dev/null", "w"))

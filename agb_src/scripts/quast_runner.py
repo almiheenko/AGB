@@ -9,7 +9,7 @@ from collections import defaultdict
 from agb_src.scripts.config import GAP_THRESHOLD
 from agb_src.scripts.edges_mapping import map_edges_to_ref, parse_mapping_info
 from agb_src.scripts.utils import is_empty_file, can_reuse, get_quast_filename, get_edge_num, get_edge_agv_id, \
-    edge_id_to_name, get_match_edge_id
+    edge_id_to_name, get_match_edge_id, get_path_to_program
 
 align_pattern = "between (?P<start1>\d+) (?P<end1>\d+) and (?P<start2>\d+) (?P<end2>\d+)"
 
@@ -34,8 +34,8 @@ def run(input_fpath, reference_fpath, out_fpath, output_dirpath, threads, is_met
     if not exists(output_dirpath):
         os.makedirs(output_dirpath)
     if not can_reuse(out_fpath, files_to_check=[input_fpath, reference_fpath]):
-        quast_exec_path = "quast.py"
-        if is_empty_file(quast_exec_path):
+        quast_exec_path = get_path_to_program("quast.py")
+        if not quast_exec_path:
             print("QUAST is not found!")
             return None
         cmdline = [quast_exec_path, "--fast",  "--agb", input_fpath, "-r", reference_fpath,
@@ -88,7 +88,7 @@ def run_quast_analysis(input_fpath, reference_fpath, output_dirpath, json_output
         ms_out_fpath = run(input_fpath, reference_fpath, ms_out_fpath, quast_output_dir, threads, is_meta)
     if not ms_out_fpath:
         if not is_empty_file(input_fpath) and not is_empty_file(reference_fpath):
-            print("QUAST failed!")
+            print("QUAST failed! Make sure you are using the latest version of QUAST")
         print("No information about %s mappings to the reference genome" % ("edge" if dict_edges else "contig"))
         with open(join(json_output_dirpath, "reference.json"), 'w') as handle:
             handle.write("chrom_lengths='" + json.dumps([]) + "';\n")

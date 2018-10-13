@@ -223,3 +223,23 @@ def embed_css_and_scripts(html):
 
     return html
 
+
+def get_path_to_program(program, dirpath=None, min_version=None):
+    """
+    returns the path to an executable or None if it can't be found
+    """
+    def is_exe(fpath):
+        if os.path.isfile(fpath) and os.access(fpath, os.X_OK):
+            return True
+
+    if dirpath:
+        exe_file = os.path.join(dirpath, program)
+        if is_exe(exe_file):
+            return exe_file
+
+    for path in os.environ["PATH"].split(os.pathsep):
+        exe_file = os.path.join(path, program)
+        if is_exe(exe_file):
+            return exe_file
+    return None
+

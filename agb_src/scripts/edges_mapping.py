@@ -113,7 +113,7 @@ def parse_mapping_info(mapping_fpath, json_output_dir, dict_edges):
             else:
                 color = '#808080'
             colors.add(color)
-        if len(colors) <= 4:
+        if len(colors) <= 5:
             dict_edges[edge_id].chrom = ':'.join(list(colors))
         else:
             dict_edges[edge_id].chrom = 'white:red:black:red:black:white'

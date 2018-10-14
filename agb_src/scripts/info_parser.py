@@ -2,23 +2,25 @@ import shlex
 import subprocess
 import sys
 from collections import defaultdict
-from os.path import join, abspath
+from os.path import join, abspath, basename
 
 from agb_src.scripts.graph_parser import parse_abyss_dot, parse_flye_dot, parse_gfa, get_edges_from_gfa
 from agb_src.scripts.utils import get_edge_agv_id, is_empty_file, find_file_by_pattern, is_osx, get_edge_num, \
-    get_canu_id
+    get_canu_id, can_reuse
 
 
 def parse_canu_output(input_dirpath, output_dirpath, min_edge_len):
-    gfa_fpath = find_file_by_pattern(input_dirpath, ".unitigs.gfa")
-    if not gfa_fpath:
+    raw_gfa_fpath = find_file_by_pattern(input_dirpath, ".unitigs.gfa")
+    if not raw_gfa_fpath:
         print("ERROR! GFA file is not found in %s! Please check the options" % abspath(input_dirpath))
         sys.exit(1)
-    cmd = "sed -i " + ("''" if is_osx() else "") + ' "1s/bogart.edges/1.0/" ' + gfa_fpath
-    subprocess.call(shlex.split(cmd))
+    edges_fpath = get_edges_from_gfa(raw_gfa_fpath, output_dirpath, min_edge_len)
+    gfa_fpath = join(output_dirpath, basename(raw_gfa_fpath))
+    if is_empty_file(gfa_fpath) or not can_reuse(gfa_fpath, files_to_check=[raw_gfa_fpath]):
+        cmd = 'sed "1s/bogart.edges/1.0/" ' + raw_gfa_fpath
+        subprocess.call(shlex.split(cmd), stdout=open(gfa_fpath, 'w'))
     dict_edges = parse_gfa(gfa_fpath, min_edge_len, input_dirpath, assembler="canu")
     contig_edges = parse_canu_assembly_info(input_dirpath, dict_edges)
-    edges_fpath = get_edges_from_gfa(gfa_fpath, output_dirpath, min_edge_len)
     return dict_edges, contig_edges, edges_fpath
 
 

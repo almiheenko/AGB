@@ -199,9 +199,9 @@ function addModeSwitch(){
 }
 
 function addColorSelect(){
-    var selectOptions = '<option value="0" selected>repeated edges</option>';
+    var selectOptions = '<option value="0" selected>repeat edges</option>';
     if (Object.keys(edgeDataRef).length) {
-        selectOptions += '<option value="1">edges mapping to reference</option>';
+        selectOptions += '<option value="1">edge alignments to reference</option>';
         selectOptions += '<option value="2">erroneous edges</option>';
     }
     // selectOptions += '<option value="3">high covered edges</option>';
@@ -414,13 +414,13 @@ function buildRefTable() {
             chromosomesData[chrom] = chromosomesData[chrom] || [];
             if (checkEdge(x, chromosomes.indexOf(chrom))) {
                 if (x[0] == "e") chromosomesData[chrom].push(x);
-                if (edgeInfo[x]) {
+                /*if (edgeInfo[x]) {
                     chromosomesContigs[chrom] = chromosomesContigs[chrom] || new Set();
                     for (var j = 0; j < edgeInfo[x].length; j++) {
                         chromosomesContigs[chrom].add(edgeInfo[x][j])
                     }
                     contigsFound = true;
-                }
+                }*/
             }
         }
     }

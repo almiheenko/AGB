@@ -102,11 +102,22 @@ function updateRefView() {
                        "<br> " + misassembliesText)
                      .style("left", (d3.event.pageX) + "px")
                      .style("top", (d3.event.pageY - 28) + "px");
+
+                   var selectedItem = d3.select(this);
+                   chromosomeView.append('rect')
+                        .attr('class', 'glow')
+                        .attr('pointer-events', 'none')
+                        .attr('width', selectedItem.attr('width'))
+                        .attr('height', selectedItem.attr('height'))
+                        .attr('fill', 'white')
+                        .attr('opacity', .3)
+                        .attr('transform', selectedItem.attr('transform'));
                })
               .on("mouseout", function() {
                    tooltipDiv.transition()
                      .duration(300)
                      .style("opacity", 0);
+                   chromosomeView.select('.glow').remove();
                });
         if (selectedAlign) selectAlign(selectedAlign);
     }
@@ -139,22 +150,6 @@ function zoomFunction(){
             newW = new_xScale(newEnd) - new_xScale(newStart);
             return newW > 0 ? newW : 0;
         });
-}
-
-function glow() {
-    var selectedItem = d3.select(this);
-    chromosomeView.append('rect')
-        .attr('class', 'glow')
-        .attr('pointer-events', 'none')
-        .attr('width', selectedItem.attr('width'))
-        .attr('height', selectedItem.attr('height'))
-        .attr('fill', 'white')
-        .attr('opacity', .3)
-        .attr('transform', selectedItem.attr('transform'));
-}
-
-function disglow() {
-    chromosomeView.select('.glow').remove();
 }
 
 function getTickValue(value) {

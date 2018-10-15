@@ -105,14 +105,15 @@ function render(doRefresh, doAnimate, doRefreshTables) {
             d3.selectAll('.edge').selectAll('text').style('display','');
         d3.select("#graph > svg").attr("display", "");
         d3.selectAll(".node")
-            .attr("id", function(d) { return "node" + d.key; })
+            .attr("id", function(d) { return "node" + d.key; });
         buildVertexTable();
-        buildContigsTable();
         buildEdgesTable();
-        if (doRefreshTables) {
+        if (selectedMethod !== "ref")
             buildRefTable();
+        if (selectedMethod !== "contig")
+            buildContigsTable();
+        if (doRefreshTables)
             buildComponentsTable();
-        }
         setupAutocompleteSearch();
         $('#saveBtns').show();
         highlightChromEdges();
@@ -472,15 +473,13 @@ function hideEdgesByThresholds(doRefresh, doAnimate, doRefreshTables) {
                     edgesToCollapse = edgesToCollapse + 1;
                 }
                 else if (edgeData[edgeId]) {
-                    edge = edgeData[edgeId];
-                    if (!checkEdgeWithThresholds(edge)) {
+                    if (!checkEdgeWithThresholds(edgeId)) {
                         edgesToCollapse = edgesToCollapse + 1;
                     }
                 }
                 else if (baseLoopEdgeDict[edgeId]) {
                     for (var k = 0; k < baseLoopEdgeDict[edgeId].length; k++) {
-                        edge = edgeData[baseLoopEdgeDict[edgeId][k]];
-                        if (!checkEdgeWithThresholds(edge)) {
+                        if (!checkEdgeWithThresholds(baseLoopEdgeDict[edgeId][k])) {
                             edgesToCollapse = edgesToCollapse + 1;
                         }
                     }
@@ -595,7 +594,7 @@ function hideEdgesByThresholds(doRefresh, doAnimate, doRefreshTables) {
                     end = newData[edgeId] ? newData[edgeId][1] : edge.e;
                     if (expandedNodes.has(source) && expandedNodes.has(end))
                         isWrong = false;
-                    else if (repeatEdges.has(edge.id) || hiddenEdges.has(edge.id) || !checkEdgeWithThresholds(edge))
+                    else if (repeatEdges.has(edge.id) || hiddenEdges.has(edge.id) || !checkEdgeWithThresholds(edge.id))
                         isWrong = true;
                     else isWrong = false;
                     if (!isWrong) {
@@ -612,7 +611,7 @@ function hideEdgesByThresholds(doRefresh, doAnimate, doRefreshTables) {
                         source = newData[edgeId] ? newData[edgeId][0] : edge.s;
                         if (expandedNodes.has(source))
                             isWrong = false;
-                        else if (repeatEdges.has(edge.id) || hiddenEdges.has(edge.id) || !checkEdgeWithThresholds(edge))
+                        else if (repeatEdges.has(edge.id) || hiddenEdges.has(edge.id) || !checkEdgeWithThresholds(edge.id))
                             isWrong = true;
                         else isWrong = false;
                         if (!isWrong) {
@@ -634,7 +633,7 @@ function hideEdgesByThresholds(doRefresh, doAnimate, doRefreshTables) {
         if (edge) {
             source = newData[edgeId] ? newData[edgeId][0] : edge.s;
             end = newData[edgeId] ? newData[edgeId][1] : edge.e;
-            if (repeatEdges.has(edge.id) || !checkEdgeWithThresholds(edge) || hiddenEdges.has(edge.id)) {
+            if (repeatEdges.has(edge.id) || !checkEdgeWithThresholds(edge.id) || hiddenEdges.has(edge.id)) {
                 if (!expandedNodes.has(source) && !expandedNodes.has(end)) {
                     clusterNodeSizeDict[source] = clusterNodeSizeDict[source] || 0;
                     clusterNodeSizeDict[source]++;
@@ -721,7 +720,7 @@ function hideEdgesByThresholds(doRefresh, doAnimate, doRefreshTables) {
             if (matches && matches.length > 1) {
                 edgeId = matches[1];
                 edge = edgeData[edgeId];
-                if (edge && checkEdgeWithThresholds(edge)) {
+                if (edge && checkEdgeWithThresholds(edgeId)) {
                     if (newEdges[edgeId]) {
                         node1 = newEdges[edgeId][0];
                         node2 = newEdges[edgeId][1];
@@ -903,7 +902,8 @@ function checkEdgeCoverage(edgeId) {
     return true;
 }
 
-function checkEdgeWithThresholds(edge) {
+function checkEdgeWithThresholds(edgeId) {
+    edge = edgeData[edgeId];
     if ((minCoverage && edge.cov < minCoverage) || (maxCoverage && edge.cov > maxCoverage) || edge.len < minLen || (maxLen && edge.len > maxLen))
         return false;
     return true;
@@ -920,17 +920,18 @@ function checkRepeatEdgeId(edgeId) {
     return true;
 }
 
-function checkEdge(edgeId, targetChrom) {
-    edge = edgeData[edgeId];
-    targetComponent = NaN;
-    if (selectedMethod == "ref" && !isNaN(parseInt(targetChrom))) targetComponent = chromosomes[targetChrom];
-    else if (selectedMethod == "contig" && !isNaN(parseInt(targetChrom))) targetComponent = contigs[targetChrom];
+function checkEdge(edgeId, targetN) {
+    var edge = edgeData[edgeId];
+    var targetComponent = NaN;
+    if (selectedMethod == "default") targetComponent = !isNaN(parseInt(targetN)) ? targetN : componentN;
+    else if (selectedMethod == "ref" && !isNaN(parseInt(targetN))) targetComponent = chromosomes[targetN];
+    else if (selectedMethod == "contig" && !isNaN(parseInt(targetN))) targetComponent = contigs[targetN];
     //if(edge) console.log(edgeMappingInfo[edge.id], targetComponent, chromosomes, edge)
     if (!edge)
         return false;
-    if (!checkEdgeWithThresholds(edge))
+    if (!checkEdgeWithThresholds(edgeId))
         return false;
-    if (selectedMethod == "default" && getEdgeComponent(edgeId) !== componentN)
+    if (selectedMethod == "default" && getEdgeComponent(edgeId) !== targetComponent)
         return false;
     if (!checkRepeatEdgeId(edgeId))
         return false;

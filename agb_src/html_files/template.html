@@ -180,6 +180,30 @@
         </div>
 
         <input type="text" id="searchElementBox" class="search_box" placeholder="Search by edge ID, contig, chromosome...">
+        <div id="components_tab">
+          <div class="panel panel-default collapse_panel">
+            <div class="panel-heading">
+              <h4 class="panel-title">
+                <a data-toggle="collapse" href="#collapse_components_table" class="collapse_header">Graph components</a>
+              </h4>
+            </div>
+            <div id="collapse_components_table" class="panel-collapse collapse">
+              <div>
+                <div id='components_table_div' class="scroll_table_div">
+                </div>
+                <span id='adjEdgesWarning' style="font-size: 14px; color: #5f5c5c; display: none">
+                    Note: Adjacent edges are not taken into account.
+                </span>
+                <p id='numberRowsWarning' style="font-size: 14px; color: #6d120d; display: none">
+                    Warning: too much connected components! Only components with more than 1 edge are listed.
+                </p>
+                <p id='numberEdgesWarning' style="font-size: 14px; color: #5f5c5c">
+                    Note: Forward ("+") and reverse ("-") edges are counted as one edge.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
         <div id="contig_tab">
           <div class="panel panel-default collapse_panel">
             <div class="panel-heading">
@@ -215,30 +239,6 @@
                 <p id='wrongOptionsChromWarning' style="text-align: center; font-size: 12px; color: #a80000; display: none">
                 Some edges in the graph path are hidden or belong to other components. Try to change thresholds in Additional options or switch to "contig" mode.
                 </p>
-            </div>
-          </div>
-        </div>
-        <div>
-          <div class="panel panel-default collapse_panel">
-            <div class="panel-heading">
-              <h4 class="panel-title">
-                <a data-toggle="collapse" href="#collapse_components_table" class="collapse_header">Graph components</a>
-              </h4>
-            </div>
-            <div id="collapse_components_table" class="panel-collapse collapse">
-              <div>
-                <div id='components_table_div' class="scroll_table_div">
-                </div>
-                <span id='adjEdgesWarning' style="font-size: 14px; color: #5f5c5c; display: none">
-                    Note: Adjacent edges are not taken into account.
-                </span>
-                <p id='numberRowsWarning' style="font-size: 14px; color: #6d120d; display: none">
-                    Warning: too much connected components! Only components with more than 1 edge are listed.
-                </p>
-                <p id='numberEdgesWarning' style="font-size: 14px; color: #5f5c5c">
-                    Note: Forward ("+") and reverse ("-") edges are counted as one edge.
-                </p>
-              </div>
             </div>
           </div>
         </div>

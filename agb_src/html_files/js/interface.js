@@ -336,26 +336,38 @@ function buildContigsTable() {
         return;
     }
     var showAssemblyErrors = chromosomes.length > 0;
-    table = '';
+    var table = '';
     table += "<table border='1' id='contig_table' class='sortable scroll_table' style='width:" + (leftPanelWidth) + "px'>";
     table += "<thead><tr class='header'><th>Contig</th><th>Len (Kb)</th><th>Cov</th><th># edges</th>" +
         (showAssemblyErrors ? "<th># errors</th>" : "") + "</tr></thead><tbody>";
     enableContigs = [];
     for (x in contigInfo) {
-        contigLen = contigInfo[x].length;
+        var contigLen = contigInfo[x].length;
         contigLen = contigLen < 10000 ? Math.round(contigLen / 100) / 10 : Math.round(contigLen / 1000);
-        edgesN = 0;
-        errorsN = 0;
-        if (misassembledContigs && misassembledContigs[x]) errorsN = misassembledContigs[x].length;
+        var edgesN = 0;
+        var errorsN = 0;
+        // if (misassembledContigs && misassembledContigs[x]) errorsN = misassembledContigs[x].length;
         for (i = 0; i < contigInfo[x].edges.length; i++) {
-            edge = contigInfo[x].edges[i];
+            var edge = contigInfo[x].edges[i];
             if (edge != "*" && edge != "??") {
-                edgeElId = edge[0] == '-' ? 'rc' + edge.substr(1) : 'e' + edge;
+                var edgeId = edge[0] == '-' ? 'rc' + edge.substr(1) : 'e' + edge;
                 //edgeId = getEdgeElement(edgeData[edgeElId]);
-                if ((selectedMethod == "contig" && checkEdgeWithThresholds(edge)) || checkEdge(edgeElId)) {
-                     edgesN++;
-                     errorsN = errorsN + edgeData[edgeElId].errors.length;
-                }
+                 var edgeErrorsN = 0;
+                 if (edgeData[edgeId] && ((selectedMethod == "contig" && checkEdgeWithThresholds(edgeId)) || checkEdge(edgeId))) {
+                    edgesN++;
+                    edgeErrorsN = edgeData[edgeId].errors.length;
+                 }
+                 else if (loopEdgeDict[edgeId]) {
+                     var edgeChecked = false;
+                    for (var k = 0; k < loopEdgeDict[edgeId].length; k++) {
+                        if ((selectedMethod == "contig" && checkEdgeWithThresholds(loopEdgeDict[edgeId][k])) || checkEdge(loopEdgeDict[edgeId][k])) {
+                            edgeErrorsN += edgeData[loopEdgeDict[edgeId][k]].errors.length;
+                            edgeChecked = true;
+                        }
+                    }
+                    if (edgeChecked) edgesN++;
+                 }
+                 errorsN = errorsN + edgeErrorsN;
             }
         }
         // if (edgesN) {
@@ -401,40 +413,61 @@ function buildRefTable() {
         document.getElementById("ref_tab").style.display="none";
         return;
     }
-    table = '';
+    var table = '';
     table += "<table border='1' id='ref_table' class='sortable scroll_table' style='width:" + (leftPanelWidth) + "px'>";
     chromosomesData = {};
     chromosomesContigs = {};
     var contigsFound = false;
     var chromLengths = [];
     enableChroms = [];
-    for (x in edgeMappingInfo) {
-        for (i = 0; i < edgeMappingInfo[x].length; i++) {
-            chrom = edgeMappingInfo[x][i];
-            chromosomesData[chrom] = chromosomesData[chrom] || [];
-            if (checkEdge(x, chromosomes.indexOf(chrom))) {
+    for (var edgeId in edgeMappingInfo) {
+        for (i = 0; i < edgeMappingInfo[edgeId].length; i++) {
+             chrom = edgeMappingInfo[edgeId][i];
+             chromosomesData[chrom] = chromosomesData[chrom] || [];
+             if (edgeData[edgeId] && ((selectedMethod == "ref" && checkEdgeWithThresholds(edgeId)) || checkEdge(edgeId))) {
+                chromosomesData[chrom].push(edgeData[edgeId].len * 1000);
+             }
+             else if (loopEdgeDict[edgeId]) {
+                 var edgeLen = 0;
+                 for (var k = 0; k < loopEdgeDict[edgeId].length; k++) {
+                    if ((selectedMethod == "ref" && checkEdgeWithThresholds(loopEdgeDict[edgeId][k])) || checkEdge(loopEdgeDict[edgeId][k])) {
+                        edgeLen += edgeData[loopEdgeDict[edgeId][k]].len * 1000;
+                    }
+                 }
+                 if (edgeLen > 0) chromosomesData[chrom].push(edgeLen);
+             }
+            /*if (checkEdge(x, chromosomes.indexOf(chrom))) {
                 if (x[0] == "e") chromosomesData[chrom].push(x);
-                /*if (edgeInfo[x]) {
+                if (edgeInfo[x]) {
                     chromosomesContigs[chrom] = chromosomesContigs[chrom] || new Set();
                     for (var j = 0; j < edgeInfo[x].length; j++) {
                         chromosomesContigs[chrom].add(edgeInfo[x][j])
                     }
                     contigsFound = true;
-                }*/
-            }
+                }
+            }*/
         }
     }
-    for (chrom in chrom_lengths) {
-        chromLengths.push(chrom_lengths[chrom]);
+    for (chrom in chromosomesData) {
+        var chromLen = 0;
+        for (i = 0; i < chromosomesData[chrom].length; i++) {
+            chromLen += chromosomesData[chrom][i];
+        }
+        chromLengths.push(chromLen)
     }
     var factor = Math.max.apply(Math, chromLengths) > 100000000 ? 1000000 : 1000;
     var factorText = factor == 1000 ? "Kb" : "Mb";
     table += "<thead><tr class='header'><th>Chromosome</th><th>Len (" + factorText + ")</th><th># edges</th>" +
         (contigsFound ? "<th># contigs</th>" : "") + "</tr></thead><tbody>";
-    for (chrom in chrom_lengths) {
-        len = Math.round(chrom_lengths[chrom] * 10 / factor) ? Math.round(chrom_lengths[chrom] * 10 / factor) / 10 : Math.round(chrom_lengths[chrom] * 100 / factor) / 100;
-        table += "<tr id='chromrow" + chrom + "'><td>" + chrom + "</td><td>" + len + "</td><td>" + (chromosomesData[chrom] ? chromosomesData[chrom].length : '-') +
-            (contigsFound ? ("</td><td>" + (chromosomesContigs[chrom] ? chromosomesContigs[chrom].size : '-')) : "") + "</td></tr>";
+    for (chrom in chromosomesData) {
+        var chromLen = 0;
+        for (i = 0; i < chromosomesData[chrom].length; i++) {
+            chromLen += chromosomesData[chrom][i];
+        }
+        chromLen = Math.round(chromLen * 10 / factor) ? Math.round(chromLen * 10 / factor) / 10 : Math.round(chromLen * 100 / factor) / 100;
+        chromLen = chromLen / 2;
+        table += "<tr id='chromrow" + chrom + "'><td>" + chrom + "</td><td>" + (chromLen > 0 ? chromLen : '-') + "</td><td>" +
+            (chromosomesData[chrom].length ?  Math.round(chromosomesData[chrom].length / 2) : '-') + "</td></tr>";
         enableChroms.push(chrom);
     }
     table += "</tbody></table>";
@@ -444,6 +477,26 @@ function buildRefTable() {
         selectedChromName = $(this).find('td:first').html();
         selectChrom(selectedChromName);
     });
+    sorttable.sort_alpha = function(a,b) {
+        var as = a[0], bs = b[0];
+        var a, b, a1, b1, i= 0, n, L,
+        rx=/(\.\d+)|(\d+(\.\d+)?)|([^\d.]+)|(\.\D+)|(\.$)/g;
+        if(as === bs) return 0;
+        a= as.toUpperCase().match(rx);
+        b= bs.toUpperCase().match(rx);
+        L= a.length;
+        while(i<L){
+            if(!b[i]) return 1;
+            a1= a[i],
+            b1= b[i++];
+            if(a1!== b1){
+                n= a1-b1;
+                if(!isNaN(n)) return n;
+                return a1>b1? 1:-1;
+            }
+        }
+        return b[i]? -1:0;
+    }
     sorttable.makeSortable(document.getElementById("ref_table"));
     if (srcGraphs[componentN].chrom) {
         $('#chromrow' + srcGraphs[componentN].chrom).addClass('selected').siblings().removeClass('selected');
@@ -632,7 +685,7 @@ function buildComponentsTable() {
         }
         componentInfo['unique'] = componentInfo['unique'] + loopEdges.size;
         componentInfo['repeat'] = componentInfo['repeat'] + loopRepeatEdges.size;
-        if (selectedMethod == "ref" || selectedMethod == "contig")
+        if (selectedMethod == "ref")
             componentInfo['n'] = calculateComponents(toGraph(filteredDotLines));
         componentInfo['enter'] = srcGraphs[i].enters;
         componentInfo['exit'] = srcGraphs[i].exits;

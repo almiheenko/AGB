@@ -27,7 +27,7 @@ Run AGB to visualize an assembly graph:
     agb.py --graph <GFA(1,2)/FASTG/Graphviz file>
 ```
 
-Run AGB to visualize an assembly graph:
+Run AGB on an assembler output folder to visualize an assembly graph with additional useful information:
 ```
     agb.py -i <assembler_output_dir>
 ```

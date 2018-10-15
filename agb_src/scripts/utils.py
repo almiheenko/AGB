@@ -207,6 +207,7 @@ def embed_css_and_scripts(html):
 
     for line_tmpl, files, l_tag, r_tag in [
             (js_line_tmpl, [join(JS_DIR, f) for f in listdir(JS_DIR) if f.endswith("js")], js_l_tag, js_r_tag),
+            (js_line_tmpl, [join(JS_DIR, "d3-graphviz", f) for f in listdir(join(JS_DIR, "d3-graphviz")) if f.endswith("js")], js_l_tag, js_r_tag),
             (css_line_tmpl, [join(CSS_DIR, f) for f in listdir(CSS_DIR) if f.endswith("css")], css_l_tag, css_r_tag),
         ]:
         for fpath in files:

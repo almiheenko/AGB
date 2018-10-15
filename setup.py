@@ -23,7 +23,7 @@ setup(
     # Versions should comply with PEP440.  For a discussion on single-sourcing
     # the version across setup.py and the project code, see
     # https://packaging.python.org/en/latest/single_source_version.html
-    version="0.1",
+    version="0.4",
 
     description='Assembly Graph Browser',
 
@@ -35,7 +35,7 @@ setup(
     author_email='al.miheenko@gmail.com',
 
     # Choose your license
-    license='BSD3',
+    license='GPLv2',
 
     # What does your project relate to?
     keywords=['bioinformatics', 'genome assembly', 'visualization'],
@@ -47,7 +47,6 @@ setup(
         package_name:
             find_package_files('scripts') +
             find_package_files('html_files') +
-            find_package_files('test_data') +
             [
             'README.md',
             'LICENSE'

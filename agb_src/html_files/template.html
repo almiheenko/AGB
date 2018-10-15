@@ -281,6 +281,7 @@
         <button id="prev_btn" class="selector round" disabled>&#8249;</button>
         <button id="next_btn" class="selector round" disabled>&#8250;</button>
         <span>Component <span id="component_n"></span>/<span id="component_total"></span> <span id="component_chromosome"></span></span>
+        <p id="unique_warning" style="color:red; display: none; text-align: center; font-size: 8px;">Too many unique edges!</br>Only repeat edges are shown</p>
         <p id="partition_warning" style="color:red; display: none; text-align: center; font-size: 8px;">This is a part of the large connected component.</br>Large blue nodes represent other parts of the component.</p>
     </div>
     <div id="div_switch" style="float:left; width:250px; margin-left: 10px">
@@ -419,7 +420,7 @@ var copyBtn = $("#unbalanced_tooltip").tooltip({ trigger: 'manual' });
 });
 
 setupInterfaceBtns();
-hideEdgesByThresholds(false, false, true);
+updateDot(false, false, true);
 timeTransition = 500;
 
 var enableEdges = [];

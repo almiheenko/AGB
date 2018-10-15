@@ -53,7 +53,7 @@ function setupInterfaceBtns() {
 
     $('#collapse_repeats_checkbox').on('change', function() {
         expandedNodes = new Set();
-        hideEdgesByThresholds(false, false, true);
+        updateDot(false, false, true);
         if ($('#collapse_repeats_checkbox')[0].checked) {
             $('#unbalanced_checkbox').prop('checked', false);
             $('#unbalanced_checkbox').prop('disabled', true);
@@ -99,7 +99,7 @@ function setupInterfaceBtns() {
         $('#contig_mode').removeAttr('disabled');
     });
     $('#adj_edges_checkbox').on('change', function() {
-        hideEdgesByThresholds(false, true, false);
+        updateDot(false, true, false);
     });
     $('#show_labels').on('change', function() {
         if (!this.checked)
@@ -114,7 +114,7 @@ function setupInterfaceBtns() {
         document.getElementById('errors_info').style.display = 'none';
         if (document.getElementById('color_select').selectedIndex == 2) document.getElementById('errors_info').style.display = '';
         if (document.getElementById('color_select').selectedIndex == 3) document.getElementById('repeat_info').style.display = '';
-        hideEdgesByThresholds(false, false, false);
+        updateDot(false, false, false);
     };
 
     function submitOnEnter(event){
@@ -299,7 +299,7 @@ function setMinCoverage(event, textBox) {
     else if (key == 13) {
         if (parseInt(textBox.value)) minCoverage = parseInt(textBox.value);
         else minCoverage = 0;
-        hideEdgesByThresholds(false, true, true);
+        updateDot(false, true, true);
     }
 }
 
@@ -311,7 +311,7 @@ function setMaxCoverage(event, textBox) {
     else if (key == 13) {
         if (parseInt(textBox.value)) maxCoverage = parseInt(textBox.value);
         else maxCoverage = 0;
-        hideEdgesByThresholds(false, true, true);
+        updateDot(false, true, true);
     }
 }
 
@@ -326,7 +326,7 @@ function setEdgeLenThreshold(event, minValue, maxValue) {
         else minLen = 0;
         if (parseInt(maxValue)) maxLen = parseFloat(maxValue);
         else maxLen = '';
-        hideEdgesByThresholds(false, true, true);
+        updateDot(false, true, true);
     }
 }
 
@@ -928,7 +928,7 @@ function changeComponent(component, doRefreshTables) {
     else {
         $("#prev_btn").prop('disabled', false);
     }
-    hideEdgesByThresholds(true, false, doRefreshTables);
+    updateDot(true, false, doRefreshTables);
     if (selectedMethod == "ref")
         updateRefView();
 }

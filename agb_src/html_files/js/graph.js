@@ -167,7 +167,7 @@ function render(doRefresh, doAnimate, doRefreshTables) {
                     }
                 }
                 d3.event.stopPropagation();
-                hideEdgesByThresholds(false, true, false);
+                updateDot(false, true, false);
         });
         edges = d3.selectAll('.edge');
         edges
@@ -363,7 +363,7 @@ function highlightChromEdges() {
     return firstEdge;
 }
 
-function hideEdgesByThresholds(doRefresh, doAnimate, doRefreshTables) {
+function updateDot(doRefresh, doAnimate, doRefreshTables) {
     $(".tooltip").tooltip("hide");
     deselectAll();
     dotSrc = srcGraphs[componentN].dot;
@@ -710,33 +710,39 @@ function hideEdgesByThresholds(doRefresh, doAnimate, doRefreshTables) {
     }
 
     nodes = new Set(repeatConnectNodes[componentN]);
-    for (i = 0; i < uniqueEdges.length; i++) {
-        var edgeMatches = uniqueEdges[i].match(edgePattern);
-        var node1 = edgeMatches[1], node2 = edgeMatches[2];
-        node1 = replacementDict[node1] ? replacementDict[node1] : node1;
-        node2 = replacementDict[node2] ? replacementDict[node2] : node2;
-        if (filteredNodes.has(node1) || filteredNodes.has(node2)) {
-            var matches = uniqueEdges[i].match(idPattern);
-            if (matches && matches.length > 1) {
-                edgeId = matches[1];
-                edge = edgeData[edgeId];
-                if (edge && checkEdgeWithThresholds(edgeId)) {
-                    if (newEdges[edgeId]) {
-                        node1 = newEdges[edgeId][0];
-                        node2 = newEdges[edgeId][1];
+    if (uniqueEdges.length > 300) {
+        $('#unique_warning').show();
+    }
+    else {
+        $('#unique_warning').hide();
+        for (i = 0; i < uniqueEdges.length; i++) {
+            var edgeMatches = uniqueEdges[i].match(edgePattern);
+            var node1 = edgeMatches[1], node2 = edgeMatches[2];
+            node1 = replacementDict[node1] ? replacementDict[node1] : node1;
+            node2 = replacementDict[node2] ? replacementDict[node2] : node2;
+            if (filteredNodes.has(node1) || filteredNodes.has(node2)) {
+                var matches = uniqueEdges[i].match(idPattern);
+                if (matches && matches.length > 1) {
+                    edgeId = matches[1];
+                    edge = edgeData[edgeId];
+                    if (edge && checkEdgeWithThresholds(edgeId)) {
+                        if (newEdges[edgeId]) {
+                            node1 = newEdges[edgeId][0];
+                            node2 = newEdges[edgeId][1];
+                        }
+                        newData[edgeId] = [node1, node2]
+                        label = (edge.len && edge.name.indexOf('part') == -1) ? 'id ' + edge.name + '\\l' + edge.len + 'k ' + edge.cov +'x' : "";
+                        var s = '"' + node1 + '" -> "' + node2 + '" [label="' + label + '",id = "' + edgeId + '", color="' + edge.color + '"];';
+                        //console.log(s)
+                        //dotSrcLines.push(s);
+                        flankingEdges.push(s);
+                        graph[node1] = graph[node1] || {};
+                        graph[node1][node2] = graph[node1][node2] || new Set();
+                        graph[node2] = graph[node2] || {};
+                        graph[node2][node1] = graph[node2][node1] || new Set();
+                        graph[node1][node2].add(edgeId)
+                        graph[node2][node1].add(edgeId)
                     }
-                    newData[edgeId] = [node1, node2]
-                    label = (edge.len && edge.name.indexOf('part') == -1) ? 'id ' + edge.name + '\\l' + edge.len + 'k ' + edge.cov +'x' : "";
-                    var s = '"' + node1 + '" -> "' + node2 + '" [label="' + label + '",id = "' + edgeId + '", color="' + edge.color + '"];';
-                    //console.log(s)
-                    //dotSrcLines.push(s);
-                    flankingEdges.push(s);
-                    graph[node1] = graph[node1] || {};
-                    graph[node1][node2] = graph[node1][node2] || new Set();
-                    graph[node2] = graph[node2] || {};
-                    graph[node2][node1] = graph[node2][node1] || new Set();
-                    graph[node1][node2].add(edgeId)
-                    graph[node2][node1].add(edgeId)
                 }
             }
         }

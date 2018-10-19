@@ -7,7 +7,8 @@ import networkx as nx
 from agb_src.scripts.config import *
 from agb_src.scripts.graph_analysis import process_graph
 from agb_src.scripts.utils import print_dot_header, get_edge_agv_id, calculate_median_cov, is_empty_file, \
-    find_file_by_pattern, get_edge_num, get_canu_id, get_scaffolds_fpath, is_flye, is_canu, is_spades, edge_id_to_name
+    find_file_by_pattern, get_edge_num, get_canu_id, get_scaffolds_fpath, is_flye, is_canu, is_spades, edge_id_to_name, \
+    get_match_edge_id
 
 
 def build_jsons(dict_edges, input_dirpath, output_dirpath, mapping_info, chrom_names, edge_by_chrom, contig_edges, assembler):
@@ -140,7 +141,7 @@ def create_contig_info(dict_edges, input_dirpath, output_dirpath, contig_edges,
             handle.write("median_cov='" + json.dumps(calculate_median_cov(dict_edges)) + "';\n")
         return
 
-    edge_contigs = defaultdict(list)
+    edge_contigs = defaultdict(set)
     for contig, data in contig_info.items():
         subgraph = None
         repeat_subgraph = None
@@ -149,7 +150,10 @@ def create_contig_info(dict_edges, input_dirpath, output_dirpath, contig_edges,
         for edge_name in set(edges):
             edge_id = get_edge_agv_id(edge_name)
             if edge_id in dict_edges:
-                edge_contigs[edge_id].append(contig)
+                edge_contigs[edge_id].add(contig)
+                match_edge_id = get_match_edge_id(edge_id)
+                if match_edge_id in dict_edges:
+                    edge_contigs[match_edge_id].add(contig)
             if not subgraph and edge_id in edges_by_component:
                 data['g'] = edges_by_component[edge_id]
             if not repeat_subgraph and edge_id in edges_by_repeat_component:
@@ -159,6 +163,9 @@ def create_contig_info(dict_edges, input_dirpath, output_dirpath, contig_edges,
 
         data['num_edges'] = str(len(edges))
         contig_info[contig] = data
+
+    for edge_id in edge_contigs:
+        edge_contigs[edge_id] = list(edge_contigs[edge_id])
 
     with open(join(output_dirpath, 'contig_info.json'), 'a') as handle:
         handle.write("contig_info='" + json.dumps(contig_info) + "';\n")

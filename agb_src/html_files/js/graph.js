@@ -380,10 +380,7 @@ function updateDot(doRefresh, doAnimate, doRefreshTables) {
             edgeId = matches[1];
             edgeRealId = edgeInfo[edgeId] ? edgeId : (edgeData[edgeId] ? edgeData[edgeId].el_id : edgeId);
             if (selectedMethod == "ref") {
-                if (!checkChromEdge(edgeId)) {
-                    hiddenEdges.add(edgeId);
-                }
-                else if (baseLoopEdgeDict[edgeId]) {
+                if (baseLoopEdgeDict[edgeId]) {
                     var hiddenEdgesCount = 0;
                     for (var k = 0; k < baseLoopEdgeDict[edgeId].length; k++) {
                         edge = edgeData[baseLoopEdgeDict[edgeId][k]];
@@ -394,12 +391,12 @@ function updateDot(doRefresh, doAnimate, doRefreshTables) {
                     }
                     if (hiddenEdgesCount == baseLoopEdgeDict[edgeId].length) hiddenEdges.add(edgeId);
                 }
-            }
-            else if (selectedMethod == "contig") {
-                if (!checkContigEdge(edgeData[edgeId])) {
+                else if (!checkChromEdge(edgeId)) {
                     hiddenEdges.add(edgeId);
                 }
-                else if (baseLoopEdgeDict[edgeId]) {
+            }
+            else if (selectedMethod == "contig") {
+                if (baseLoopEdgeDict[edgeId]) {
                     var hiddenEdgesCount = 0;
                     for (var k = 0; k < baseLoopEdgeDict[edgeId].length; k++) {
                         edge = edgeData[baseLoopEdgeDict[edgeId][k]];
@@ -409,6 +406,9 @@ function updateDot(doRefresh, doAnimate, doRefreshTables) {
                         }
                     }
                     if (hiddenEdgesCount == baseLoopEdgeDict[edgeId].length) hiddenEdges.add(edgeId);
+                }
+                else if (!checkContigEdge(edgeData[edgeId])) {
+                    hiddenEdges.add(edgeId);
                 }
             }
         }
@@ -945,10 +945,13 @@ function checkEdge(edgeId, targetN) {
     //    return false;
     if (selectedMethod == "ref" && (!edgeDataFull[edgeId] || !edgeMappingInfo[edge.id] || (targetComponent && edgeMappingInfo[edge.id].indexOf(targetComponent) === -1)))
         return false;
-    if (selectedMethod == "contig" &&
-        ((!targetComponent && contigInfo[contigs[componentN]].edges.indexOf(edgeData[edgeId].name) == -1) ||
-            (targetComponent && contigInfo[targetComponent].edges.indexOf(edgeData[edgeId].name) == -1)))
-        return false;
+    if (selectedMethod == "contig") {
+        var contigEdges = targetComponent ? contigInfo[targetComponent].edges : contigInfo[contigs[componentN]].edges;
+        var edgeName = edgeData[edgeId].name;
+        var edgeMatchName = edgeName[0] == '-' ? edgeName.replace('-', '') : '-' + edgeName;
+        if (contigEdges.indexOf(edgeName) == -1 && contigEdges.indexOf(edgeMatchName) == -1)
+            return false;
+    }
     return true;
 }
 
@@ -1035,14 +1038,14 @@ function selectEdge(edge, edgeId, edgeLen, edgeCov, edgeMulti) {
             }
             if (edgeData[selectedEdge].aligns) edgeDescription = edgeDescription + "Note: maximum top 3 alignments per chromosome are shown.<br/>";
         }
-        if (edgeData[selectedEdge] && edgeData[selectedEdge].errors.length > 0) {
+        if (edgeData[selectedEdge] && edgeData[selectedEdge].errors && edgeData[selectedEdge].errors.length > 0) {
             edgeDescription = edgeDescription + '<br/><b>Misassembly breakpoints:</b>';
             for (var i = 0; i < edgeData[selectedEdge].errors.length; i++) {
                 error = edgeData[selectedEdge].errors[i];
                 edgeDescription = edgeDescription + '<li> between ' + error[0] + ' ' + error[1] + ' and ' + error[2] + ' ' + error[3] + '</li>';
             }
         }
-        if (edgeData[selectedEdge] && edgeData[selectedEdge].overlaps.length > 0) {
+        if (edgeData[selectedEdge] && edgeData[selectedEdge].overlaps && edgeData[selectedEdge].overlaps.length > 0) {
             var overlapsText = '<br/><b>Overlaps:</b>';
             var overlapsN = 0;
             for (var i = 0; i < edgeData[selectedEdge].overlaps.length; i++) {

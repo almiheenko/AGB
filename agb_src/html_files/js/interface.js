@@ -281,6 +281,8 @@ function changeSplitMethod(method, component) {
     $("#contig_table tbody tr").removeClass('selected');
     $("#edge_table tbody tr").removeClass('selected');
     $("#vertex_table tbody tr").removeClass('selected');
+    if (selectedMethod == "ref") buildRefTable();
+    if (selectedMethod == "contig") buildContigsTable();
 }
 
 $(document).keyup(function(e) {
@@ -337,8 +339,8 @@ function buildContigsTable() {
     }
     var showAssemblyErrors = chromosomes.length > 0;
     var table = '';
-    table += "<table border='1' id='contig_table' class='sortable scroll_table' style='width:" + (leftPanelWidth) + "px'>";
-    table += "<thead><tr class='header'><th>Contig</th><th>Len (Kb)</th><th>Cov</th><th># edges</th>" +
+    table += "<table border='1' id='contig_table' class='sortable scroll_table'>";
+    table += "<thead><tr class='header'><th>Name</th><th>Len (kbp)</th><th>Cov</th><th># edges</th>" +
         (showAssemblyErrors ? "<th># errors</th>" : "") + "</tr></thead><tbody>";
     enableContigs = [];
     for (x in contigInfo) {
@@ -414,7 +416,7 @@ function buildRefTable() {
         return;
     }
     var table = '';
-    table += "<table border='1' id='ref_table' class='sortable scroll_table' style='width:" + (leftPanelWidth) + "px'>";
+    table += "<table border='1' id='ref_table' class='sortable scroll_table'>";
     chromosomesData = {};
     chromosomesContigs = {};
     var contigsFound = false;
@@ -456,7 +458,7 @@ function buildRefTable() {
         chromLengths.push(chromLen)
     }
     var factor = Math.max.apply(Math, chromLengths) > 100000000 ? 1000000 : 1000;
-    var factorText = factor == 1000 ? "Kb" : "Mb";
+    var factorText = factor == 1000 ? "kbp" : "Mbp";
     table += "<thead><tr class='header'><th>Chromosome</th><th>Len (" + factorText + ")</th><th># edges</th>" +
         (contigsFound ? "<th># contigs</th>" : "") + "</tr></thead><tbody>";
     for (chrom in chromosomesData) {
@@ -505,8 +507,8 @@ function buildRefTable() {
 
 function buildEdgesTable() {
     table = '';
-    table += "<table border='1' id='edge_table' class='sortable scroll_table' style='width:" + (leftPanelWidth) + "px'>";
-    table += "<thead><tr class='header'><th>Edge</th><th>Len (Kb)</th><th>Cov</th><th>Mult.</th></tr></thead><tbody>";
+    table += "<table border='1' id='edge_table' class='sortable scroll_table'>";
+    table += "<thead><tr class='header'><th>Edge</th><th>Len (kbp)</th><th>Cov</th><th>Mult.</th></tr></thead><tbody>";
     enableEdges = [];
     for (x in edgeData) {
         if (edgeData[x].name.toString()[0] != '-' && x.indexOf('_') == -1 && checkEdge(x) && 
@@ -528,6 +530,26 @@ function buildEdgesTable() {
         selectedEdgeLabel = $(this).find('td:first').html();
         selectEdgeByLabel(selectedEdgeLabel);
     });
+    sorttable.sort_alpha = function(a,b) {
+        var as = a[0], bs = b[0];
+        var a, b, a1, b1, i= 0, n, L,
+        rx=/(\.\d+)|(\d+(\.\d+)?)|([^\d.]+)|(\.\D+)|(\.$)/g;
+        if(as === bs) return 0;
+        a= as.toUpperCase().match(rx);
+        b= bs.toUpperCase().match(rx);
+        L= a.length;
+        while(i<L){
+            if(!b[i]) return 1;
+            a1= a[i],
+            b1= b[i++];
+            if(a1!== b1){
+                n= a1-b1;
+                if(!isNaN(n)) return n;
+                return a1>b1? 1:-1;
+            }
+        }
+        return b[i]? -1:0;
+    }
     sorttable.makeSortable(document.getElementById("edge_table"));
 }
 
@@ -625,7 +647,7 @@ function buildVertexTable() {
 
 function buildComponentsTable() {
     table = '';
-    table += "<table border='1' id='components_table' class='sortable scroll_table' style='width:" + (leftPanelWidth-11) + "px'>";
+    table += "<table border='1' id='components_table' class='sortable scroll_table'>";
     var components = [];
     var lengths = [];
     var maxEnters = 0;
@@ -647,21 +669,19 @@ function buildComponentsTable() {
                 edgeId = matches[1];
                 edgeRealId = edgeInfo[edgeId] ? edgeId : (edgeData[edgeId] ? edgeData[edgeId].el_id : edgeId);
                 if (checkEdge(edgeRealId, i)) {
-                    if (edgeId[0] === "e") {
-                        if (edgeData[edgeRealId].s === edgeData[edgeRealId].e) {
-                            if (edgeData[edgeRealId].unique) loopEdges.add(edgeRealId);
-                            else loopRepeatEdges.add(edgeRealId);
-                        }
-                        else {
-                            if (edgeData[edgeRealId].unique) componentInfo['unique']++;
-                            else componentInfo['repeat']++;
-                        }
+                    if (edgeData[edgeRealId].s === edgeData[edgeRealId].e) {
+                        if (edgeData[edgeRealId].unique) loopEdges.add(edgeRealId.replace('e', '').replace('rc', ''));
+                        else loopRepeatEdges.add(edgeRealId.replace('e', '').replace('rc', ''));
+                    }
+                    else {
+                        if (edgeData[edgeRealId].unique) componentInfo['unique']++;
+                        else componentInfo['repeat']++;
+                    }
 
-                        var matches = dotSrcLines[j].match(lenCovPattern);
-                        if (matches && matches.length > 2) {
-                            edge_len = parseFloat(matches[1]);
-                            componentInfo['len'] = componentInfo['len'] + edge_len;
-                        }
+                    var matches = dotSrcLines[j].match(lenCovPattern);
+                    if (matches && matches.length > 2) {
+                        edge_len = parseFloat(matches[1]);
+                        componentInfo['len'] = componentInfo['len'] + edge_len;
                     }
                     filteredDotLines.push(dotSrcLines[j]);
                 }
@@ -673,9 +693,7 @@ function buildComponentsTable() {
                             edge = edgeData[baseLoopEdgeDict[edgeId][k]];
                             if (edge.unique) loopEdges.add(edgeId);
                             else loopRepeatEdges.add(edgeId);
-                            if (edge.id[0] === "e") {
-                                componentInfo['len'] = componentInfo['len'] + edge.len;
-                            }
+                            componentInfo['len'] = componentInfo['len'] + edge.len;
                         }
                     }
                     if (loopEdgesCount) filteredDotLines.push(dotSrcLines[j]);
@@ -695,7 +713,7 @@ function buildComponentsTable() {
         lengths.push(componentInfo['len'])
     }
     var factor = Math.max.apply(Math, lengths) > 10000 ? 1000 : 1;
-    var factorText = factor == 1 ? "Kb" : "Mb";
+    var factorText = factor == 1 ? "kbp" : "Mbp";
     var showExits = maxEnters || maxExits;
     table += "<thead><tr class='header'><th>#</th>" + "<th># unique edges</th>" +
         ($('#collapse_repeats_checkbox')[0].checked ? "" : "<th># repeat edges</th>") +
@@ -707,10 +725,12 @@ function buildComponentsTable() {
         if (components[i]['len']) {
             numRows++;
             if (components.length < 1000 || components[i]['unique'] > 1 || components[i]['repeat'] > 1) {
+                len = components[i]['len'] / 2;
                 len = Math.round(components[i]['len'] * 10 / factor) ? Math.round(components[i]['len'] * 10 / factor) / 10 : Math.round(components[i]['len'] * 100 / factor) / 100;
                 table += "<tr id='componentrow" + components[i]['id'] + "'><td>" + (components[i]['id'] + 1) +
-                    "</td><td>" + (components[i]['unique'] ? components[i]['unique'] : "-") +
-                    ($('#collapse_repeats_checkbox')[0].checked ? "" : "</td><td>" + (components[i]['repeat'] ? components[i]['repeat'] : "-")) +
+                    "</td><td>" + (components[i]['unique'] ? Math.round(components[i]['unique'] / 2) : "-") +
+                    ($('#collapse_repeats_checkbox')[0].checked ? "" : "</td><td>" +
+                        (components[i]['repeat'] ? Math.round(components[i]['repeat'] / 2) : "-")) +
                     (selectedMethod == "ref" || selectedMethod == "contig" ? "</td><td>" + (components[i]['n'] ? components[i]['n'] : "-") : "") +
                     "</td><td>" + len +
                     (showExits ? "</td><td>" + (components[i]['enter'] ? components[i]['enter'] : "-") : "") +

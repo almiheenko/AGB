@@ -22,7 +22,7 @@
 .info-popup .info-popup-content{
     margin:40px auto 0px auto;
     width: 800px;
-    height: 550px;
+    height: 600px;
     padding:10px;
     background-color: #e2e2e2;
     border-radius:5px;
@@ -197,6 +197,13 @@ path.contig_selected  {
     border-radius: 50%;
 }
 
+#edge_table.sortable th:not(.sorttable_sorted):not(.sorttable_sorted_reverse):not(.sorttable_nosort):after {
+    content: " \25B4\25BE"
+}
+
+#ref_table.sortable th:not(.sorttable_sorted):not(.sorttable_sorted_reverse):not(.sorttable_nosort):after {
+    content: " \25B4\25BE"
+}
 /*
  SVG elements
  */

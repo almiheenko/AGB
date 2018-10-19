@@ -56,7 +56,7 @@
 <div class="info-popup" id="info_popup" style="display:none" onclick="javascript:infoPopUpHide()">
     <div class="info-popup-content" onclick="javascript:infoPopUpShow()">
         <h4><b>Edges</b></h4>
-        <svg width="800" height="80">
+        <svg width="800" height="110">
             <g transform="translate(0,5)">
             <path fill="none" stroke="#000000" stroke-width="2" d="M0,5 40,5" style=""></path>
             <polygon fill="#000000" stroke="#000000" stroke-width="2" points="35,2 42,5 35,8" style=""></polygon>
@@ -65,16 +65,18 @@
             <g transform="translate(0,35)">
             <path fill="none" stroke="red" stroke-width="2" d="M0,5 40,5" style=""></path>
             <polygon fill="red" stroke="red" stroke-width="2" points="35,2 42,5 35,8" style=""></polygon>
-                <text x="50" y="10" text-anchor="start" font="16px"> repetitive edge (multiplicity 2 and higher).
-                    Note: clusters of adjacent repeat edges are shown with the same color.</text>
+                <text x="50" y="10" text-anchor="start" font="16px"> repetitive edge
+                    (multiplicity 2 or higher, or marked as repetitive by an assembler).</text>
+                    <text x="0" y="32" text-anchor="start" font="16px">Clusters of adjacent repeat edges are shown with the same color.
+                    </text>
             </g>
-            <text x="0" y="75" text-anchor="start" font="24px">When a node is selected:</text>
-            <g transform="translate(205,65)" class="node_selected_in">
+            <text x="0" y="95" text-anchor="start" font="24px">When a node is selected:</text>
+            <g transform="translate(205,85)" class="node_selected_in">
             <path fill="none" stroke-width="2" d="M0,5 40,5" style=""></path>
             <polygon stroke-width="2" points="35,2 42,5 35,8" style=""></polygon>
                 <text x="50" y="10" text-anchor="start" font="16px"> incoming edge</text>
             </g>
-            <g transform="translate(390,65)" class="node_selected_out">
+            <g transform="translate(390,85)" class="node_selected_out">
             <path fill="none" stroke-width="2" d="M0,5 40,5" style=""></path>
             <polygon stroke-width="2" points="35,2 42,5 35,8" style=""></polygon>
                 <text x="50" y="10" text-anchor="start" font="16px"> outgoing edge</text>
@@ -88,7 +90,7 @@
         <svg width="800" height="170">
         <g>
             <ellipse fill="white" stroke="#000000" cx="11" cy="11" rx="9" ry="9"></ellipse>
-            <text x="27" y="14" text-anchor="start" font="16px"> default node</text>
+            <text x="27" y="14" text-anchor="start" font="16px"> regular node</text>
         </g>
         <g transform="translate(150,0)" class="hanging_node">
             <ellipse stroke="#000000" cx="11" cy="11" rx="9" ry="9"></ellipse>
@@ -112,6 +114,7 @@
         </g>
         </svg>
         <h4><b>Reference-based mode</b></h4>
+        <p>You can scroll and zoom into the reference panel using the mouse or touchpad.
         <svg width="800" height="80">
         <g transform="translate(0,10)">
             <rect class="chromBg" width="430" height="30"></rect>

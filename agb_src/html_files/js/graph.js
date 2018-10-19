@@ -944,13 +944,19 @@ function checkEdge(edgeId, targetN) {
     // if($('#break_checkbox')[0].checked && edgeData[edgeId].unique)
     //    return false;
     if (selectedMethod == "ref" && (!edgeDataFull[edgeId] || !edgeMappingInfo[edge.id] || (targetComponent && edgeMappingInfo[edge.id].indexOf(targetComponent) === -1)))
-        return false;
+    {
+       if (!$('#adj_edges_checkbox')[0].checked || !checkEdgeWithThresholds(edgeId))
+           return false;
+    }
     if (selectedMethod == "contig") {
         var contigEdges = targetComponent ? contigInfo[targetComponent].edges : contigInfo[contigs[componentN]].edges;
         var edgeName = edgeData[edgeId].name;
         var edgeMatchName = edgeName[0] == '-' ? edgeName.replace('-', '') : '-' + edgeName;
         if (contigEdges.indexOf(edgeName) == -1 && contigEdges.indexOf(edgeMatchName) == -1)
-            return false;
+        {
+           if (!$('#adj_edges_checkbox')[0].checked || !checkEdgeWithThresholds(edgeId))
+               return false;
+        }
     }
     return true;
 }

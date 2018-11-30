@@ -24,15 +24,15 @@ source activate AGB
 ### Usage
 Run AGB to visualize an assembly graph:
 ```
-    agb.py --graph <GFA(1,2)/FASTG/Graphviz file>
+    agb.py --graph <GFA(1,2)/FASTG/Graphviz file> -a <assembler_name>
 ```
 
 Run AGB on an assembler output folder to visualize an assembly graph with additional useful information:
 ```
-    agb.py -i <assembler_output_dir>
+    agb.py -i <assembler_output_dir> -a <assembler_name>
 ```
 
-The assembly graph viewer will be saved to agb_output/viewer.html.
+The assembly graph viewer will be saved to <code>agb_output/viewer.html</code>.
 
 ### Examples
 

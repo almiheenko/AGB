@@ -81,6 +81,7 @@ def main():
 
     opts, args = parser.parse_args()
     if not opts.assembler:
+        print('ERROR! You should specify the name of the used assembler software using the option -a')
         parser.print_help(file=sys.stderr)
         sys.exit(1)
 

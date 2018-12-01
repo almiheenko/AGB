@@ -51,6 +51,8 @@ function toGraph(srcLines) {
 }
 
 function calculateComponents(g) {
+    // get a number of connected components in a graph
+
     var components = 0;
     var visited = {};
     for (var i in g) {
@@ -106,6 +108,8 @@ function render(doRefresh, doAnimate, doRefreshTables) {
         d3.select("#graph > svg").attr("display", "");
         d3.selectAll(".node")
             .attr("id", function(d) { return "node" + d.key; });
+
+        // refresh tables in the left pane
         buildVertexTable();
         buildEdgesTable();
         if (selectedMethod !== "ref")
@@ -114,12 +118,15 @@ function render(doRefresh, doAnimate, doRefreshTables) {
             buildContigsTable();
         if (doRefreshTables)
             buildComponentsTable();
+
         setupAutocompleteSearch();
         $('#saveBtns').show();
+
         highlightChromEdges();
         contigEdges = highlightContigEdges();
         highlightNodes();
         if (selectedEdge) {
+            // preserve edge selection
             d3.selectAll('#' + selectedEdge).classed('selected', true);
             d3.selectAll('#edgerow' + selectedEdge.replace('e', '').replace('rc', '')).classed('selected', true);
             document.getElementById('node_info').innerHTML = edgeDescription;
@@ -129,6 +136,7 @@ function render(doRefresh, doAnimate, doRefreshTables) {
         else if (contigEdges.length > 0) zoomToElement(contigEdges[0]);
         if (selectedMatchEdge) d3.selectAll('#' + selectedMatchEdge).classed('selected', false);
         if (nodeToSelect) {
+            // preserve node selection
             selectedNode = nodeToSelect;
             selectNode(selectedNode);
             nodeToSelect = "";
@@ -146,6 +154,7 @@ function render(doRefresh, doAnimate, doRefreshTables) {
         });
         nodes
             .on("dblclick", function (e) {
+                // edges collapsed into a node can be expanded by a double-click on the node
                 selectedNode = d3.select(this).select('title').text();
                 clusterNode = clusterCenters[selectedNode] || selectedNode;
                 if (expandedNodes.has(clusterNode)) {
@@ -175,7 +184,7 @@ function render(doRefresh, doAnimate, doRefreshTables) {
                 d3.select(this).classed("focused", true);
                 var edgeId = d3.select(this).attr('id');
                 var curEdge = edgeDataFull[edgeId] || edgeDataFull[edgeId];
-                if (curEdge) {
+                if (curEdge) { // add edge tooltip
                     tooltipDiv.transition()
                         .delay(500)
                         .duration(200)
@@ -235,14 +244,14 @@ function highlightNodes() {
             nodeId = d3.select(this).select('title').text();
             return unbalancedNodes.has(nodeId);
         })
-        .classed('unbalanced_node', true);
+        .classed('unbalanced_node', true); // highlight nodes with differences in indegree/outdegree with red
     }
     nodes = hangNodes[componentN] ? new Set(hangNodes[componentN]) : new Set();
     d3.selectAll('.node').filter(function (e) {
         nodeId = d3.select(this).select('title').text();
         return nodes.has(nodeId);
     })
-    .classed('hanging_node', true);
+    .classed('hanging_node', true); // highlight nodes with zero indegree or outdegree with black
     if (selectedMethod == "repeat") {
         nodes = new Set(repeatConnectNodes[componentN]);
         d3.selectAll('.node').filter(function (e) {
@@ -258,7 +267,7 @@ function highlightNodes() {
     .classed('part_node', true)
     .select('ellipse')
     .attr('rx', 13)
-    .attr('ry', 13);
+    .attr('ry', 13); // in large graph, highlight nodes representing the hidden parts of the graph
     d3.selectAll('.node').filter(function (e) {
         nodeId = d3.select(this).select('title').text();
         return newNodes.has(nodeId);
@@ -268,7 +277,7 @@ function highlightNodes() {
     .attr('style', function() {
         nodeId = d3.select(this.parentNode).select('title').text();
         if (nodeColors[nodeId]) return 'fill: ' + nodeColors[nodeId].replace(/\d+$/, "");
-    });
+    }); // highlight nodes with collapsed edges
 }
 
 function highlightContigEdges() {
@@ -281,6 +290,10 @@ function highlightContigEdges() {
     $('#uniqueEdgesWarning').hide();
     var realEdges = [];
     if (selectedContig) {
+        // display graph path for selected contig
+        // mark hidden edges with gray color
+        // add multiplicity to repetitive edges
+
         graphPath = "";
         selectedEdges = new Set();
         var graphEdges = [];
@@ -314,12 +327,14 @@ function highlightContigEdges() {
             else graphEdges.push(edge)
         }
         if (graphEdges.length > 0) {
+            // format a graph path
             prevEdge = null;
             edgeCount = 1;
             for (i = graphEdges.length - 1; i > -1; i--) {
                 edge = graphEdges[i];
                 if (prevEdge == edge) edgeCount++;
                 if (prevEdge && (prevEdge != edge || i == 0)) {
+                    // if an edge repeats more than 2 times, print only one occurence
                     if (edgeCount <= 2 && prevEdge) {
                         graphPath = prevEdge + graphPath;
                     } 
@@ -351,6 +366,7 @@ function highlightChromEdges() {
     var firstEdge;
     if (!isNaN(parseInt(selectedChrom))) {
         selectedEdges = new Set();
+        // highlight edges mapped to the selected chromosome
         for (i = 0; i < chromEdges.length; i++) {
             var edgeId = chromEdges[i];
             var edgeElId = getEdgeElement(edgeData[edgeId]);
@@ -377,6 +393,7 @@ function updateDot(doRefresh, doAnimate, doRefreshTables) {
     for (i = 0; i < dotSrcLines.length;) {
         var matches = dotSrcLines[i].match(idPattern);
         if (matches && matches.length > 1 && (selectedMethod == "ref" || selectedMethod == "contig") && !$('#adj_edges_checkbox')[0].checked) {
+            // hide adjacent edges in repeat-focused and reference-based modes (if corresponding checkbox is not checked)
             edgeId = matches[1];
             edgeRealId = edgeInfo[edgeId] ? edgeId : (edgeData[edgeId] ? edgeData[edgeId].el_id : edgeId);
             if (selectedMethod == "ref") {
@@ -423,6 +440,7 @@ function updateDot(doRefresh, doAnimate, doRefreshTables) {
         }
         else {
             if ($('#collapse_repeats_checkbox')[0].checked) {
+                // store repetitive edges
                 if (baseLoopEdgeDict[edgeId]) {
                     var repeatEdgesCount = 0;
                     for (var k = 0; k < baseLoopEdgeDict[edgeId].length; k++) {
@@ -433,6 +451,7 @@ function updateDot(doRefresh, doAnimate, doRefreshTables) {
                             edgesColor[edge.id] = dotSrcLines[i].match(colorPattern)[1];
                         }
                     }
+                    //collapse if all loop edges are repetitive
                     if (repeatEdgesCount == baseLoopEdgeDict[edgeId].length) repeatEdges.add(edgeId);
                 }
                 else {
@@ -459,12 +478,12 @@ function updateDot(doRefresh, doAnimate, doRefreshTables) {
     }
     var collapsedNodes = {};
     newNodes = new Set();
-    var strongEdges = {};
     for (node in graph) {
         for (i = 0; i < Object.keys(graph[node]).length; i++) {
             edgesToCollapse = 0;
             node2 = Object.keys(graph[node])[i];
             var filteredEdges = new Set();
+            // store edges that should be collapsed based on their repetitiveness or length/depth thresholds
             for (let edgeId of graph[node][node2]) {
                 if (!hiddenEdges.has(edgeId)) {
                     filteredEdges.add(edgeId)
@@ -486,30 +505,25 @@ function updateDot(doRefresh, doAnimate, doRefreshTables) {
                 }
             }
             graph[node][node2] = filteredEdges;
-            //console.log(filteredEdges)
+
             if (edgesToCollapse && node != node2 && !expandedNodes.has(node) && !expandedNodes.has(node2)) {
-                    collapsedNodes[node] = collapsedNodes[node] || new Set();
-                    collapsedNodes[node].add(node2);
-            }
-            else if (edgesToCollapse == 0) {
-                //strongEdges[node] = strongEdges[node] || {};
-                //strongEdges[node][node2] = curEdges;
+                collapsedNodes[node] = collapsedNodes[node] || new Set();
+                collapsedNodes[node].add(node2);
             }
         }
     }
-    //console.log(collapsedNodes,strongEdges)
+
     newData = {};
     replacementDict = {};
     nodeColors = {};
     collapsedEdges = {};
     for (node in collapsedNodes) {
+        // iteratively collapse stored edges
         edgeS = replacementDict[node] ? replacementDict[node] : node;
         collapsedEdges[edgeS] = collapsedEdges[edgeS] || new Set();
         for (let node2 of collapsedNodes[node]) {  
             edgeE = replacementDict[node2] ? replacementDict[node2] : node2;
             if (edgeS == edgeE || !graph[edgeE]) continue;
-            if ((strongEdges[edgeS] && strongEdges[edgeS][edgeE]) || (strongEdges[edgeE] && strongEdges[edgeE][edgeS]))
-                continue;
             newNodes.add(edgeS);
             for (i = 0; i < Object.keys(graph[edgeE]).length;) {
                 pairNode = Object.keys(graph[edgeE])[i];
@@ -550,12 +564,6 @@ function updateDot(doRefresh, doAnimate, doRefreshTables) {
                 if (replacementDict[e1] == edgeE)
                     replacementDict[e1] = edgeS
             }
-            for (e1 in strongEdges) {
-                if (strongEdges[e1][node2])
-                    strongEdges[e1][edgeS] = strongEdges[e1][node2];
-                if (strongEdges[e1][edgeE])
-                    strongEdges[e1][edgeS] = strongEdges[e1][edgeE];
-            }
         }
     }
     clusterNodeSizeDict = {};
@@ -577,9 +585,8 @@ function updateDot(doRefresh, doAnimate, doRefreshTables) {
             }
         }
     }
-    //console.log(newEdges,graph)
     
-    // find loop edges
+    // find new loop edges
     loopEdgeDict = {};
     for (node in loopEdges) {
         if (loopEdges[node]) {
@@ -592,7 +599,7 @@ function updateDot(doRefresh, doAnimate, doRefreshTables) {
                     newEdgesDict[edgeId] = loopId;
                     source = newData[edgeId] ? newData[edgeId][0] : edge.s;
                     end = newData[edgeId] ? newData[edgeId][1] : edge.e;
-                    if (expandedNodes.has(source) && expandedNodes.has(end))
+                    if (expandedNodes.has(source) && expandedNodes.has(end)) // check that the node is not expanded
                         isWrong = false;
                     else if (repeatEdges.has(edge.id) || hiddenEdges.has(edge.id) || !checkEdgeWithThresholds(edge.id))
                         isWrong = true;
@@ -609,7 +616,7 @@ function updateDot(doRefresh, doAnimate, doRefreshTables) {
                         newEdgesDict[baseLoopEdgeDict[edgeId][k]] = loopId;
                         edge = edgeData[baseLoopEdgeDict[edgeId][k]];
                         source = newData[edgeId] ? newData[edgeId][0] : edge.s;
-                        if (expandedNodes.has(source))
+                        if (expandedNodes.has(source)) // check that the node is not expanded
                             isWrong = false;
                         else if (repeatEdges.has(edge.id) || hiddenEdges.has(edge.id) || !checkEdgeWithThresholds(edge.id))
                             isWrong = true;
@@ -628,6 +635,7 @@ function updateDot(doRefresh, doAnimate, doRefreshTables) {
         }
     }
 
+    // create new dot
     for (let edgeId of newEdges) {   
         edge = edgeData[edgeId];
         if (edge) {
@@ -668,6 +676,7 @@ function updateDot(doRefresh, doAnimate, doRefreshTables) {
                         s = '"' + loopNode + '" -> "' + loopNode + '" [label="' + label + '",id = "' + edgeId + '", color="' + edge.color + '"];';
                     }
                 }
+                // if there are several loop edges, hide their labels and display as one
                 else if (filterEdges.length == 2 && filterEdges[0].name.replace('-', '') === filterEdges[1].name.replace('-', '')) {
                     edge = filterEdges[0];
                     label = edge.len ? 'id ' + edge.name.replace('-', '') + '\\l' + edge.len + 'k ' + edge.cov + 'x' : "";
@@ -687,22 +696,16 @@ function updateDot(doRefresh, doAnimate, doRefreshTables) {
     var colorErrorEdges = document.getElementById('color_select').selectedIndex == 2;
     var colorCovEdges = document.getElementById('color_select').selectedIndex == 3;
 
-    //components = calculateComponents(toGraph(dotSrcLines));
     var filteredNodes = new Set();
     for (i = 0; i < dotSrcLines.length;) {
         var matches = dotSrcLines[i].match(idPattern);
         if (matches) {
             edgeId = matches[1];
-            //if (components[edgeId] < minComponents) {
-            //    dotSrcLines.splice(i, 1);
-            //}
-            //else {
             var matches = dotSrcLines[i].match(edgePattern);
             var node1 = matches[1], node2 = matches[2];
             filteredNodes.add(node1);
             filteredNodes.add(node2);
             i++;
-            //}
         }
         else {
             i++;
@@ -713,7 +716,7 @@ function updateDot(doRefresh, doAnimate, doRefreshTables) {
     if (uniqueEdges.length > 300) {
         $('#unique_warning').show();
     }
-    else {
+    else { // if there are less than 300 edges, show adjacent edges if they are satisfied with length/depth thresholds
         $('#unique_warning').hide();
         for (i = 0; i < uniqueEdges.length; i++) {
             var edgeMatches = uniqueEdges[i].match(edgePattern);
@@ -730,18 +733,17 @@ function updateDot(doRefresh, doAnimate, doRefreshTables) {
                             node1 = newEdges[edgeId][0];
                             node2 = newEdges[edgeId][1];
                         }
-                        newData[edgeId] = [node1, node2]
+                        newData[edgeId] = [node1, node2];
                         label = (edge.len && edge.name.indexOf('part') == -1) ? 'id ' + edge.name + '\\l' + edge.len + 'k ' + edge.cov +'x' : "";
                         var s = '"' + node1 + '" -> "' + node2 + '" [label="' + label + '",id = "' + edgeId + '", color="' + edge.color + '"];';
-                        //console.log(s)
-                        //dotSrcLines.push(s);
+
                         flankingEdges.push(s);
                         graph[node1] = graph[node1] || {};
                         graph[node1][node2] = graph[node1][node2] || new Set();
                         graph[node2] = graph[node2] || {};
                         graph[node2][node1] = graph[node2][node1] || new Set();
-                        graph[node1][node2].add(edgeId)
-                        graph[node2][node1].add(edgeId)
+                        graph[node1][node2].add(edgeId);
+                        graph[node2][node1].add(edgeId);
                     }
                 }
             }
@@ -752,6 +754,8 @@ function updateDot(doRefresh, doAnimate, doRefreshTables) {
         dotSrcLines = dotSrcLines.concat(flankingEdges);
         dotSrcLines.push("}");
     }
+
+    // color graph edges depending on settings
     graph = parseGraph(dotSrcLines);
     for (i = 0; i < dotSrcLines.length; i++) {
         var matches = dotSrcLines[i].match(lenCovPattern);
@@ -761,12 +765,13 @@ function updateDot(doRefresh, doAnimate, doRefreshTables) {
             var edge_width = 2;
             var multiplicity = coverage / median_cov;
             multiplicity = multiplicity < 1.75 ? 1 : Math.round(multiplicity);
-            if (multiplicity > 10) edge_width = 9;
+            if (multiplicity > 10) edge_width = 9; // set edge width based on inferred miltiplicity
             else if (multiplicity > 5) edge_width = 7;
             else if (multiplicity > 1) edge_width = 5;
             //else edge_width = multiplicity;
             dotSrcLines[i] = dotSrcLines[i].replace("]", ", penwidth=" + edge_width + " ]");
             if (colorChromEdges) {
+                // color graph edges based on their mappings to the reference genome
                 var matches = dotSrcLines[i].match(idPattern);
                 edgeId = matches[1];
                 edgeRealId = (edgeInfo[edgeId] || !edgeData[edgeId]) ? edgeId : edgeData[edgeId].el_id;
@@ -778,23 +783,26 @@ function updateDot(doRefresh, doAnimate, doRefreshTables) {
                 dotSrcLines[i] = dotSrcLines[i].replace(oldColor[0], 'color="' + color + '"');
             }
             else if (colorCovEdges) {
-                var color = 'red';
-                if (coverage >= q3_cov)
+                // color graph edges based on their coverage
+                var color = 'red'; // color low covered edges as red
+                if (coverage >= q3_cov)  // color high covered edges as green
                     color = 'green';
                 else if (coverage >= median_cov)
                     color = '#d39200';
 
                 var oldColor = dotSrcLines[i].match(colorPattern);
-                if (dotSrcLines[i].indexOf(' = "black"') == -1) {  // use parallel edges for repeat
+                if (dotSrcLines[i].indexOf(' = "black"') == -1) {  // use parallel edges to display repeat edges
                     dotSrcLines[i] = dotSrcLines[i].replace(oldColor[1], color + ':white:' + color);
                 }
                 else dotSrcLines[i] = dotSrcLines[i].replace(oldColor[1], color);
             }
             else if (colorErrorEdges) {
+                // color graph edges based on the presence of assembly errors
                 var color = "green";
                 var matches = dotSrcLines[i].match(idPattern);
                 edgeId = matches[1];
                 edgeRealId = (edgeInfo[edgeId] || !edgeData[edgeId]) ? edgeId : edgeData[edgeId].el_id;
+                // highlight an edge with red color if it is in a misassembled contig and with dark red color if it contains a misassembly itself
                 if (edgeData[edgeRealId] && edgeData[edgeRealId].errors.length > 0)
                     color = "#b90000:white:#b90000";
                 else if (edgeInfo[edgeRealId]) {
@@ -804,6 +812,7 @@ function updateDot(doRefresh, doAnimate, doRefreshTables) {
                             break;
                         }
                 }
+                // if errors are not found, repeat the check for reverse complement edge
                 if (color === "green") {
                     edgeRealId = edgeRealId[0] == "e" ? edgeRealId.replace("e", "rc") : edgeRealId.replace("rc", "e");
                     if (edgeData[edgeRealId] && edgeData[edgeRealId].errors.length > 0)
@@ -834,6 +843,7 @@ function searchEdge(event) {
   tr = table.getElementsByTagName("tr");
 
   for (i = 0; i < tr.length; i++) {
+      // filter edges in a table
     td = tr[i].getElementsByTagName("td")[0];
     if (td) {
       if (td.innerHTML.toUpperCase().indexOf(filterVal) > -1) {
@@ -846,6 +856,7 @@ function searchEdge(event) {
 }
 
 function getEdgeComponent(edgeId) {
+    // get the number of component containing the edge
     if (edgeData[edgeId])
         edge = edgeData[edgeId];
     else if (loopEdgeDict[edgeId]) 
@@ -882,6 +893,7 @@ function selectEdgeByLabel(edgeLabel) {
 }
 
 function checkContigEdge(edge) {
+    // check whether the current contig contains the edge
     if (!edge) return false;
     var matchEdge = edge.name[0] === '-' ? edge.name.replace('-', '') : '-' + edge.name;
     var contigName = srcGraphs[componentN].contig;
@@ -889,6 +901,7 @@ function checkContigEdge(edge) {
 }
 
 function checkChromEdge(edgeId) {
+    // check whether the edge is mapped to the current reference chromosome
     return !edgeData[edgeId] || (!edgeMappingInfo || (edgeMappingInfo[edgeId] && edgeMappingInfo[edgeId].indexOf(curChrom) !== -1));
 }
 
@@ -921,6 +934,7 @@ function checkRepeatEdgeId(edgeId) {
         source = newData[edgeId] ? newData[edgeId][0] : edge.s;
         end = newData[edgeId] ? newData[edgeId][1] : edge.e;
     }
+    // check whether the edge is repetitive and should be shown
     if ($('#collapse_repeats_checkbox')[0].checked && !edgeData[edgeId].unique && !expandedNodes.has(source) && !expandedNodes.has(end))
         return false;
     return true;
@@ -937,7 +951,7 @@ function checkEdge(edgeId, targetN) {
         return false;
     if (!checkEdgeWithThresholds(edgeId))
         return false;
-    if (selectedMethod == "default" && getEdgeComponent(edgeId) !== targetComponent)
+    if (selectedMethod == "default" && getEdgeComponent(edgeId) !== targetComponent)  // check whether the edge is in current graph component
         return false;
     if (!checkRepeatEdgeId(edgeId))
         return false;
@@ -949,6 +963,7 @@ function checkEdge(edgeId, targetN) {
            return false;
     }
     if (selectedMethod == "contig") {
+        // check whether the contig contains the edge or the edge is adjacent to contig edges
         var contigEdges = targetComponent ? contigInfo[targetComponent].edges : contigInfo[contigs[componentN]].edges;
         var edgeName = edgeData[edgeId].name;
         var edgeMatchName = edgeName[0] == '-' ? edgeName.replace('-', '') : '-' + edgeName;
@@ -965,11 +980,14 @@ function selectEdge(edge, edgeId, edgeLen, edgeCov, edgeMulti) {
     deselectAll();
     selectedEdge = edge;
     console.log(edge);
+    // select an edge and its reverse complement component
     selectedMatchEdge = selectedEdge.indexOf("rc") == -1 ? selectedEdge.replace('e', 'rc') : selectedEdge.replace('rc', 'e');
     if (d3.select('#' + selectedMatchEdge).empty()) selectedMatchEdge = null;
     d3.select('#' + selectedEdge).classed('selected', true); 
     if (selectedMatchEdge)
         d3.select('#' + selectedMatchEdge).classed('selected', true);
+
+    // print all selected edges if they are shown (depends on options and thresholds)
     if (selectedEdge.lastIndexOf('loop', 0) === 0) {
         edgeDescription = '<ul><b>Loop edges:</b>';
         for (var k = 0; k < loopEdgeDict[selectedEdge].length; k++) {
@@ -1066,6 +1084,7 @@ function selectEdge(edge, edgeId, edgeLen, edgeCov, edgeMulti) {
         }
     }
     if (selectedMethod == "ref" && aligns) {
+        // highlight alignments of this edge to the reference
         selectedAlignId = 'align_' + selectedEdge;
         d3.selectAll('.align').classed("selected", false);
         d3.selectAll('.' + selectedEdge).classed("selected", true);
@@ -1076,6 +1095,7 @@ function selectEdge(edge, edgeId, edgeLen, edgeCov, edgeMulti) {
 }
 
 function selectContig(selectedContig){
+    // switch to contig-based mode
     $('#wrongOptionsWarning').hide();
     $('#uniqueEdgesWarning').hide();
     contigComponent = null;
@@ -1108,6 +1128,7 @@ function selectContig(selectedContig){
 }
        
 function selectChrom(chromName){
+    // switch to reference-based mode
     chromN = chromosomes.indexOf(chromName);
     chromEdges = chromosomesData[chromName];
     changeToChromosome(chromN);

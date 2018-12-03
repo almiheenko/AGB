@@ -768,17 +768,19 @@ function zoomToElement(elementId) {
     var graphBox = $("#graph0")[0].getBBox();
     if ((graphBox.width > 500 || graphBox.height > 500) && ("#" + elementId)[0]) {
         var b = $("#" + elementId)[0].getBBox();
-        var scaleFactor = Math.ceil(graphBox.width / 400);
-        //console.log(b)
-        var zoomX = (-b.x)*scaleFactor+100;
-        var zoomY = (-b.y)*scaleFactor+100;
-        d3.select('svg').transition()
-          .duration(150)
-          .call(d3.zoom().transform,
-                d3.zoomIdentity
-                .translate(zoomX, zoomY)
-                .scale(scaleFactor));
-        d3.select("#graph0").attr("transform", "translate("+zoomX+","+zoomY+")"+"scale(" + scaleFactor + ")");
+        var scaleFactor = Math.ceil(graphBox.width / 400); // zoom to 400px
+        var offsetX = b.x > 0 ? 100 : -100;
+        var offsetY = b.y > 0 ? 100 : -100;
+        var zoomX = (-b.x+offsetX)*scaleFactor;
+        var zoomY = (-b.y+offsetY)*scaleFactor;
+
+        var t = d3.zoomTransform(graphviz.zoomSelection().node());
+        t = t.translate(zoomX, zoomY);
+        t = t.scale(scaleFactor);
+        graphviz.resetZoom();
+        graphviz.zoomBehavior().transform(graphviz.zoomSelection(), t); // Translate the zoom transform for the top level svg
+        var g = d3.select(d3.select("svg").node().querySelector("g"));
+        g.attr('transform', "translate("+zoomX+","+zoomY+")"+"scale(" + scaleFactor + ")");
     }
 }
 

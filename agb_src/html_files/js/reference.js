@@ -4,6 +4,7 @@ var chromHeight = 30;
 function addRefView() {
     if (chromViewWidth === 0) return;
     if (typeof(chromosomeView) === 'undefined') {
+        // add reference viewer
         var chart = d3.select('#refView')
             .append('svg:svg')
             .attr('width', chromViewWidth + 20)
@@ -24,7 +25,7 @@ function addRefView() {
             .scaleExtent([1, 32])
             .translateExtent([[0, 0], [chromViewWidth, chromHeight]])
             .extent([[0, 0], [chromViewWidth, chromHeight]])
-            .on("zoom", zoomFunction);
+            .on("zoom", zoomFunction); // add zoom to reference viewer
         chromosomeView.call(zoom);
 
         tooltipDiv = d3.select("body").append("div")
@@ -60,8 +61,10 @@ function updateRefView() {
     var lastTickText = d3.select(lastTick).select('text');
     lastTickText.text(lastTickText.text() + ' ' + tickValue);
 
+    // delete all blocks
     chromosomeView.selectAll('.align').remove();
     if (chromAligns && chromAligns[curChrom]) {
+        // add alignment blocks
         aligns = chromosomeView.append('g').selectAll('.align')
                     .data(chromAligns[curChrom])
                     .enter().append('rect')
@@ -78,47 +81,50 @@ function updateRefView() {
                         return xScale(align.e) - xScale(align.s);
                     })
                     .attr('height', chromHeight);
-        aligns.on('click', function (align) {
-            selectAlign(align, this);
-        })
-              .on("mouseover", function(align) {
-                   tooltipDiv.transition()
-                       .delay(500)
-                     .duration(200)
-                     .style("opacity", .9);
-                   numMisassemblies = align.ms.length == 0 ? 0 : (align.ms.indexOf(';') !== -1 ? 2 : 1);
-                   misassembliesText = "";
-                   if (align.ms.length > 0) {
-                       misassemblies = align.ms.split(';');
-                       misTypes = [];
-                       for (var i=0; i< misassemblies.length; i++) {
-                           misTypes.push(misassemblies[i].split(',')[0]);
-                       }
-                       misassembliesText = misTypes.join(', ')
-                   }
-                   else misassembliesText = "No misassemblies";
-                   tooltipDiv.html("<b>Edge:</b> " + edgeData[align.edge].name +
-                       "<br> <b>Aligned to:</b> " + align.s + "-" + align.e +
-                       "<br> " + misassembliesText)
-                     .style("left", (d3.event.pageX) + "px")
-                     .style("top", (d3.event.pageY - 28) + "px");
 
-                   var selectedItem = d3.select(this);
-                   chromosomeView.append('rect')
-                        .attr('class', 'glow')
-                        .attr('pointer-events', 'none')
-                        .attr('width', selectedItem.attr('width'))
-                        .attr('height', selectedItem.attr('height'))
-                        .attr('fill', 'white')
-                        .attr('opacity', .3)
-                        .attr('transform', selectedItem.attr('transform'));
+        aligns
+            .on('click', function (align) {
+                selectAlign(align, this);
+            })
+            .on("mouseover", function(align) {
+                // show misassemblies on hover
+               tooltipDiv.transition()
+                   .delay(500)
+                 .duration(200)
+                 .style("opacity", .9);
+               numMisassemblies = align.ms.length == 0 ? 0 : (align.ms.indexOf(';') !== -1 ? 2 : 1);
+               misassembliesText = "";
+               if (align.ms.length > 0) {
+                   misassemblies = align.ms.split(';');
+                   misTypes = [];
+                   for (var i=0; i< misassemblies.length; i++) {
+                       misTypes.push(misassemblies[i].split(',')[0]);
+                   }
+                   misassembliesText = misTypes.join(', ')
+               }
+               else misassembliesText = "No misassemblies";
+               tooltipDiv.html("<b>Edge:</b> " + edgeData[align.edge].name +
+                   "<br> <b>Aligned to:</b> " + align.s + "-" + align.e +
+                   "<br> " + misassembliesText)
+                 .style("left", (d3.event.pageX) + "px")
+                 .style("top", (d3.event.pageY - 28) + "px");
+
+               var selectedItem = d3.select(this);
+               chromosomeView.append('rect')
+                    .attr('class', 'glow')
+                    .attr('pointer-events', 'none')
+                    .attr('width', selectedItem.attr('width'))
+                    .attr('height', selectedItem.attr('height'))
+                    .attr('fill', 'white')
+                    .attr('opacity', .3)
+                    .attr('transform', selectedItem.attr('transform'));
                })
-              .on("mouseout", function() {
-                   tooltipDiv.transition()
-                     .duration(300)
-                     .style("opacity", 0);
-                   chromosomeView.select('.glow').remove();
-               });
+            .on("mouseout", function() {
+               tooltipDiv.transition()
+                 .duration(300)
+                 .style("opacity", 0);
+               chromosomeView.select('.glow').remove();
+            });
         if (selectedAlign) selectAlign(selectedAlign);
     }
 }

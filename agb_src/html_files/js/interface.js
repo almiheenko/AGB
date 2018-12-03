@@ -1,6 +1,5 @@
 function setupInterfaceBtns() { 
     var minLeftPanelHeight = 800;
-    console.log(window.innerHeight)
     
     addModeSwitch();
     if (window.innerHeight <= minLeftPanelHeight) {
@@ -10,7 +9,7 @@ function setupInterfaceBtns() {
     else {
         document.getElementById("left_panel").style.height = (window.innerHeight - 80) + "px";
     }
-    // document.getElementById('title').innerHTML = capitalizeFirstLetter(title);
+
     document.getElementById('max_cov_threshold').value = maxCoverage;
     document.getElementById('max_cov_threshold').onkeyup = function(event) {
         setMaxCoverage(event, this);
@@ -65,12 +64,13 @@ function setupInterfaceBtns() {
         }
     });
     $('#unbalanced_checkbox').on('change', function() {
-        highlightNodes();
+        highlightNodes();  // highlight nodes with non-zero balance with red
     });
 
     $('#adj_edges_option').hide();
 
     $('#default_mode').on("click",function(){
+        // change viewer to default mode
         changeSplitMethod('default');
         $('#default_mode').attr('disabled','disabled');
         $('#repeat_mode').removeAttr('disabled');
@@ -78,6 +78,7 @@ function setupInterfaceBtns() {
         $('#contig_mode').removeAttr('disabled');
     });
     $('#ref_mode').on("click",function(){
+        // change viewer to ref-based mode
         changeSplitMethod('ref');
         $('#default_mode').removeAttr('disabled');
         $('#repeat_mode').removeAttr('disabled');
@@ -85,6 +86,7 @@ function setupInterfaceBtns() {
         $('#contig_mode').removeAttr('disabled');
     });
     $('#contig_mode').on("click",function(){
+        // change viewer to contig-focused mode
         changeSplitMethod('contig');
         $('#default_mode').removeAttr('disabled');
         $('#repeat_mode').removeAttr('disabled');
@@ -92,6 +94,7 @@ function setupInterfaceBtns() {
         $('#contig_mode').attr('disabled','disabled');
     });
     $('#repeat_mode').on("click",function(){
+        // change viewer to repeat-focused mode
         changeSplitMethod('repeat');
         $('#default_mode').removeAttr('disabled');
         $('#ref_mode').removeAttr('disabled');
@@ -99,6 +102,7 @@ function setupInterfaceBtns() {
         $('#contig_mode').removeAttr('disabled');
     });
     $('#adj_edges_checkbox').on('change', function() {
+        // show/hide adjacent edges
         updateDot(false, true, false);
     });
     $('#show_labels').on('change', function() {
@@ -126,6 +130,7 @@ function setupInterfaceBtns() {
 
     $('#saveBtns').hide();
     $('#saveButton').on('click', function(){
+        // save svg image of displayed graph
         try {
             var isFileSaverSupported = !!new Blob();
         } catch (e) {
@@ -152,23 +157,6 @@ function setupInterfaceBtns() {
         saveAs(blob, "graph.dot");
     });
     addRefView();
-    /*document.getElementById("edges_textarea").addEventListener("keypress", submitOnEnter);
-    document.getElementById('draw_edges_btn').onclick = function(event) {
-        var err_msg = '';
-        if (document.getElementById('edges_textarea').value.length < 1)
-            err_msg = 'Please specify at least one edge';
-        else {
-            selectedEdges = document.getElementById('edges_textarea').value.split(',');
-            for (i = 0; i < selectedEdges.length; i++) {
-                edge = selectedEdges[i];
-                edgeId = edge[0] == '-' ? 'redge' + edge.substr(1) : 'edge' + edge;
-                if (!edgeInfo[edgeId])
-                    err_msg = 'Edge ' + edge + ' does not exist! Please check edge ID and resubmit';
-            }
-        }
-        if (err_msg) alert(err_msg);
-        else window.open("fa2.html?" + selectedEdges.join(','));
-    };*/
 }
 
 function addModeSwitch(){
@@ -195,7 +183,7 @@ function addModeSwitch(){
         div += '</label>';
     }
     div += '</div>';
-     document.getElementById('div_switch').innerHTML = div;
+    document.getElementById('div_switch').innerHTML = div;
 }
 
 function addColorSelect(){
@@ -354,13 +342,13 @@ function buildContigsTable() {
             if (edge != "*" && edge != "??") {
                 var edgeId = edge[0] == '-' ? 'rc' + edge.substr(1) : 'e' + edge;
                 //edgeId = getEdgeElement(edgeData[edgeElId]);
-                 var edgeErrorsN = 0;
+                 var edgeErrorsN = 0; // sum misassemblies in all edges
                  if (edgeData[edgeId] && ((selectedMethod == "contig" && checkEdgeWithThresholds(edgeId)) || checkEdge(edgeId))) {
                     edgesN++;
                     edgeErrorsN = edgeData[edgeId].errors.length;
                  }
                  else if (loopEdgeDict[edgeId]) {
-                     var edgeChecked = false;
+                    var edgeChecked = false;
                     for (var k = 0; k < loopEdgeDict[edgeId].length; k++) {
                         if ((selectedMethod == "contig" && checkEdgeWithThresholds(loopEdgeDict[edgeId][k])) || checkEdge(loopEdgeDict[edgeId][k])) {
                             edgeErrorsN += edgeData[loopEdgeDict[edgeId][k]].errors.length;
@@ -387,6 +375,7 @@ function buildContigsTable() {
         selectedContig = $(this).find('td:first').html();
         selectContig(selectedContig);
     });
+    // add alphanumeric sort
     sorttable.sort_alpha = function(a,b) {
         var as = a[0], bs = b[0];
         var a, b, a1, b1, i= 0, n, L,
@@ -426,6 +415,7 @@ function buildRefTable() {
         for (i = 0; i < edgeMappingInfo[edgeId].length; i++) {
              chrom = edgeMappingInfo[edgeId][i];
              chromosomesData[chrom] = chromosomesData[chrom] || [];
+             // calculate total length of edges mapped to the chromosome
              if (edgeData[edgeId] && ((selectedMethod == "ref" && checkEdgeWithThresholds(edgeId)) || checkEdge(edgeId))) {
                 chromosomesData[chrom].push(edgeData[edgeId].len * 1000);
              }
@@ -479,6 +469,7 @@ function buildRefTable() {
         selectedChromName = $(this).find('td:first').html();
         selectChrom(selectedChromName);
     });
+    // add alphanumeric sort
     sorttable.sort_alpha = function(a,b) {
         var as = a[0], bs = b[0];
         var a, b, a1, b1, i= 0, n, L,
@@ -511,6 +502,7 @@ function buildEdgesTable() {
     table += "<thead><tr class='header'><th>Edge</th><th>Len (kbp)</th><th>Cov</th><th>Mult.</th></tr></thead><tbody>";
     enableEdges = [];
     for (x in edgeData) {
+        // add only forward edges satisfied with length/depth thresholds
         if (edgeData[x].name.toString()[0] != '-' && x.indexOf('_') == -1 && checkEdge(x) && 
             (selectedMethod != "ref" || !isNaN(parseInt(edgeDataRef[x].ref_comp)))) {
             enableEdges.push(edgeDataFull[x] || edgeData[x]);
@@ -575,9 +567,10 @@ function buildVertexTable() {
             var edgeIds = Array.from(graph[node][node2]);
             for (var j=0; j<edgeIds.length; j++) {
                 edgeId = edgeIds[j];
-                //if (!d3.select('#' + edgeId).empty() == componentN) adjEdges[node] = componentN;
+
                 if (diGraph[node] && diGraph[node][node2] && diGraph[node][node2].has(edgeId)) {
                     if (diGraph[node2] && diGraph[node2][node] && diGraph[node2][node].has(edgeId)) {
+                        // calculate loop edges in the node
                         if (edgeData[edgeId] && checkEdge(edgeId))
                             nodeInfo['loop']++;
                         else if (loopEdgeDict[edgeId]) {
@@ -588,6 +581,7 @@ function buildVertexTable() {
                     }
                     else {
                         edgeRealId = edgeInfo[edgeId] ? edgeId : (edgeData[edgeId] ? edgeData[edgeId].el_id : edgeId);
+                        // calculate node outdegree
                         if (edgeData[edgeRealId] && checkEdge(edgeRealId)) {
                             nodeInfo['out']++;
                             nodeInfo['out_mult'] = nodeInfo['out_mult'] + edgeData[edgeRealId].mult;
@@ -600,29 +594,26 @@ function buildVertexTable() {
                     }
                     else {
                         edgeRealId = edgeInfo[edgeId] ? edgeId : (edgeData[edgeId] ? edgeData[edgeId].el_id : edgeId);
+                        // calculate node indegree
                         if (edgeData[edgeRealId] && checkEdge(edgeRealId)) {
                             nodeInfo['in']++;
                             nodeInfo['in_mult'] = nodeInfo['in_mult'] + edgeData[edgeRealId].mult;
                             inCoverage += edgeData[edgeRealId].cov;
                         }
                     }
-                    /*else if (loopEdgeDict[edgeId]) {
-                        for (var k = 0; k < loopEdgeDict[edgeId].length; k++) {
-                            if (checkEdge(loopEdgeDict[edgeId][k])) nodeInfo['in_mult'] = nodeInfo['in_mult'] + edgeData[loopEdgeDict[edgeId][k]].mult;
-                        }
-                    }*/
                 }
             }
         }
         nodeInfo['balance'] = Math.abs(nodeInfo['out_mult'] - nodeInfo['in_mult']);
         if (inCoverage && outCoverage && Math.abs(1 - (inCoverage / outCoverage)) > 0.1)
-            unbalancedNodes.add(node);
+            unbalancedNodes.add(node); // consider node as unbalanced if differencies between coverage of incoming and outgoing edges more than 10%
         nodeInfo['size'] = clusterNodeSizeDict[node] || 0;
         if (!adjEdges[node]) adjEdges[node] = edgeId;
         if (node.indexOf('part') === -1)
             nodes.push(nodeInfo);
     }
     for (i = 0; i < nodes.length; i++) {
+        // add only nodes with visible edges
         if (nodes[i]['in'] || nodes[i]['out'] || nodes[i]['loop'])
             table += "<tr id='noderow" + nodes[i]['id'] + "'><td>" + nodes[i]['id'] + "</td><td>" + 
                 (nodes[i]['in'] ? nodes[i]['in'] + " (" + nodes[i]['in_mult'] + ")" : "-") + 
@@ -704,7 +695,7 @@ function buildComponentsTable() {
         componentInfo['unique'] = componentInfo['unique'] + loopEdges.size;
         componentInfo['repeat'] = componentInfo['repeat'] + loopRepeatEdges.size;
         if (selectedMethod == "ref")
-            componentInfo['n'] = calculateComponents(toGraph(filteredDotLines));
+            componentInfo['n'] = calculateComponents(toGraph(filteredDotLines));  // show number of connected components
         componentInfo['enter'] = srcGraphs[i].enters;
         componentInfo['exit'] = srcGraphs[i].exits;
         maxEnters = Math.max(maxEnters, srcGraphs[i].enters);
@@ -724,6 +715,7 @@ function buildComponentsTable() {
     for (i = 0; i < components.length; i++) {
         if (components[i]['len']) {
             numRows++;
+            // do not show row if the total number of components is > 1000 or the component does not have any edges
             if (components.length < 1000 || components[i]['unique'] > 1 || components[i]['repeat'] > 1) {
                 len = components[i]['len'] / 2;
                 len = Math.round(components[i]['len'] * 10 / factor) ? Math.round(components[i]['len'] * 10 / factor) / 10 : Math.round(components[i]['len'] * 100 / factor) / 100;
@@ -769,7 +761,7 @@ function changeToContig(contig){
     if (contigN != componentN || selectedMethod != "contig") {
         changeSplitMethod('contig', contigN);
     }
-    else highlightChromEdges();
+    else highlightContigEdges();
 }
 
 function zoomToElement(elementId) {
@@ -798,6 +790,7 @@ function selectNode(selectedNode) {
     var outEdges = [];
     var loopEdges = [];
     if (selectedNode.lastIndexOf('part', 0) === 0) {
+        // a node represents a hidden part of a large graph
         part = srcPartDict[selectedNode];
         s = 'Graph part, ' + part.n + ' nodes.';
         s = s + ' <span class="link" onclick="javascript:changeComponent(' + part.idx + ');">Show</span>';
@@ -924,6 +917,7 @@ function selectNode(selectedNode) {
 }
 
 function changeComponent(component, doRefreshTables) {
+    // display the specified graph component
     componentN = component;
     if (!srcPartDict || !srcPartDict['part' + componentN] || !srcPartDict['part' + componentN].big) $('#partition_warning').hide();
     else $('#partition_warning').show();
@@ -956,19 +950,19 @@ function changeComponent(component, doRefreshTables) {
 function attributer(datum, index, nodes) {
     var selection = d3.select(this);
     if (datum.tag == "svg") {
-        var graphHeight = datum.children[1].translation.y;
+        graphHeight = datum.children[1].translation.y;
         var graphWidth = parseInt(datum.attributes.width);
         var margin = 100;
         var width = window.innerWidth - (leftPanelWidth + margin);
-        var ratio = (window.innerHeight - margin) / width;
-        var height = width * ratio;
+        aspectRatio = (window.innerHeight - margin) / width;
+        var height = width * aspectRatio;
         //var height = Math.min(graphHeight, newHeight - 50);
 
         var x = 0;
         var y = 0;
-        var scale = Math.min(1, width/graphWidth);
+        var scale = Math.min(1, width / graphWidth);
         document.getElementById("pathDiv").style.width = width + "px";
-        console.log(window.innerWidth,width, graphWidth, height, scale, width/scale);
+        console.log(window.innerWidth, width, graphWidth, height, graphHeight, scale, width/scale);
         selection
             .attr("width", width + "px")
             .attr("height", height + "px");
@@ -978,105 +972,10 @@ function attributer(datum, index, nodes) {
         datum.attributes.overflow = "hidden";
         datum.attributes.preserveAspectRatio="none";
         datum.attributes.viewBox = x + " " + y + " " + (width / scale) + " " + (height / scale);
+        graphHeight = height / scale;
         chromViewWidth = width - 100;
         addRefView();
     }
-}
-
-function moveEdgeStartPoint(edge, endNode, x1, y1) {
-    var endNodeEl = endNode.select('ellipse');
-    _updateEdge(edge, x1, y1, endNodeEl.attr('cx'),endNodeEl.attr('cy'), true);
-
-    return this;
-}
-    
-function moveEdgeEndPoint(edge, startNode, x2, y2) {
-    var startNodeEl = startNode.select('ellipse');
-    _updateEdge(edge, startNodeEl.attr('cx'), startNodeEl.attr('cy'), x2, y2);
-
-    return this;
-}
-
-function _updateEdge(edge, x1, y1, x2, y2, isStart) {
-    var line = edge.selectWithoutDataPropagation("path");
-    var id = edge.attr("id");
-    var shortening = 0;
-    var arrowHeadLength = 10;
-    var nodeMargin = 11;
-    var arrowHeadWidth = 6;
-    var margin = 0.174;
-    var edgeOffset = 10;
-
-    var arrowHeadPoints = [[0, -arrowHeadWidth / 2], [arrowHeadLength, 0], [0, arrowHeadWidth / 2], [0, -arrowHeadWidth / 2]];
-
-    var x1 = parseFloat(x1), x2 = parseFloat(x2), y1 = parseFloat(y1), y2 = parseFloat(y2);
-    var dx = x2 - x1;
-    var dy = y2 - y1;
-    var length = Math.sqrt(dx * dx + dy * dy);
-    var cosA = dx / length;
-    var sinA = dy / length;
-
-    if (!isStart) {
-        x1 = x1 + edgeOffset*cosA;
-        y1 = y1 + edgeOffset*sinA;
-        x2 = x1 + (length - shortening - (arrowHeadLength + nodeMargin + margin)) * cosA;
-        y2 = y1 + (length - shortening - (arrowHeadLength + nodeMargin + margin)) * sinA;
-    }
-    else {
-        x1 = x1 + edgeOffset*cosA;
-        y1 = y1 + edgeOffset*sinA;
-        x2 = x2 - edgeOffset*cosA;
-        y2 = y2 - edgeOffset*sinA;
-    }
-
-    var line = edge.selectWithoutDataPropagation("path");
-    var arrowHead = edge.selectWithoutDataPropagation("polygon");
-    var text =  edge.selectWithoutDataPropagation("text");
-
-    var path1 = path();
-    path1.moveTo(x1, y1)
-    //path1.lineTo(x2, y2);
-    //path1.quadraticCurveTo(x1, y1, x2, y2)
-    path1='M'+x1+',' + y1 + 'Q'+x1+','+y1+','+x2+',' +y2
-    line.attr("d", path1);
-
-    var pos = line.node().getPointAtLength(line.node().getTotalLength()/2);
-    text.attr('x', pos.x);
-    text.attr('y', x2>x1 == y2>y1 ? pos.y-5 : pos.y+5);
-    text.attr('text-anchor', 'left');
-
-    x2 = x1 + (length - shortening - (arrowHeadLength + nodeMargin + edgeOffset)) * cosA;
-    y2 = y1 + (length - shortening - (arrowHeadLength + nodeMargin + edgeOffset)) * sinA;
-
-    for (var i = 0; i < arrowHeadPoints.length; i++) {
-        var point = arrowHeadPoints[i];
-        arrowHeadPoints[i] = rotate(point[0], point[1], cosA, sinA);
-    }
-    for (var i = 0; i < arrowHeadPoints.length; i++) {
-        var point = arrowHeadPoints[i];
-        arrowHeadPoints[i] = [x2 + point[0], y2 + point[1]];
-    }
-    var allPoints = [];
-    for (var i = 0; i < arrowHeadPoints.length; i++) {
-        var point = arrowHeadPoints[i];
-        allPoints.push(point.join(','));
-    }
-    var pointsAttr = allPoints.join(' ');
-
-    arrowHead.attr("points", pointsAttr);
-
-    return this;
-}
-function rotate(x, y, cosA, sinA) {
-    // (x + j * y) * (cosA + j * sinA) = x * cosA - y * sinA + j * (x * sinA + y * cosA)
-    y = -y;
-    sinA = -sinA;
-    var _ref = [x * cosA - y * sinA, x * sinA + y * cosA];
-    x = _ref[0];
-    y = _ref[1];
-
-    y = -y;
-    return [x, y];
 }
 
 function setupAutocompleteSearch(){

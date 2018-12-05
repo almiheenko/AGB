@@ -3,11 +3,11 @@ package:
   version: "0.4"
 
 source:
-  git_rev: 44675b5
+  git_rev: 4c1fad6
   git_url: https://github.com/almiheenko/AGB
 
 build:
-  number: 0
+  number: 4
 
 requirements:
   host:

@@ -114,10 +114,16 @@ function setupInterfaceBtns() {
 
     addColorSelect();
     document.getElementById('color_select').onchange = function(event) {
-        document.getElementById('repeat_info').style.display = 'none';
-        document.getElementById('errors_info').style.display = 'none';
-        if (document.getElementById('color_select').selectedIndex == 2) document.getElementById('errors_info').style.display = '';
-        if (document.getElementById('color_select').selectedIndex == 3) document.getElementById('repeat_info').style.display = '';
+        $('#repeat_info').hide();
+        $('#errors_info').hide();
+        var selectedOption = document.getElementById('color_select').selectedIndex;
+
+        if (selectedOption == 1) { // edge alignments to reference
+        }
+        if (selectedOption == 2) { // erroneous edges
+            $('#errors_info').show();
+        }
+        // if (selectedOption == 3) document.getElementById('repeat_info').style.display = '';
         updateDot(false, false, false);
     };
 
@@ -321,6 +327,8 @@ function setEdgeLenThreshold(event, minValue, maxValue) {
 }
 
 function buildContigsTable() {
+    // in contig-based mode take into account all edges satisfied with thresholds for each contig
+    // otherwise, take into account only displayed edges
     if (!Object.keys(contigInfo).length) {
         document.getElementById("contig_tab").style.display="none";
         return;
@@ -360,11 +368,11 @@ function buildContigsTable() {
                  errorsN = errorsN + edgeErrorsN;
             }
         }
-        // if (edgesN) {
+        if (edgesN || Object.keys(contigInfo).length < 500) {
             enableContigs.push(x);
             table += "<tr id='contigrow" + x + "'><td>" + x + "</td><td>" + contigLen + "</td><td>" + contigInfo[x].cov +
                 "</td><td>" + (edgesN ? edgesN : "-") + (showAssemblyErrors ? "</td><td>" + (errorsN ? errorsN : "-") : "") + "</td>" + "</tr>";
-        // }
+        }
         //table += "<tr id='contigrow" + x + "'><td>" + x + "</td><td>" + contigLen + "</td><td>" + contigInfo[x].cov + "</td><td>" + contigInfo[x].n_edges + "</td></tr>";
     }
     table += "</tbody></table>";
@@ -400,6 +408,8 @@ function buildContigsTable() {
 }
 
 function buildRefTable() {
+    // in reference-based mode take into account all edges satisfied with thresholds for each chromosome
+    // otherwise, take into account only displayed edges
     if (chromosomes.length == 0) {
         document.getElementById("ref_tab").style.display="none";
         return;
@@ -497,6 +507,7 @@ function buildRefTable() {
 }
 
 function buildEdgesTable() {
+    // show only displayed edges
     table = '';
     table += "<table border='1' id='edge_table' class='sortable scroll_table'>";
     table += "<thead><tr class='header'><th>Edge</th><th>Len (kbp)</th><th>Cov</th><th>Mult.</th></tr></thead><tbody>";
@@ -546,6 +557,7 @@ function buildEdgesTable() {
 }
 
 function buildVertexTable() {
+    // show only displayed nodes
     table = '';
     table += "<table border='1' id='vertex_table' class='sortable scroll_table' style='width:" + (leftPanelWidth) + "px'>";
     table += "<thead><tr class='header'><th>Node ID</th><th>Incoming edges(mult.)</th><th>Outgoing edges(mult.)</th><th>Loops</th><th>Balance</th>" + ($('#collapse_repeats_checkbox')[0].checked ? "<th>Size</th>" : "") + "</tr></thead><tbody>";
@@ -637,6 +649,7 @@ function buildVertexTable() {
 }
 
 function buildComponentsTable() {
+    // take into account only displayed edges
     table = '';
     table += "<table border='1' id='components_table' class='sortable scroll_table'>";
     var components = [];
@@ -695,7 +708,7 @@ function buildComponentsTable() {
         componentInfo['unique'] = componentInfo['unique'] + loopEdges.size;
         componentInfo['repeat'] = componentInfo['repeat'] + loopRepeatEdges.size;
         if (selectedMethod == "ref")
-            componentInfo['n'] = calculateComponents(toGraph(filteredDotLines));  // show number of connected components
+            componentInfo['n'] = calculateComponents(parseGraph(filteredDotLines), true);  // show number of connected components
         componentInfo['enter'] = srcGraphs[i].enters;
         componentInfo['exit'] = srcGraphs[i].exits;
         maxEnters = Math.max(maxEnters, srcGraphs[i].enters);

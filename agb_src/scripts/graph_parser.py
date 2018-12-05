@@ -283,6 +283,7 @@ def parse_gfa(gfa_fpath, min_edge_len, input_dirpath=None, assembler=None):
 
 
 def calculate_multiplicities(dict_edges):
+    ## calculate inferred edge multiplicity as edge coverage divided by median coverage
     median_cov = calculate_median_cov(dict_edges)
     for name in dict_edges:
         multiplicity = dict_edges[name].cov / median_cov
@@ -295,7 +296,8 @@ def calculate_multiplicities(dict_edges):
 def construct_graph(dict_edges, predecessors, successors):
     dict_edges = calculate_multiplicities(dict_edges)
 
-    ### construct graph
+    # if we have only links between sequences
+    # we need to construct graph based on this information
     node_id = 1
     graph = defaultdict(set)
     for edge_id in dict_edges.keys():
@@ -332,7 +334,7 @@ def construct_graph(dict_edges, predecessors, successors):
         dict_edges[edge_id].start = start_node
         dict_edges[edge_id].end = end_node
 
-    ### color repeat edges
+    ### color each cluster of repeat edges in one color
     colored_edges = set()
     color_idx = 0
     for edge_id in dict_edges.keys():

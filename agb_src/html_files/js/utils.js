@@ -25,28 +25,29 @@ function deselectContig() {
     selectedChrom = "";
 }
 
-
-
-
-function parseGraph(srcLines) {
+function parseGraph(srcLines, skipIds) {
+    // parse DOT file
     var g = {};
     for (var i = 0; i < srcLines.length; i++) {
         var matches = srcLines[i].match(edgePattern);
         if (matches && matches.length >= 3) {
             var node1 = matches[1], node2 = matches[2];
-            var edgeId = srcLines[i].match(idPattern)[1];
             g[node1] = g[node1] || {};
             g[node2] = g[node2] || {};
             g[node1][node2] = g[node1][node2] || new Set();
             g[node2][node1] = g[node2][node1] || new Set();
-            g[node1][node2].add(edgeId);
-            g[node2][node1].add(edgeId);
+            if (!skipIds) {  // do not store excessive information for calculation of connected components
+                var edgeId = srcLines[i].match(idPattern)[1];
+                g[node1][node2].add(edgeId);
+                g[node2][node1].add(edgeId);
+            }
         }
     }
     return g;
 }
 
 function parseDirectedGraph(srcLines) {
+    // parse DOT file taking into account edge directions
     var g = {};
     for (var i = 0; i < srcLines.length; i++) {
         var matches = srcLines[i].match(edgePattern);
@@ -56,24 +57,6 @@ function parseDirectedGraph(srcLines) {
             g[node1] = g[node1] || {};
             g[node1][node2] = g[node1][node2] || new Set();
             g[node1][node2].add(edgeId);
-        }
-    }
-    return g;
-}
-
-function toGraph(srcLines) {
-    var g = {};
-    for (var i = 0; i < srcLines.length; i++) {
-        var matches = srcLines[i].match(edgePattern);
-        if (matches && matches.length >= 3) {
-            var node1 = matches[1], node2 = matches[2];
-            g[node1] = g[node1] || {};
-            g[node2] = g[node2] || {};
-            g[node1][node2] = g[node1][node2] || new Set();
-            g[node2][node1] = g[node2][node1] || new Set();
-            //edgeId = srcLines[i].match(idPattern)[1];
-            //g[node1][node2].add(edgeId);
-            //g[node2][node1].add(edgeId);
         }
     }
     return g;
@@ -88,11 +71,6 @@ function calculateComponents(g) {
         var subGraph = dfs(g, i, visited);
         if (subGraph != null) {
             components++;
-            //for (var edge in subGraph) {
-                //console.log(subGraph[edge], subGraph)
-                //components[subGraph[edge]] = subGraph.length;
-
-            //}
         }
     }
     return components;

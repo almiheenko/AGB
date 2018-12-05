@@ -133,7 +133,7 @@ def create_contig_info(dict_edges, input_dirpath, output_dirpath, contig_edges,
     elif is_spades(assembler):
         contig_info = parse_spades_contigs_info(input_dirpath, contig_edges)
     if not contig_info:
-        with open(join(output_dirpath, 'contig_info.json'), 'w') as handle:
+        with open(join(output_dirpath, 'contig_info.json'), 'a') as handle:
             handle.write("contigInfo=" + json.dumps([]) + ";\n")
 
         with open(join(output_dirpath, 'edges_base_info.json'), 'w') as handle:

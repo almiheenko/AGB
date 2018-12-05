@@ -767,20 +767,26 @@ function changeToContig(contig){
 function zoomToElement(elementId) {
     var graphBox = $("#graph0")[0].getBBox();
     if ((graphBox.width > 500 || graphBox.height > 500) && ("#" + elementId)[0]) {
-        var b = $("#" + elementId)[0].getBBox();
-        var scaleFactor = Math.ceil(graphBox.width / 400); // zoom to 400px
-        var offsetX = b.x > 0 ? 100 : -100;
-        var offsetY = b.y > 0 ? 100 : -100;
-        var zoomX = (-b.x+offsetX)*scaleFactor;
-        var zoomY = (-b.y+offsetY)*scaleFactor;
+        graphviz.resetZoom();
+        var bbox = $("#" + elementId)[0].getBBox();
+        var svgBox = d3.select('#graph > svg').attr("viewBox").split(/\s+|,/);
+        var svgx = parseInt(svgBox[0]), svgy = parseInt(svgBox[1]), svgw = parseInt(svgBox[2]), svgh = parseInt(svgBox[3]);
+
+        // top-left coordinates of element
+        var bx = bbox.x;
+        var by = bbox.y;
+        var realHeight = parseInt($('#graph > svg').attr('height'));
+        var offsetY = svgh - realHeight;
+        var scaleFactor = Math.min(Math.round(svgh / 500), Math.round(svgw / 500));  // zoom to 500px
+        var tx = -bx*scaleFactor + svgx + svgw/4;
+        var ty = -by*scaleFactor + svgy - svgh/2 - offsetY;
 
         var t = d3.zoomTransform(graphviz.zoomSelection().node());
-        t = t.translate(zoomX, zoomY);
+        t = t.translate(tx, ty);
         t = t.scale(scaleFactor);
-        graphviz.resetZoom();
         graphviz.zoomBehavior().transform(graphviz.zoomSelection(), t); // Translate the zoom transform for the top level svg
         var g = d3.select(d3.select("svg").node().querySelector("g"));
-        g.attr('transform', "translate("+zoomX+","+zoomY+")"+"scale(" + scaleFactor + ")");
+        g.attr('transform', "translate("+tx+","+ty+")"+"scale(" + scaleFactor + ")");
     }
 }
 

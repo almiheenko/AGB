@@ -10,9 +10,9 @@ VELVET_NAME = 'Velvet'
 
 SUPPORTED_ASSEMBLERS = [CANU_NAME, FLYE_NAME, SPADES_NAME]
 
-MIN_EDGE_LEN = 500
-MAX_SUB_NODES = 80
-MAX_NODES = 300
+MIN_EDGE_LEN = 500  # filter short edges out
+MAX_SUB_NODES = 80  # max number of nodes in the subgraph after splitting
+MAX_NODES = 300     # split graph into smaller subgraphs if the number of nodes is bigger
 
 GAP_THRESHOLD = 1000
 

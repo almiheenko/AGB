@@ -7,7 +7,7 @@ import subprocess
 from collections import defaultdict
 
 from agb_src.scripts.config import GAP_THRESHOLD
-from agb_src.scripts.edges_mapping import map_edges_to_ref, parse_mapping_info
+from agb_src.scripts.mapping_utils import map_edges_to_ref, parse_mapping_info
 from agb_src.scripts.utils import is_empty_file, can_reuse, get_quast_filename, get_edge_num, get_edge_agv_id, \
     edge_id_to_name, get_match_edge_id, get_path_to_program
 
@@ -76,8 +76,8 @@ def parse_alignments(alignments_fpath, json_output_dirpath):
             align = {'s': start, 'e': end, 'edge': edge_id, 'ms': ';'.join(ms_info[(chrom, start, end)])}
             aligns_by_chroms[chrom].append(align)
     with open(join(json_output_dirpath, 'reference.json'), 'w') as handle:
-        handle.write("gaps='" + json.dumps(gaps_info) + "';\n")
-        handle.write("chrom_aligns='" + json.dumps(aligns_by_chroms) + "';\n")
+        handle.write("chromGaps=" + json.dumps(gaps_info) + ";\n")
+        handle.write("chromAligns=" + json.dumps(aligns_by_chroms) + ";\n")
 
 
 def run_quast_analysis(input_fpath, reference_fpath, output_dirpath, json_output_dirpath, threads, contig_edges, dict_edges=None, is_meta=False):
@@ -91,12 +91,12 @@ def run_quast_analysis(input_fpath, reference_fpath, output_dirpath, json_output
             print("QUAST failed! Make sure you are using the latest version of QUAST")
         print("No information about %s mappings to the reference genome" % ("edge" if dict_edges else "contig"))
         with open(join(json_output_dirpath, "reference.json"), 'w') as handle:
-            handle.write("chrom_lengths='" + json.dumps([]) + "';\n")
-            handle.write("mapping_info='" + json.dumps([]) + "';\n")
-            handle.write("gaps='" + json.dumps([]) + "';\n")
-            handle.write("chrom_aligns='" + json.dumps([]) + "';\n")
+            handle.write("chrom_lengths=" + json.dumps([]) + ";\n")
+            handle.write("edgeMappingInfo=" + json.dumps([]) + ";\n")
+            handle.write("chromGaps=" + json.dumps([]) + ";\n")
+            handle.write("chromAligns=" + json.dumps([]) + ";\n")
         with open(join(json_output_dirpath, 'errors.json'), 'w') as handle:
-            handle.write("misassembled_contigs='[]';\n")
+            handle.write("misassembledContigs=[];\n")
         return None, None, None, dict_edges
 
     misassembled_seqs = defaultdict(list)
@@ -119,7 +119,7 @@ def run_quast_analysis(input_fpath, reference_fpath, output_dirpath, json_output
 
     if not dict_edges:
         with open(join(json_output_dirpath, 'errors.json'), 'w') as handle:
-            handle.write("misassembled_contigs='" + json.dumps(misassembled_seqs) + "';\n")
+            handle.write("misassembledContigs='" + json.dumps(misassembled_seqs) + "';\n")
         return None, None, None, dict_edges
     else:
         parse_alignments(get_alignments_fpath(quast_output_dir, input_fpath), json_output_dirpath)

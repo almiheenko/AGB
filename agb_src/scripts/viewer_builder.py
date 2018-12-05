@@ -134,11 +134,11 @@ def create_contig_info(dict_edges, input_dirpath, output_dirpath, contig_edges,
         contig_info = parse_spades_contigs_info(input_dirpath, contig_edges)
     if not contig_info:
         with open(join(output_dirpath, 'contig_info.json'), 'w') as handle:
-            handle.write("contig_info='" + json.dumps([]) + "';\n")
+            handle.write("contigInfo=" + json.dumps([]) + ";\n")
 
         with open(join(output_dirpath, 'edges_base_info.json'), 'w') as handle:
-            handle.write("edge_info='" + json.dumps([]) + "';")
-            handle.write("median_cov='" + json.dumps(calculate_median_cov(dict_edges)) + "';\n")
+            handle.write("edgeInfo=" + json.dumps([]) + ";")
+            handle.write("medianCov=" + json.dumps(calculate_median_cov(dict_edges)) + ";\n")
         return
 
     edge_contigs = defaultdict(set)
@@ -168,10 +168,10 @@ def create_contig_info(dict_edges, input_dirpath, output_dirpath, contig_edges,
         edge_contigs[edge_id] = list(edge_contigs[edge_id])
 
     with open(join(output_dirpath, 'contig_info.json'), 'a') as handle:
-        handle.write("contig_info='" + json.dumps(contig_info) + "';\n")
+        handle.write("contigInfo=" + json.dumps(contig_info) + ";\n")
 
     with open(join(output_dirpath, 'edges_base_info.json'), 'w') as handle:
-        handle.write("edge_info='" + json.dumps(edge_contigs) + "';")
-        handle.write("median_cov='" + json.dumps(calculate_median_cov(dict_edges)) + "';\n")
+        handle.write("edgeInfo=" + json.dumps(edge_contigs) + ";")
+        handle.write("medianCov=" + json.dumps(calculate_median_cov(dict_edges)) + ";\n")
     return
 

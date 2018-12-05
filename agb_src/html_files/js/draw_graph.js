@@ -1,105 +1,13 @@
-
-function parseGraph(srcLines) {
-    var g = {};
-    for (var i = 0; i < srcLines.length; i++) {
-        var matches = srcLines[i].match(edgePattern);
-        if (matches && matches.length >= 3) {
-            var node1 = matches[1], node2 = matches[2];
-            var edgeId = srcLines[i].match(idPattern)[1];
-            g[node1] = g[node1] || {};
-            g[node2] = g[node2] || {};
-            g[node1][node2] = g[node1][node2] || new Set();
-            g[node2][node1] = g[node2][node1] || new Set();
-            g[node1][node2].add(edgeId);
-            g[node2][node1].add(edgeId);
-        }
-    }
-    return g;
-}
-
-function parseDirectedGraph(srcLines) {
-    var g = {};
-    for (var i = 0; i < srcLines.length; i++) {
-        var matches = srcLines[i].match(edgePattern);
-        if (matches && matches.length >= 3) {
-            var node1 = matches[1], node2 = matches[2];
-            var edgeId = srcLines[i].match(idPattern)[1];
-            g[node1] = g[node1] || {};
-            g[node1][node2] = g[node1][node2] || new Set();
-            g[node1][node2].add(edgeId);
-        }
-    }
-    return g;
-}
-
-function toGraph(srcLines) {
-    var g = {};
-    for (var i = 0; i < srcLines.length; i++) {
-        var matches = srcLines[i].match(edgePattern);
-        if (matches && matches.length >= 3) {
-            var node1 = matches[1], node2 = matches[2];
-            g[node1] = g[node1] || {};
-            g[node2] = g[node2] || {};
-            g[node1][node2] = g[node1][node2] || new Set();
-            g[node2][node1] = g[node2][node1] || new Set();
-            //edgeId = srcLines[i].match(idPattern)[1];
-            //g[node1][node2].add(edgeId);
-            //g[node2][node1].add(edgeId);
-        }
-    }
-    return g;
-}
-
-function calculateComponents(g) {
-    // get a number of connected components in a graph
-
-    var components = 0;
-    var visited = {};
-    for (var i in g) {
-        var subGraph = dfs(g, i, visited);
-        if (subGraph != null) {
-            components++;
-            //for (var edge in subGraph) {
-                //console.log(subGraph[edge], subGraph)
-                //components[subGraph[edge]] = subGraph.length;
-                
-            //}
-        }
-    }
-    return components;
-}
-
-function dfs(g, node, visited) {
-    if (visited[node]) return null;
-    var subGraph = [];
-    visited[node] = true;
-    for (var i in g[node]) {
-        if (i == node) {
-            subGraph = subGraph.concat(Array.from(g[node][i]));
-            continue
-        }
-        var result = dfs(g, i, visited);
-        if (result == null) continue;
-        subGraph = subGraph.concat(Array.from(g[node][i]));
-        subGraph = subGraph.concat(result);
-    }
-    return subGraph;
-}
-
 function render(doRefresh, doAnimate, doRefreshTables) {
-    transition1 = d3.transition()
-        .ease(d3.easeLinear)
-        .delay(0)
-        .duration(timeTransition);
-
     d3.select("#graph > svg").attr("display", "none");
     if (doRefresh) {
-        //    .remove()
         graphviz.resetZoom();
         graphviz.attributer(attributer);
-        //.width(1000).fit(true).zoom(true);
     }
+    console.log('finish reset', Date.now())
     graphviz.on('end', function() {
+
+    console.log('finish render1', Date.now())
         d3.select('#graph0').select("title").text("");
         if (!$('#show_labels')[0].checked)
             d3.selectAll('.edge').selectAll('text').style('display','none');
@@ -183,7 +91,7 @@ function render(doRefresh, doAnimate, doRefreshTables) {
             .on("mouseenter", function (e) {
                 d3.select(this).classed("focused", true);
                 var edgeId = d3.select(this).attr('id');
-                var curEdge = edgeDataFull[edgeId] || edgeDataFull[edgeId];
+                var curEdge = defEdgeData[edgeId] || defEdgeData[edgeId];
                 if (curEdge) { // add edge tooltip
                     tooltipDiv.transition()
                         .delay(500)
@@ -215,7 +123,7 @@ function render(doRefresh, doAnimate, doRefreshTables) {
             if (!d3.select(this).select('text').empty()) {
                 var edgeId = d3.select(this).attr('id');
                 if (edgeData[edgeId]) {
-                    curEdge = edgeDataFull[d3.select(this).attr('id')];
+                    curEdge = defEdgeData[d3.select(this).attr('id')];
                     selectEdge(d3.select(this).attr('id'), curEdge.id, curEdge.len, curEdge.cov, curEdge.mult);
                 }
                 else selectEdge(d3.select(this).attr('id')); 
@@ -224,11 +132,17 @@ function render(doRefresh, doAnimate, doRefreshTables) {
                 selectEdge(d3.select(this).attr('id'));
             }
         });
+        console.log('finish render2', Date.now())
     });
-    graphTransition = doAnimate ? transition1 : d3.transition().duration(0);
+    graphTransition = doAnimate ? d3.transition()
+                                        .ease(d3.easeLinear)
+                                        .delay(0)
+                                        .duration(timeTransition)
+                                : d3.transition().duration(0);
     graphviz
-        .tweenShapes(false)
-        .transition(transition1)
+        .tweenShapes(true)
+        .transition(graphTransition)
+        .totalMemory(204857600)  // set memory limit to 100Mb instead of 16Mb by default
         .dot(dot)
         .render();
 
@@ -307,19 +221,19 @@ function highlightContigEdges() {
                 visEdgeId = d3.select('#' + edgeId).empty() ? edgeElId : edgeId; 
                 if (!d3.select('#' + visEdgeId).empty()) {
                      realEdges.push(edgeId);
-                     if (edgeDataFull[edgeElId].unique)
+                     if (defEdgeData[edgeElId].unique)
                         graphEdges.push('<b>' + edge + '</b>');
                      else
-                        graphEdges.push(edge + ' (' + edgeDataFull[edgeElId].mult + ')');
+                        graphEdges.push(edge + ' (' + defEdgeData[edgeElId].mult + ')');
                      d3.select('#' + visEdgeId).selectAll('path')
                        .filter(function(d) {return d3.select(this).attr('stroke') !== '#ffffff'; }).classed('contig_selected',true);
                      d3.select('#' + visEdgeId).selectAll('polygon').classed('contig_selected',true);
                 }
                 else {
-                     if (edgeDataFull[edgeElId].unique)
+                     if (defEdgeData[edgeElId].unique)
                         graphEdges.push('<span class="gray_text"><b>' + edge + '</b></span>');
                      else
-                        graphEdges.push('<span class="gray_text">' + edge + '</span> (' + edgeDataFull[edgeElId].mult + ')');
+                        graphEdges.push('<span class="gray_text">' + edge + '</span> (' + defEdgeData[edgeElId].mult + ')');
                     isHiddenEdges = true;
                 }
                 selectedEdges.add(edge);
@@ -380,6 +294,7 @@ function highlightChromEdges() {
 }
 
 function updateDot(doRefresh, doAnimate, doRefreshTables) {
+    console.log(Date.now())
     $(".tooltip").tooltip("hide");
     deselectAll();
     dotSrc = srcGraphs[componentN].dot;
@@ -763,7 +678,7 @@ function updateDot(doRefresh, doAnimate, doRefreshTables) {
             edge_len = parseFloat(matches[1]);
             coverage = parseInt(matches[2]);
             var edge_width = 2;
-            var multiplicity = coverage / median_cov;
+            var multiplicity = coverage / medianCov;
             multiplicity = multiplicity < 1.75 ? 1 : Math.round(multiplicity);
             if (multiplicity > 10) edge_width = 9; // set edge width based on inferred miltiplicity
             else if (multiplicity > 5) edge_width = 7;
@@ -776,8 +691,11 @@ function updateDot(doRefresh, doAnimate, doRefreshTables) {
                 edgeId = matches[1];
                 edgeRealId = (edgeInfo[edgeId] || !edgeData[edgeId]) ? edgeId : edgeData[edgeId].el_id;
                 var color = 'black';
-                if (edgeDataRef[edgeRealId] && edgeDataRef[edgeRealId].chrom)
-                    color = edgeDataRef[edgeRealId].chrom;
+                if (refEdgeData[edgeRealId] && refEdgeData[edgeRealId].chrom) {
+                    color = refEdgeData[edgeRealId].chrom;
+                    if ($('#gradient_color')[0].checked) {
+                    }
+                }
                 var oldColor = dotSrcLines[i].match(colorPattern);
 
                 dotSrcLines[i] = dotSrcLines[i].replace(oldColor[0], 'color="' + color + '"');
@@ -787,7 +705,7 @@ function updateDot(doRefresh, doAnimate, doRefreshTables) {
                 var color = 'red'; // color low covered edges as red
                 if (coverage >= q3_cov)  // color high covered edges as green
                     color = 'green';
-                else if (coverage >= median_cov)
+                else if (coverage >= medianCov)
                     color = '#d39200';
 
                 var oldColor = dotSrcLines[i].match(colorPattern);
@@ -832,7 +750,9 @@ function updateDot(doRefresh, doAnimate, doRefreshTables) {
         }
     }
     dot = dotSrcLines.join('\n');
+    console.log('finish script', Date.now())
     render(doRefresh, doAnimate, doRefreshTables);
+    console.log('finish render', Date.now())
 }
 
 function searchEdge(event) {
@@ -864,10 +784,10 @@ function getEdgeComponent(edgeId) {
     if (selectedMethod == "repeat")
         edgeComponent = edge.rep_comp;
     else if (selectedMethod == "ref") {
-        edgeComponent =  edgeDataRef[edgeId].ref_comp;
+        edgeComponent =  refEdgeData[edgeId].ref_comp;
     }
     else if (selectedMethod == "contig")
-        edgeComponent =  edgeDataRef[edgeId].contig_comp;
+        edgeComponent =  refEdgeData[edgeId].contig_comp;
     else edgeComponent = edge.comp;
     return edgeComponent;
 }
@@ -957,7 +877,7 @@ function checkEdge(edgeId, targetN) {
         return false;
     // if($('#break_checkbox')[0].checked && edgeData[edgeId].unique)
     //    return false;
-    if (selectedMethod == "ref" && (!edgeDataFull[edgeId] || !edgeMappingInfo[edge.id] || (targetComponent && edgeMappingInfo[edge.id].indexOf(targetComponent) === -1)))
+    if (selectedMethod == "ref" && (!defEdgeData[edgeId] || !edgeMappingInfo[edge.id] || (targetComponent && edgeMappingInfo[edge.id].indexOf(targetComponent) === -1)))
     {
        if (!$('#adj_edges_checkbox')[0].checked || !checkEdgeWithThresholds(edgeId))
            return false;
@@ -993,7 +913,7 @@ function selectEdge(edge, edgeId, edgeLen, edgeCov, edgeMulti) {
         for (var k = 0; k < loopEdgeDict[selectedEdge].length; k++) {
             var curLoopEdge = loopEdgeDict[selectedEdge][k];
             if (checkEdge(curLoopEdge)) {
-                edge = edgeDataFull[curLoopEdge];
+                edge = defEdgeData[curLoopEdge];
 
                 edgeDescription = edgeDescription + 
                         '<li>Edge ID: ' + edge.name +
@@ -1024,8 +944,8 @@ function selectEdge(edge, edgeId, edgeLen, edgeCov, edgeMulti) {
     else if (uniqueEdgesDict[selectedEdge]) {
         edgeDescription = '<ul><b>Edges:</b>';
         for (var k = 0; k < uniqueEdgesDict[selectedEdge].length; k++) {
-            if (edgeDataFull[uniqueEdgesDict[selectedEdge][k]]) {
-                edge = edgeDataFull[uniqueEdgesDict[selectedEdge][k]];
+            if (defEdgeData[uniqueEdgesDict[selectedEdge][k]]) {
+                edge = defEdgeData[uniqueEdgesDict[selectedEdge][k]];
 
                 edgeDescription = edgeDescription + 
                         '<li>Edge ID: ' + edge.name +
@@ -1060,7 +980,8 @@ function selectEdge(edge, edgeId, edgeLen, edgeCov, edgeMulti) {
                 chromPos = edgeData[selectedEdge].aligns && edgeData[selectedEdge].aligns[chrom] ? edgeData[selectedEdge].aligns[chrom] : chrom;
                 edgeDescription = edgeDescription + '<li onclick="changeToChromosome(' + chromN + ')"> ' + chromPos + '</li>';
             }
-            if (edgeData[selectedEdge].aligns) edgeDescription = edgeDescription + "Note: maximum top 3 alignments per chromosome are shown.<br/>";
+            if (edgeData[selectedEdge].aligns && edgeMappingInfo[selectedEdge].length === 3)
+                edgeDescription = edgeDescription + "Note: maximum top 3 alignments per chromosome are shown.<br/>";
         }
         if (edgeData[selectedEdge] && edgeData[selectedEdge].errors && edgeData[selectedEdge].errors.length > 0) {
             edgeDescription = edgeDescription + '<br/><b>Misassembly breakpoints:</b>';

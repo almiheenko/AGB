@@ -162,8 +162,8 @@ function setupInterfaceBtns() {
 function addModeSwitch(){
     var div = "";
     var divWidth = 120;
-    if (Object.keys(edgeDataRef).length) divWidth += 70;
-    if (Object.keys(edgeDataContig).length) divWidth += 50;
+    if (Object.keys(refEdgeData).length) divWidth += 70;
+    if (Object.keys(contigEdgeData).length) divWidth += 50;
     div += '<div style="padding-top:-30px; width:' + divWidth + 'px; text-align:center">Mode</div>';
     div += '<div class="btn-group btn-group-toggle" data-toggle="buttons">';
     div += '<label class="btn btn-info active option_mode" id="default_mode">';
@@ -172,12 +172,12 @@ function addModeSwitch(){
     div += '<label class="btn btn-info option_mode" id="repeat_mode">';
     div += '<input type="radio" name="mode" autocomplete="off" checked> repeat';
     div += '</label>';
-    if (Object.keys(edgeDataRef).length) {
+    if (Object.keys(refEdgeData).length) {
         div += '<label class="btn btn-info option_mode" id="ref_mode">';
         div += '<input type="radio" name="mode" autocomplete="off" val="ref"> reference';
         div += '</label>';
     }
-    if (Object.keys(edgeDataContig).length) {
+    if (Object.keys(contigEdgeData).length) {
         div += '<label class="btn btn-info option_mode" id="contig_mode">';
         div += '<input type="radio" name="mode" autocomplete="off" val="contig"> contig';
         div += '</label>';
@@ -188,7 +188,7 @@ function addModeSwitch(){
 
 function addColorSelect(){
     var selectOptions = '<option value="0" selected>repeat edges</option>';
-    if (Object.keys(edgeDataRef).length) {
+    if (Object.keys(refEdgeData).length) {
         selectOptions += '<option value="1">edge alignments to reference</option>';
         selectOptions += '<option value="2">erroneous edges</option>';
     }
@@ -218,9 +218,9 @@ function changeSplitMethod(method, component) {
         $('#numberEdgesWarning').show();
         $('#refView').show();
         srcGraphs = ref_graphs;
-        edgeData = edgeDataRef;
+        edgeData = refEdgeData;
         srcPartDict = refPartitionDict;
-        hangNodes = defaultHangNodes;
+        hangNodes = defHangNodes;
         selectedChrom = 0;
     }
     else if(selectedMethod == 'contig') {
@@ -232,7 +232,7 @@ function changeSplitMethod(method, component) {
         $('#numberEdgesWarning').hide();
         $('#refView').hide();
         srcGraphs = contig_graphs;
-        edgeData = edgeDataContig;
+        edgeData = contigEdgeData;
         srcPartDict = null;
         selectedChrom = "";
     }
@@ -246,7 +246,7 @@ function changeSplitMethod(method, component) {
         $('#refView').hide();
         srcGraphs = repeat_graphs;
         srcPartDict = repeatPartitionDict;
-        edgeData = edgeDataRepeat;
+        edgeData = repeatEdgeData;
         hangNodes = repeatHangNodes;
     }
     else {
@@ -259,9 +259,9 @@ function changeSplitMethod(method, component) {
         $('#numberEdgesWarning').show();
         $('#refView').hide();
         srcGraphs = def_graphs;
-        edgeData = edgeDataFull;
-        srcPartDict = partitionDict;
-        hangNodes = defaultHangNodes;
+        edgeData = defEdgeData;
+        srcPartDict = defPartitionDict;
+        hangNodes = defHangNodes;
         selectedChrom = "";
     }
     changeComponent(componentN, true);
@@ -504,8 +504,8 @@ function buildEdgesTable() {
     for (x in edgeData) {
         // add only forward edges satisfied with length/depth thresholds
         if (edgeData[x].name.toString()[0] != '-' && x.indexOf('_') == -1 && checkEdge(x) && 
-            (selectedMethod != "ref" || !isNaN(parseInt(edgeDataRef[x].ref_comp)))) {
-            enableEdges.push(edgeDataFull[x] || edgeData[x]);
+            (selectedMethod != "ref" || !isNaN(parseInt(refEdgeData[x].ref_comp)))) {
+            enableEdges.push(defEdgeData[x] || edgeData[x]);
         }
     }
     enableEdges.sort(function(a, b) {
@@ -803,7 +803,7 @@ function selectNode(selectedNode) {
                 d3.select('#' + edgeId).classed('node_selected_in', true);
                 if ((selectedMethod != "repeat" && bigEdge.comp == componentN) || (selectedMethod == "repeat" && bigEdge.rep_comp == componentN)) {
                     for (var k = 0; k < uniqueEdgesDict[edgeId].length; k++) {
-                        if (edgeDataFull[uniqueEdgesDict[edgeId][k]]) {
+                        if (defEdgeData[uniqueEdgesDict[edgeId][k]]) {
                             edge = edgeData[uniqueEdgesDict[edgeId][k]];
                             if ((selectedMethod != "repeat" && edge.comp == componentN) || (selectedMethod == "repeat" && edge.rep_comp == componentN))
                                 inEdges.push(edge);
@@ -848,7 +848,7 @@ function selectNode(selectedNode) {
                 var edges = Array.from(adjEdges[adjNodes[i]]);
                 for (var j = 0; j < edges.length; j++) {
                     edgeId = edges[j];
-                    edge = edgeDataFull[edgeId];
+                    edge = defEdgeData[edgeId];
                     //console.log(edge)
                     if (selectedNode == adjNodes[i]) {
                         if (edgeId.lastIndexOf('loop', 0) === 0) {
@@ -1039,7 +1039,7 @@ function createAutocompleteListItems() {
     var autocompleteItems = [];
     for (x in edgeData) {
         if (edgeData[x].name.toString()[0] !== '-' && x.indexOf('_') === -1) {
-            edge = edgeDataFull[x] || edgeData[x];
+            edge = defEdgeData[x] || edgeData[x];
             autocompleteItems.push({
                 label: edge.name,
                 value: 'edge,' + edge.name,

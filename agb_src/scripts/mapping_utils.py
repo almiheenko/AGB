@@ -26,6 +26,8 @@ def map_edges_to_ref(input_fpath, output_dirpath, reference_fpath, threads):
 
 
 def parse_mapping_info(mapping_fpath, json_output_dir, dict_edges):
+    # assign edges to chromosomes and color edges to corresponding colors
+
     mapping_info = defaultdict(set)
 
     edge_mappings = defaultdict(lambda: defaultdict(list))
@@ -47,7 +49,7 @@ def parse_mapping_info(mapping_fpath, json_output_dir, dict_edges):
     edge_by_chrom = defaultdict(set)
     chrom_names = set()
     for edge_id in edge_mappings:
-        len_threshold = 0.9 * edge_lengths[edge_id]
+        len_threshold = 0.9 * edge_lengths[edge_id]  # assign an edge to a chromosome if more than 90% of edge aligned to the chromosome
         gap_threshold = min(5000, 0.05 * edge_lengths[edge_id])
         for chrom, mappings in edge_mappings[edge_id].items():
             mappings.sort(key=lambda x: (x[0], -x[1]), reverse=False)
@@ -57,10 +59,12 @@ def parse_mapping_info(mapping_fpath, json_output_dir, dict_edges):
             last_pos = 0
             last_ref_pos = 0
             align_s, align_e = 0, 0
+            # calculate covered length (do not count overlaps)
             for (start, end, ref_start, ref_end) in mappings:
                 start = max(start, last_pos)
                 covered_len += max(0, end - start + 1)
                 last_pos = max(last_pos, end + 1)
+
             if covered_len >= len_threshold:
                 chroms_by_edge[edge_id].add(chrom)
                 chrom_names.add(chrom)
@@ -118,6 +122,6 @@ def parse_mapping_info(mapping_fpath, json_output_dir, dict_edges):
         else:
             dict_edges[edge_id].chrom = 'white:red:black:red:black:white'
     with open(join(json_output_dir, "reference.json"), 'a') as handle:
-        handle.write("chrom_lengths='" + json.dumps(chrom_len_dict) + "';\n")
-        handle.write("mapping_info='" + json.dumps(mapping_info) + "';\n")
+        handle.write("chrom_lengths=" + json.dumps(chrom_len_dict) + ";\n")
+        handle.write("edgeMappingInfo=" + json.dumps(mapping_info) + ";\n")
     return mapping_info, non_alt_chroms, edge_by_chrom

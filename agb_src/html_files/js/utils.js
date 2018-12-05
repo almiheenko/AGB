@@ -24,3 +24,93 @@ function deselectContig() {
     selectedContig = "";
     selectedChrom = "";
 }
+
+
+
+
+function parseGraph(srcLines) {
+    var g = {};
+    for (var i = 0; i < srcLines.length; i++) {
+        var matches = srcLines[i].match(edgePattern);
+        if (matches && matches.length >= 3) {
+            var node1 = matches[1], node2 = matches[2];
+            var edgeId = srcLines[i].match(idPattern)[1];
+            g[node1] = g[node1] || {};
+            g[node2] = g[node2] || {};
+            g[node1][node2] = g[node1][node2] || new Set();
+            g[node2][node1] = g[node2][node1] || new Set();
+            g[node1][node2].add(edgeId);
+            g[node2][node1].add(edgeId);
+        }
+    }
+    return g;
+}
+
+function parseDirectedGraph(srcLines) {
+    var g = {};
+    for (var i = 0; i < srcLines.length; i++) {
+        var matches = srcLines[i].match(edgePattern);
+        if (matches && matches.length >= 3) {
+            var node1 = matches[1], node2 = matches[2];
+            var edgeId = srcLines[i].match(idPattern)[1];
+            g[node1] = g[node1] || {};
+            g[node1][node2] = g[node1][node2] || new Set();
+            g[node1][node2].add(edgeId);
+        }
+    }
+    return g;
+}
+
+function toGraph(srcLines) {
+    var g = {};
+    for (var i = 0; i < srcLines.length; i++) {
+        var matches = srcLines[i].match(edgePattern);
+        if (matches && matches.length >= 3) {
+            var node1 = matches[1], node2 = matches[2];
+            g[node1] = g[node1] || {};
+            g[node2] = g[node2] || {};
+            g[node1][node2] = g[node1][node2] || new Set();
+            g[node2][node1] = g[node2][node1] || new Set();
+            //edgeId = srcLines[i].match(idPattern)[1];
+            //g[node1][node2].add(edgeId);
+            //g[node2][node1].add(edgeId);
+        }
+    }
+    return g;
+}
+
+function calculateComponents(g) {
+    // get a number of connected components in a graph
+
+    var components = 0;
+    var visited = {};
+    for (var i in g) {
+        var subGraph = dfs(g, i, visited);
+        if (subGraph != null) {
+            components++;
+            //for (var edge in subGraph) {
+                //console.log(subGraph[edge], subGraph)
+                //components[subGraph[edge]] = subGraph.length;
+
+            //}
+        }
+    }
+    return components;
+}
+
+function dfs(g, node, visited) {
+    if (visited[node]) return null;
+    var subGraph = [];
+    visited[node] = true;
+    for (var i in g[node]) {
+        if (i == node) {
+            subGraph = subGraph.concat(Array.from(g[node][i]));
+            continue
+        }
+        var result = dfs(g, i, visited);
+        if (result == null) continue;
+        subGraph = subGraph.concat(Array.from(g[node][i]));
+        subGraph = subGraph.concat(result);
+    }
+    return subGraph;
+}

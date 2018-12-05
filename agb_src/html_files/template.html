@@ -338,6 +338,8 @@ var minComponents = 1;
 var componentN = 0;
 var leftPanelWidth = 350;
 var chromViewWidth = 0;
+var graphHeight = 0;
+var aspectRatio = 1;
 
 var lenCovPattern = /([0-9\.]+)k (\d+)x/i;
 var labelPattern = /(.+)\\l\(*([0-9\.]+)k/i;
@@ -350,46 +352,25 @@ var curChrom = "";
 var srcGraphs = def_graphs;
 var dotSrc = srcGraphs[componentN].dot;
 var dot;
-var partitionDict = JSON.parse(def_parts_info);
-var repeatPartitionDict = JSON.parse(repeat_parts_info);
-var refPartitionDict = JSON.parse(ref_parts_info);
-var srcPartDict = partitionDict;
+var srcPartDict = defPartitionDict;
 if (srcPartDict['part' + componentN] && srcPartDict['part' + componentN].big) $('#partition_warning').show();
 
 var selectedMethod = "default";
 
-var loopEdgeDict = JSON.parse(def_loop_edges);
-var baseLoopEdgeDict = JSON.parse(def_loop_edges);
-var uniqueEdgesDict = {};//JSON.parse(unique_edges_dict);
+var baseLoopEdgeDict = defLoopEdgeDict;
+var uniqueEdgesDict = {};//unique_edges_dict;
 
 var collapsedNodes = new Set();
-var defaultHangNodes = JSON.parse(def_hanging_nodes);
-var repeatHangNodes = JSON.parse(repeat_hanging_nodes);
-var hangNodes = defaultHangNodes;
-var repeatConnectNodes = JSON.parse(repeat_connected_nodes);
+var hangNodes = defHangNodes;
 var newNodes, nodeColors;
-var edgeInfo = JSON.parse(edge_info);
-var edgeMappingInfo = mapping_info ? JSON.parse(mapping_info) : [];
 
-var edgeDataFull = JSON.parse(def_edge_data);
-var edgeDataRef = JSON.parse(ref_edge_data);
-var edgeDataContig = JSON.parse(contig_edge_data);
-var edgeDataRepeat = JSON.parse(repeat_edge_data);
-var edgeData = edgeDataFull;
-
-var misassembledContigs = misassembled_contigs ? JSON.parse(misassembled_contigs) : {};
-var chromosomes = chromosomes ? JSON.parse(chromosomes) : [];
-var chrom_lengths = chrom_lengths ? JSON.parse(chrom_lengths) : [];
-var chromGaps = gaps ? JSON.parse(gaps) : [];
-var chromAligns = chrom_aligns ? JSON.parse(chrom_aligns) : [];
+var edgeData = defEdgeData;
 
 var newData;
 var diGraph = parseDirectedGraph(full_graph.split('\n'));
 var graph = parseGraph(full_graph.split('\n'));
 var full_diGraph = parseDirectedGraph(full_graph.split('\n'));
 var full_graph = parseGraph(full_graph.split('\n'));
-var contigInfo = JSON.parse(contig_info);
-var contigs = contigs ? JSON.parse(contigs) : [];
 
 var clusterNodeSizeDict = {};
 var newEdgesDict = {};

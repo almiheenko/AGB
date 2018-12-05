@@ -28,25 +28,28 @@ def process_graph(g, undirected_g, dict_edges, edges_by_nodes, two_way_edges, ou
     chrom_list = []
     contig_list = []
     complex_component = False
-    if chrom_names and suffix == "ref":
-        for chrom in list(natural_sort(chrom_names)):
-            edges = edge_by_chrom[chrom]
-            ref_g = nx.DiGraph()
-            for edge_id in set(edges):
-                ref_g.add_edge(dict_edges[edge_id].start, dict_edges[edge_id].end)
-            viewer_data, last_idx, sub_complex_component = \
-                split_graph(ref_g, g, undirected_g, dict_edges, modified_dict_edges, loop_edges, edges_by_nodes,
-                            two_way_edges, last_idx, parts_info, mapping_info=mapping_info, chrom=chrom)
-            parts_info = viewer_data.parts_info
-            graph.extend(viewer_data.g)
-            for i in range(len(viewer_data.g)):
-                chrom_list.append(chrom)
-            complex_component = complex_component or sub_complex_component
+    if suffix == "ref":
+        if chrom_names:
+            ## create graph for reference-based mode
+            for chrom in list(natural_sort(chrom_names)):
+                edges = edge_by_chrom[chrom]  # use only edges mapped to the chromosome
+                graph_component = nx.DiGraph()
+                for edge_id in set(edges):
+                    graph_component.add_edge(dict_edges[edge_id].start, dict_edges[edge_id].end)
+                viewer_data, last_idx, sub_complex_component = \
+                    split_graph(graph_component, g, undirected_g, dict_edges, modified_dict_edges, loop_edges, edges_by_nodes,
+                                two_way_edges, last_idx, parts_info, mapping_info=mapping_info, chrom=chrom)
+                parts_info = viewer_data.parts_info
+                graph.extend(viewer_data.g)
+                for i in range(len(viewer_data.g)):
+                    chrom_list.append(chrom)
+                complex_component = complex_component or sub_complex_component
         with open(join(output_dirpath, 'reference.json'), 'a') as handle:
-            handle.write("chromosomes='" + json.dumps(chrom_list) + "';\n")
+            handle.write("chromosomes=" + json.dumps(chrom_list) + ";\n")
     elif contig_edges and suffix == "contig":
+        ## create graph for contig-focused mode
         for contig, edges in contig_edges.items():
-            contig_g = nx.DiGraph()
+            graph_component = nx.DiGraph()
             edge_ids = set()
             for edge in edges:
                 _, _, edge_id = edge
@@ -55,21 +58,21 @@ def process_graph(g, undirected_g, dict_edges, edges_by_nodes, two_way_edges, ou
             filtered_edge_ids = set()
             for edge_id in edge_ids:
                 if edge_id in dict_edges:
-                    contig_g.add_edge(dict_edges[edge_id].start, dict_edges[edge_id].end)
+                    graph_component.add_edge(dict_edges[edge_id].start, dict_edges[edge_id].end)
                     filtered_edge_ids.add(edge_id)
             viewer_data, last_idx, sub_complex_component = \
-                split_graph(contig_g, g, undirected_g, dict_edges, modified_dict_edges, loop_edges, edges_by_nodes,
+                split_graph(graph_component, g, undirected_g, dict_edges, modified_dict_edges, loop_edges, edges_by_nodes,
                             two_way_edges, last_idx, parts_info, contig_edges=filtered_edge_ids)
             parts_info = viewer_data.parts_info
             for i in range(len(viewer_data.g)):
                 contig_list.append(contig)
             graph.extend(viewer_data.g)
         with open(join(output_dirpath, 'contig_info.json'), 'w') as handle:
-            handle.write("contigs='" + json.dumps(contig_list) + "';\n")
+            handle.write("contigs=" + json.dumps(contig_list) + ";\n")
     elif suffix == "repeat" or suffix == "def":
         fake_edges = []
         if is_flye(assembler):
-            ## combine reverse complement edges
+            ## add fake edges to keep forward and reverse complement components of an edge together
             for edge_id, edge in dict_edges.items():
                 if edge_id.startswith("rc"): continue
                 if suffix == "repeat" and not edge.repetitive: continue
@@ -82,12 +85,13 @@ def process_graph(g, undirected_g, dict_edges, edges_by_nodes, two_way_edges, ou
                     g.add_edge(edge.start, dict_edges[match_edge_id].end)
                     fake_edges.append((edge.start, dict_edges[match_edge_id].end))
                     fake_edges.append((edge.end, dict_edges[match_edge_id].start))
+        # split graph into connected components
         connected_components = list(nx.weakly_connected_component_subgraphs(g))
         if fake_edges:
             g.remove_edges_from(fake_edges)
-        for i, subgraph in enumerate(connected_components):
+        for i, graph_component in enumerate(connected_components):
             viewer_data, last_idx, sub_complex_component = \
-                split_graph(subgraph, base_graph, undirected_g, dict_edges, modified_dict_edges, loop_edges, edges_by_nodes,
+                split_graph(graph_component, base_graph, undirected_g, dict_edges, modified_dict_edges, loop_edges, edges_by_nodes,
                         two_way_edges, last_idx, parts_info,
                         fake_edges=fake_edges, find_hanging_nodes=suffix == "def", is_repeat_graph=suffix == "repeat")
             parts_info = viewer_data.parts_info
@@ -103,7 +107,7 @@ def process_graph(g, undirected_g, dict_edges, edges_by_nodes, two_way_edges, ou
     return edges_by_component
 
 
-def split_graph(sub_g, g, undirected_g, dict_edges, modified_dict_edges, loop_edges, edges_by_nodes, two_way_edges, last_idx, parts_info,
+def split_graph(g_component, full_g, undirected_g, dict_edges, modified_dict_edges, loop_edges, edges_by_nodes, two_way_edges, last_idx, parts_info,
                   is_repeat_graph=False, fake_edges=None, find_hanging_nodes=False, mapping_info=None, chrom=None, contig_edges=None):
     graphs = []
     hanging_nodes = []
@@ -112,23 +116,22 @@ def split_graph(sub_g, g, undirected_g, dict_edges, modified_dict_edges, loop_ed
     num_exits = []
 
     complex_component = False
-    if len(sub_g) > MAX_NODES:
+    if len(g_component) > MAX_NODES:
         complex_component = True
-        target_graph_parts = int(math.ceil(len(sub_g.nodes()) / MAX_SUB_NODES))
+        target_graph_parts = int(math.ceil(len(g_component.nodes()) / MAX_SUB_NODES))
+        # use METIS library to partition a graph into smaller subgraphs
         options = nxmetis.MetisOptions(ncuts=5, niter=100, ufactor=2, objtype=1, contig=not mapping_info, minconn=True)
-        edgecuts, parts = nxmetis.partition(sub_g.to_undirected(), target_graph_parts, options=options)
+        edgecuts, parts = nxmetis.partition(g_component.to_undirected(), target_graph_parts, options=options)
         graph_partition_dict = dict()
         for part_id, nodes in enumerate(parts):
             for node in nodes:
                 graph_partition_dict[node] = part_id
         num_graph_parts = len(parts)
-        # print('Partition:', edgecuts, len(parts), num_graph_parts, parts[0])
     else:
-        graph_partition_dict = dict((n, 0) for n in sub_g.nodes())
-        parts = [[sub_g.nodes()]]
+        graph_partition_dict = dict((n, 0) for n in g_component.nodes())
+        parts = [[g_component.nodes()]]
         num_graph_parts = 1
 
-    # print(last_idx, ' ', num_graph_parts)
     for part_id in range(num_graph_parts):
         parts_info['part' + str(last_idx + part_id)] = \
             {'n': len(parts[part_id]), 'big': False if num_graph_parts == 1 else True, 'idx': last_idx + part_id,
@@ -137,6 +140,7 @@ def split_graph(sub_g, g, undirected_g, dict_edges, modified_dict_edges, loop_ed
     edges_count = defaultdict(int)
 
     def is_flanking_edge(edge_id):
+        # check if the edge belongs to a component or is adjacent
         if mapping_info:
             return chrom not in mapping_info[edge_id]
         if is_repeat_graph:
@@ -146,7 +150,7 @@ def split_graph(sub_g, g, undirected_g, dict_edges, modified_dict_edges, loop_ed
         return False
 
     if fake_edges:
-        sub_g.remove_edges_from(fake_edges)
+        g_component.remove_edges_from(fake_edges)
     for part_id in range(num_graph_parts):
         subgraph = []
         subnodes = []
@@ -156,9 +160,10 @@ def split_graph(sub_g, g, undirected_g, dict_edges, modified_dict_edges, loop_ed
         flanking_edges = defaultdict(set)
         total_exits = 0
         total_enters = 0
-        for e in sub_g.edges():
+        for e in g_component.edges():
             start, end = e[0], e[1]
             if part_id == graph_partition_dict[start] or part_id == graph_partition_dict[end]:
+                # use edges that belongs to the current subgraph
                 edges = edges_by_nodes[(start, end)] + two_way_edges[(start, end)]
                 for edge_id in edges:
                     if not is_flanking_edge(edge_id):
@@ -175,17 +180,19 @@ def split_graph(sub_g, g, undirected_g, dict_edges, modified_dict_edges, loop_ed
         unique_nodes = set()
         for graph_edges, is_flanking in [(main_edges, False), (flanking_edges, True)]:
             for (start, end), edges in graph_edges.items():
-                if is_repeat_graph and is_flanking:
+                if is_repeat_graph and is_flanking:  # store nodes with unique edges for repeat-focused graph
                     unique_nodes.add(start)
                     unique_nodes.add(end)
                 link_component = last_idx + part_id
                 if start in graph_partition_dict and graph_partition_dict[start] != part_id:
+                    # add node representing a hidden part of the graph
                     link_component = last_idx + graph_partition_dict[start]
                     start = 'part' + str(link_component)
                 elif end in graph_partition_dict and graph_partition_dict[end] != part_id:
                     link_component = last_idx + graph_partition_dict[end]
                     end = 'part' + str(link_component)
                 if link_component != last_idx + part_id:
+                    # add edges to a hidden part of the graph
                     for edge_id in edges:
                         edge = dict_edges[edge_id]
                         new_edge_id = edge.id
@@ -203,7 +210,7 @@ def split_graph(sub_g, g, undirected_g, dict_edges, modified_dict_edges, loop_ed
                     for edge_id in edges:
                         edge = dict_edges[edge_id]
                         new_edge_id = edge.id
-                        if edges_count[edge.id]:
+                        if edges_count[edge.id]:  # edges with the same id can belongs to several graph components
                             new_edge_id = edge.id + '_' + str(edges_count[edge.id])
                         edges_count[edge.id] += 1
                         new_edge = edge.create_copy(start, end)
@@ -221,40 +228,43 @@ def split_graph(sub_g, g, undirected_g, dict_edges, modified_dict_edges, loop_ed
                         modified_dict_edges[loop_edge_id] = edge
                         loop_edges[edge_id].add(loop_edge_id)
 
-        graphs.append((len(subgraph) + 10000 * (num_graph_parts - part_id), subgraph))
+        graphs.append((len(subgraph) + 10000 * (num_graph_parts - part_id), subgraph))  # add unique subgraph id
         if find_hanging_nodes:
-            for n in sub_g.nodes():
+            # search for nodes with zero indegree or outdegree
+            for n in g_component.nodes():
                 if graph_partition_dict[n] != part_id:
                     continue
                 in_multiplicity = 0
                 out_multiplicity = 0
-                for e in g.in_edges(n):
+                for e in full_g.in_edges(n):
                     edges = edges_by_nodes[(e[0], e[1])] + two_way_edges[(e[0], e[1])]
                     for edge_id in edges:
                         in_multiplicity += dict_edges[edge_id].multiplicity
-                for e in g.out_edges(n):
+                for e in full_g.out_edges(n):
                     edges = edges_by_nodes[(e[0], e[1])] + two_way_edges[(e[0], e[1])]
                     for edge_id in edges:
                         out_multiplicity += dict_edges[edge_id].multiplicity
-                if not g.in_degree(n) or not g.out_degree(n):
+                if not full_g.in_degree(n) or not full_g.out_degree(n):
                     sub_hanging_nodes.append(n)
                 elif int(out_multiplicity - in_multiplicity) != 0:
                     subnodes.append(n)
             hanging_nodes.append(sub_hanging_nodes)
         if is_repeat_graph:
-            for n in sub_g.nodes():
+            # search for nodes with zero indegree or outdegree
+            for n in g_component.nodes():
                 if graph_partition_dict[n] != part_id:
                     continue
-                if not g.in_degree(n) or not g.out_degree(n):
+                if not full_g.in_degree(n) or not full_g.out_degree(n):
                     sub_hanging_nodes.append(n)
             for n in unique_nodes:
-                if not g.in_degree(n) or not g.out_degree(n):
+                if not full_g.in_degree(n) or not full_g.out_degree(n):
                     sub_hanging_nodes.append(n)
+            # add flanking unique edges and calculate number of entrances/exits to the repeat cluster
             for n in unique_nodes:
                 enters = 0
                 exits = 0
                 other_edges = 0
-                for e in g.in_edges(n):
+                for e in full_g.in_edges(n):
                     start, end = e[0], e[1]
                     edges = edges_by_nodes[(start, end)] + two_way_edges[(start, end)]
                     for edge_id in edges:
@@ -266,9 +276,9 @@ def split_graph(sub_g, g, undirected_g, dict_edges, modified_dict_edges, loop_ed
                             if start != end:
                                 exits += 1
                         else:
-                            if start != end or n not in sub_g.nodes():
+                            if start != end or n not in g_component.nodes():
                                 other_edges += 1
-                for e in g.out_edges(n):
+                for e in full_g.out_edges(n):
                     start, end = e[0], e[1]
                     edges = edges_by_nodes[(start, end)] + two_way_edges[(start, end)]
                     for edge_id in edges:
@@ -280,7 +290,7 @@ def split_graph(sub_g, g, undirected_g, dict_edges, modified_dict_edges, loop_ed
                             if start != end:
                                 enters += 1
                         else:
-                            if start != end or n not in sub_g.nodes():
+                            if start != end or n not in g_component.nodes():
                                 other_edges += 1
                 if other_edges:
                     sub_connected_nodes.append(n)
@@ -302,15 +312,10 @@ def save_graph(graph, hanging_nodes, connected_nodes, enters, exits, dict_edges,
     if not complex_component:
         if connected_nodes:
             sorted_graph = sorted(zip(graph, hanging_nodes, connected_nodes, enters, exits), key=lambda pair: pair[0], reverse=True)
-            graph = [x for x, _, _, _, _ in sorted_graph]
-            hanging_nodes = [x for _, x, _, _, _ in sorted_graph]
-            connected_nodes = [x for _, _, x, _, _ in sorted_graph]
-            enters = [x for _, _, _, x, _ in sorted_graph]
-            exits = [x for _, _, _, _, x in sorted_graph]
+            graph, hanging_nodes, connected_nodes, enters, exits = zip(*sorted_graph)
         elif hanging_nodes:
             sorted_graph = sorted(zip(graph, hanging_nodes), key=lambda pair: pair[0], reverse=True)
-            graph = [x for x, _ in sorted_graph]
-            hanging_nodes = [x for _, x in sorted_graph]
+            graph, hanging_nodes = zip(*sorted_graph)
 
     edges_by_component = dict()
     with open(join(output_dirpath, suffix + '_graph.json'), 'w') as out_f:
@@ -344,7 +349,6 @@ def save_graph(graph, hanging_nodes, connected_nodes, enters, exits, dict_edges,
                     edge.is_complex_loop = True
                     colors = set()
                     for loop_e in loop_edges[real_id]:
-                        ###!!!!
                         real_id = dict_edges[loop_e].id if loop_e in dict_edges else loop_e
                         if not mapping_info or (mapping_info[real_id] and chrom in mapping_info[real_id]):
                             if suffix == "def":
@@ -372,18 +376,18 @@ def save_graph(graph, hanging_nodes, connected_nodes, enters, exits, dict_edges,
         parts_info[part_id]['in'] = list(parts_info[part_id]['in'])
         parts_info[part_id]['out'] = list(parts_info[part_id]['out'])
     with open(join(output_dirpath, suffix + '_partition_info.json'), 'w') as handle:
-        handle.write(suffix + "_parts_info='" + json.dumps(parts_info) + "';")
+        handle.write(suffix + "PartitionDict=" + json.dumps(parts_info) + ";")
 
     with open(join(output_dirpath, suffix + '_edges_data.json'), 'w') as handle:
         json_dict_edges = dict((edge_id, edge.as_dict()) for edge_id, edge in modified_dict_edges.items())
-        handle.write(suffix + "_edge_data='" + json.dumps(json_dict_edges) + "';")
-        handle.write(suffix + "_loop_edges='" + json.dumps(loop_edges) + "';")
+        handle.write(suffix + "EdgeData=" + json.dumps(json_dict_edges) + ";\n")
+        handle.write(suffix + "LoopEdgeDict=" + json.dumps(loop_edges) + ";\n")
 
     if suffix == "def" or suffix=="repeat":
         with open(join(output_dirpath, suffix + '_node_info.json'), 'w') as handle:
-            handle.write(suffix + "_hanging_nodes='" + json.dumps(hanging_nodes) + "';")
+            handle.write(suffix + "HangNodes=" + json.dumps(hanging_nodes) + ";")
 
     if suffix == "repeat":
         with open(join(output_dirpath, suffix + '_node_info.json'), 'a') as handle:
-            handle.write(suffix + "_connected_nodes='" + json.dumps(connected_nodes) + "';")
+            handle.write(suffix + "ConnectNodes=" + json.dumps(connected_nodes) + ";")
     return edges_by_component

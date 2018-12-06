@@ -1,3 +1,4 @@
+import colorsys
 import json
 import subprocess
 from collections import defaultdict, OrderedDict
@@ -48,6 +49,7 @@ def parse_mapping_info(mapping_fpath, json_output_dir, dict_edges):
     chroms_by_edge = defaultdict(set)
     edge_by_chrom = defaultdict(set)
     chrom_names = set()
+    best_aligns = defaultdict(defaultdict)
     for edge_id in edge_mappings:
         len_threshold = 0.9 * edge_lengths[edge_id]  # assign an edge to a chromosome if more than 90% of edge aligned to the chromosome
         gap_threshold = min(5000, 0.05 * edge_lengths[edge_id])
@@ -84,6 +86,8 @@ def parse_mapping_info(mapping_fpath, json_output_dir, dict_edges):
                     aligns.append((chrom, align_s, align_e))
                 aligns.sort(reverse=True, key=lambda x: x[2] - x[1])
                 edge_alignment = chrom + ":"
+                if aligns:
+                    best_aligns[edge_id][chrom] = aligns[0][1]
                 for align in aligns[:3]:
                     edge_alignment += " %s-%s," % (format_pos(align[1]), format_pos(align[2]))
                 dict_edges[edge_id].aligns[chrom] = edge_alignment[:-1]
@@ -106,6 +110,7 @@ def parse_mapping_info(mapping_fpath, json_output_dir, dict_edges):
             if match_edge_id in dict_edges:
                 edge_by_chrom[chrom].add(match_edge_id)
 
+    is_single_chrom = len(chrom_order.keys()) == 1
     for edge_id, chroms in edge_chroms.items():
         if edge_id not in dict_edges:
             continue
@@ -113,7 +118,12 @@ def parse_mapping_info(mapping_fpath, json_output_dir, dict_edges):
         colors = set()
         for chrom in chroms:
             if chrom in chrom_order:
-                color = color_list[chrom_order[chrom] % len(color_list)]
+                if is_single_chrom:  # color an edge according to its position in reference
+                    pos = best_aligns[edge_id][chrom] if best_aligns[edge_id] else \
+                        best_aligns[get_match_edge_id(edge_id)][chrom]
+                    color = get_rainbow_color(pos, chrom_len_dict[chrom])
+                else:
+                    color = color_list[chrom_order[chrom] % len(color_list)]
             else:
                 color = '#808080'
             colors.add(color)
@@ -125,3 +135,10 @@ def parse_mapping_info(mapping_fpath, json_output_dir, dict_edges):
         handle.write("chrom_lengths=" + json.dumps(chrom_len_dict) + ";\n")
         handle.write("edgeMappingInfo=" + json.dumps(mapping_info) + ";\n")
     return mapping_info, non_alt_chroms, edge_by_chrom
+
+
+def get_rainbow_color(pos, chrom_len):
+    # calculate color depending on position in reference (from red to purple)
+    rgb = colorsys.hsv_to_rgb(pos*1.0/chrom_len,1,1)
+    color = '#%02x%02x%02x' % (round(rgb[0] * 255), round(rgb[1] * 255), round(rgb[2] * 255))
+    return color

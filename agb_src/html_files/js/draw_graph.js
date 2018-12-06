@@ -142,7 +142,7 @@ function render(doRefresh, doAnimate, doRefreshTables) {
     graphviz
         .tweenShapes(true)
         .transition(graphTransition)
-        .totalMemory(204857600)  // set memory limit to 100Mb instead of 16Mb by default
+        .totalMemory(104857600)  // set memory limit to 100Mb instead of 16Mb by default
         .dot(dot)
         .render();
 
@@ -294,7 +294,6 @@ function highlightChromEdges() {
 }
 
 function updateDot(doRefresh, doAnimate, doRefreshTables) {
-    console.log(Date.now())
     $(".tooltip").tooltip("hide");
     deselectAll();
     dotSrc = srcGraphs[componentN].dot;
@@ -514,12 +513,7 @@ function updateDot(doRefresh, doAnimate, doRefreshTables) {
                     newEdgesDict[edgeId] = loopId;
                     source = newData[edgeId] ? newData[edgeId][0] : edge.s;
                     end = newData[edgeId] ? newData[edgeId][1] : edge.e;
-                    if (expandedNodes.has(source) && expandedNodes.has(end)) // check that the node is not expanded
-                        isWrong = false;
-                    else if (repeatEdges.has(edge.id) || hiddenEdges.has(edge.id) || !checkEdgeWithThresholds(edge.id))
-                        isWrong = true;
-                    else isWrong = false;
-                    if (!isWrong) {
+                    if (!isEdgeHidden(source, end, edge.id)) {
                         loopEdgeDict[loopId].add(edgeId);
                         diGraph[node] = diGraph[node] || {};
                         diGraph[node][node] = diGraph[node][node] || {};
@@ -531,12 +525,7 @@ function updateDot(doRefresh, doAnimate, doRefreshTables) {
                         newEdgesDict[baseLoopEdgeDict[edgeId][k]] = loopId;
                         edge = edgeData[baseLoopEdgeDict[edgeId][k]];
                         source = newData[edgeId] ? newData[edgeId][0] : edge.s;
-                        if (expandedNodes.has(source)) // check that the node is not expanded
-                            isWrong = false;
-                        else if (repeatEdges.has(edge.id) || hiddenEdges.has(edge.id) || !checkEdgeWithThresholds(edge.id))
-                            isWrong = true;
-                        else isWrong = false;
-                        if (!isWrong) {
+                        if (!isEdgeHidden(source, source, edge.id)) {
                             loopEdgeDict[loopId].add(baseLoopEdgeDict[edgeId][k]);
                             diGraph[node] = diGraph[node] || {};
                             diGraph[node][node] = diGraph[node][node] || {};
@@ -693,8 +682,6 @@ function updateDot(doRefresh, doAnimate, doRefreshTables) {
                 var color = 'black';
                 if (refEdgeData[edgeRealId] && refEdgeData[edgeRealId].chrom) {
                     color = refEdgeData[edgeRealId].chrom;
-                    if ($('#gradient_color')[0].checked) {
-                    }
                 }
                 var oldColor = dotSrcLines[i].match(colorPattern);
 
@@ -755,6 +742,14 @@ function updateDot(doRefresh, doAnimate, doRefreshTables) {
     console.log('finish render', Date.now())
 }
 
+function isEdgeHidden(source, end, edgeId) {
+    if (expandedNodes.has(source) && expandedNodes.has(end)) // check that the node is not expanded
+        return false;
+    else if (repeatEdges.has(edgeId) || hiddenEdges.has(edgeId) || !checkEdgeWithThresholds(edgeId))
+        return true;
+    return false;
+}
+
 function searchEdge(event) {
   var input, filter, table, tr, td, i;
   input = document.getElementById("searchEdgeBox");
@@ -784,10 +779,10 @@ function getEdgeComponent(edgeId) {
     if (selectedMethod == "repeat")
         edgeComponent = edge.rep_comp;
     else if (selectedMethod == "ref") {
-        edgeComponent =  refEdgeData[edgeId].ref_comp;
+        edgeComponent = refEdgeData[edgeId].ref_comp;
     }
     else if (selectedMethod == "contig")
-        edgeComponent =  refEdgeData[edgeId].contig_comp;
+        edgeComponent = refEdgeData[edgeId].contig_comp;
     else edgeComponent = edge.comp;
     return edgeComponent;
 }

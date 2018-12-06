@@ -167,6 +167,9 @@ path.contig_selected  {
 }
 
 .gray_text {
+    font-size: 9px;
+    line-height: 12px;
+    display: block;
     color: #818181; 
 }
 

@@ -116,9 +116,11 @@ function setupInterfaceBtns() {
     document.getElementById('color_select').onchange = function(event) {
         $('#repeat_info').hide();
         $('#errors_info').hide();
+        $('#single_chrom_info').hide();
         var selectedOption = document.getElementById('color_select').selectedIndex;
 
         if (selectedOption == 1) { // edge alignments to reference
+            if (chromosomes.length == 1) $('#single_chrom_info').show()
         }
         if (selectedOption == 2) { // erroneous edges
             $('#errors_info').show();

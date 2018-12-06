@@ -329,10 +329,12 @@ function setEdgeLenThreshold(event, minValue, maxValue) {
 function buildContigsTable() {
     // in contig-based mode take into account all edges satisfied with thresholds for each contig
     // otherwise, take into account only displayed edges
-    if (!Object.keys(contigInfo).length) {
+    var numContigs = Object.keys(contigInfo).length;
+    if (numContigs === 0) {
         document.getElementById("contig_tab").style.display="none";
         return;
     }
+    var showAllContigs = numContigs < 500;
     var showAssemblyErrors = chromosomes.length > 0;
     var table = '';
     table += "<table border='1' id='contig_table' class='sortable scroll_table'>";
@@ -341,7 +343,6 @@ function buildContigsTable() {
     enableContigs = [];
     for (x in contigInfo) {
         var contigLen = contigInfo[x].length;
-        contigLen = contigLen < 10000 ? Math.round(contigLen / 100) / 10 : Math.round(contigLen / 1000);
         var edgesN = 0;
         var errorsN = 0;
         // if (misassembledContigs && misassembledContigs[x]) errorsN = misassembledContigs[x].length;
@@ -368,8 +369,9 @@ function buildContigsTable() {
                  errorsN = errorsN + edgeErrorsN;
             }
         }
-        if (edgesN || Object.keys(contigInfo).length < 500) {
+        if (edgesN || showAllContigs) {
             enableContigs.push(x);
+            contigLen = contigLen < 10000 ? Math.round(contigLen / 100) / 10 : Math.round(contigLen / 1000);
             table += "<tr id='contigrow" + x + "'><td>" + x + "</td><td>" + contigLen + "</td><td>" + contigInfo[x].cov +
                 "</td><td>" + (edgesN ? edgesN : "-") + (showAssemblyErrors ? "</td><td>" + (errorsN ? errorsN : "-") : "") + "</td>" + "</tr>";
         }

@@ -279,6 +279,7 @@ def parse_gfa(gfa_fpath, min_edge_len, input_dirpath=None, assembler=None):
     if assembler == "canu" and input_dirpath:
         dict_edges = parse_canu_unitigs_info(input_dirpath, dict_edges)
     dict_edges = construct_graph(dict_edges, predecessors, successors)
+    print("Finish parsing.")
     return dict_edges
 
 
@@ -344,11 +345,10 @@ def construct_graph(dict_edges, predecessors, successors):
             continue
         edges = dfs_color(graph, edge_id)
         color = repeat_colors[color_idx % len(repeat_colors)]
-        for e in edges:
-            match_edge = e.replace('rc', 'e') if e.startswith('rc') else e.replace('e', 'rc')
-            if dict_edges[match_edge].color != "black":
-                color = dict_edges[match_edge].color
-                break
+        # color forward and reverse complement edges in one color
+        match_edge_id = edge_id.replace('rc', 'e') if edge_id.startswith('rc') else edge_id.replace('e', 'rc')
+        if match_edge_id in dict_edges:
+            edges |= dfs_color(graph, match_edge_id)
         for e in edges:
             dict_edges[e].color = color
             colored_edges.add(e)
@@ -360,7 +360,14 @@ def dfs_color(graph, start, visited=None):
     if visited is None:
         visited = set()
     visited.add(start)
-    for next in graph[start] - visited:
-        dfs_color(graph, next, visited)
+    stack = [iter(graph[start] - visited)]
+    while stack:
+        try:
+            child = next(stack[-1])
+            if not child in visited:
+                visited.add(child)
+                stack.append(iter(graph[child] - visited))
+        except StopIteration:
+            stack.pop()
     return visited
 

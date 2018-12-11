@@ -151,6 +151,7 @@ def split_graph(g_component, full_g, undirected_g, dict_edges, modified_dict_edg
 
     if fake_edges:
         g_component.remove_edges_from(fake_edges)
+    # iterate through subgraphs of the component
     for part_id in range(num_graph_parts):
         subgraph = []
         subnodes = []
@@ -221,7 +222,6 @@ def split_graph(g_component, full_g, undirected_g, dict_edges, modified_dict_edg
                     loop_edge = Edge(edge_id)
                     loop_edge.start, loop_edge.end = start, end
                     loop_edge.is_complex_loop = True
-                    #modified_dict_edges[edge_id] = loop_edge
                     subgraph.append(edge_id)
                     for loop_edge_id in edges:
                         edge = dict_edges[loop_edge_id]
@@ -318,6 +318,7 @@ def save_graph(graph, hanging_nodes, connected_nodes, enters, exits, dict_edges,
             graph, hanging_nodes = zip(*sorted_graph)
 
     edges_by_component = dict()
+    # create JSON with DOT for each graph component
     with open(join(output_dirpath, suffix + '_graph.json'), 'w') as out_f:
         out_f.write(suffix + '_graphs=[')
         for i, (n, subgraph) in enumerate(graph):
@@ -375,6 +376,8 @@ def save_graph(graph, hanging_nodes, connected_nodes, enters, exits, dict_edges,
     for part_id in parts_info:
         parts_info[part_id]['in'] = list(parts_info[part_id]['in'])
         parts_info[part_id]['out'] = list(parts_info[part_id]['out'])
+
+    # save additional data to JSON files
     with open(join(output_dirpath, suffix + '_partition_info.json'), 'w') as handle:
         handle.write(suffix + "PartitionDict=" + json.dumps(parts_info) + ";")
 
@@ -385,7 +388,7 @@ def save_graph(graph, hanging_nodes, connected_nodes, enters, exits, dict_edges,
 
     if suffix == "def" or suffix=="repeat":
         with open(join(output_dirpath, suffix + '_node_info.json'), 'w') as handle:
-            handle.write(suffix + "HangNodes=" + json.dumps(hanging_nodes) + ";")
+            handle.write(suffix + "LeafNodes=" + json.dumps(hanging_nodes) + ";")
 
     if suffix == "repeat":
         with open(join(output_dirpath, suffix + '_node_info.json'), 'a') as handle:

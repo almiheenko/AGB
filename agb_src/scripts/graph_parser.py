@@ -204,15 +204,45 @@ def fastg_to_gfa(input_fpath, output_dirpath, assembler_name):
 
 
 def parse_gfa(gfa_fpath, min_edge_len, input_dirpath=None, assembler=None):
+    dict_edges = dict()
+    predecessors = defaultdict(list)
+    successors = defaultdict(list)
+    g = nx.DiGraph()
+
     print("Parsing " + gfa_fpath + "...")
-    gfa = gfapy.Gfa.from_file(gfa_fpath, vlevel = 0)
+    # gfa = gfapy.Gfa.from_file(gfa_fpath, vlevel = 0)
     links = []
     edge_overlaps = defaultdict(dict)
     with open(gfa_fpath) as f:
         for line in f:
-            if line[0] != 'L' and line[0] != 'E':
+            record_type = line[0]
+            if record_type == 'S':
+                fs = line.split()
+                name, seq_len = fs[1], len(fs[2])
+                add_fields = fs[3:] if len(fs) > 3 else []
+                add_info = dict((f.split(':')[0].lower(), f.split(':')[-1]) for f in add_fields)
+                cov = 1
+                if "dp" in add_info:
+                    cov = float(add_info["dp"])  ## coverage depth
+                elif "kc" in add_info:
+                    cov = max(1, int(add_info["kc"]) / seq_len)  ## k-mer count / edge length
+                if cov is None:
+                    print(name)
+                if not seq_len or seq_len >= min_edge_len:
+                    edge_id = get_edge_agv_id(get_edge_num(name))
+                    edge = Edge(edge_id, get_edge_num(name), seq_len, cov, element_id=edge_id)
+                    dict_edges[edge_id] = edge
+                    for overlapped_edge, overlap in edge_overlaps[edge_id].items():
+                        dict_edges[edge_id].overlaps.append((edge_id_to_name(overlapped_edge), overlapped_edge, overlap))
+                    rc_edge_id = get_edge_agv_id(-get_edge_num(name))
+                    rc_edge = Edge(rc_edge_id, -get_edge_num(name), seq_len, cov, element_id=rc_edge_id)
+                    dict_edges[rc_edge_id] = rc_edge
+                    for overlapped_edge, overlap in edge_overlaps[rc_edge_id].items():
+                        dict_edges[edge_id].overlaps.append((edge_id_to_name(overlapped_edge), overlapped_edge, overlap))
+
+            if record_type != 'L' and record_type != 'E':
                 continue
-            if line[0] == 'L':
+            if record_type == 'L':
                 _, from_name, from_orient, to_name, to_orient = line.split()[:5]
             else:
                 # E       *       2+      65397+  21      68$     0       47      47M
@@ -235,10 +265,6 @@ def parse_gfa(gfa_fpath, min_edge_len, input_dirpath=None, assembler=None):
                 edge_overlaps[edge1][edge2] = overlap
                 edge_overlaps[edge2][edge1] = overlap
 
-    dict_edges = dict()
-    predecessors = defaultdict(list)
-    successors = defaultdict(list)
-    g = nx.DiGraph()
     ### gfa retains only canonical links
     for link in links:
         from_name, from_orient, to_name, to_orient, overlap = link
@@ -256,25 +282,6 @@ def parse_gfa(gfa_fpath, min_edge_len, input_dirpath=None, assembler=None):
                 predecessors[edge2].append(edge1)
                 successors[edge1].append(edge2)
             g.add_edge(edge1, edge2)
-
-    for i, n in enumerate(gfa.segments):
-        if n.KC:
-            cov = max(1, n.KC / n.length)  ## k-mer count / edge length
-        elif n.dp:
-            cov = n.dp  ## coverage depth
-        else:
-            cov = 1
-        if not n.length or n.length >= min_edge_len:
-            edge_id = get_edge_agv_id(get_edge_num(n.name))
-            edge = Edge(edge_id, get_edge_num(n.name), n.length, cov, element_id=edge_id)
-            dict_edges[edge_id] = edge
-            for overlapped_edge, overlap in edge_overlaps[edge_id].items():
-                dict_edges[edge_id].overlaps.append((edge_id_to_name(overlapped_edge), overlapped_edge, overlap))
-            rc_edge_id = get_edge_agv_id(-get_edge_num(n.name))
-            rc_edge = Edge(rc_edge_id, -get_edge_num(n.name), n.length, cov, element_id=rc_edge_id)
-            dict_edges[rc_edge_id] = rc_edge
-            for overlapped_edge, overlap in edge_overlaps[rc_edge_id].items():
-                dict_edges[edge_id].overlaps.append((edge_id_to_name(overlapped_edge), overlapped_edge, overlap))
 
     if assembler == "canu" and input_dirpath:
         dict_edges = parse_canu_unitigs_info(input_dirpath, dict_edges)
@@ -303,32 +310,31 @@ def construct_graph(dict_edges, predecessors, successors):
     graph = defaultdict(set)
     for edge_id in dict_edges.keys():
         start_node = None
+        is_edge_repetitive = dict_edges[edge_id].repetitive
         for prev_e in predecessors[edge_id]:
-            if prev_e in dict_edges and dict_edges[prev_e].end:
-                start_node = dict_edges[prev_e].end
-            if prev_e in dict_edges and dict_edges[edge_id].repetitive and dict_edges[prev_e].repetitive:
-                graph[edge_id].add(prev_e)
-        for prev_e in predecessors[edge_id]:
+            if prev_e in dict_edges:
+                start_node = dict_edges[prev_e].end or start_node
+                if is_edge_repetitive and dict_edges[prev_e].repetitive:
+                    graph[edge_id].add(prev_e)
             for next_e in successors[prev_e]:
-                if next_e in dict_edges and dict_edges[next_e].start:
-                    start_node = dict_edges[next_e].start
-                if next_e in dict_edges and dict_edges[edge_id].repetitive and dict_edges[next_e].repetitive:
-                    graph[edge_id].add(next_e)
+                if next_e in dict_edges:
+                    start_node = dict_edges[next_e].start or start_node
+                    if is_edge_repetitive and dict_edges[next_e].repetitive:
+                        graph[edge_id].add(next_e)
         if not start_node:
             start_node = node_id
             node_id += 1
         end_node = None
         for next_e in successors[edge_id]:
-            if next_e in dict_edges and dict_edges[next_e].start:
-                end_node = dict_edges[next_e].start
-            if next_e in dict_edges and dict_edges[edge_id].repetitive and dict_edges[next_e].repetitive:
-                graph[edge_id].add(next_e)
-        for next_e in successors[edge_id]:
+            if next_e in dict_edges:
+                end_node = dict_edges[next_e].start or end_node
+                if is_edge_repetitive and dict_edges[next_e].repetitive:
+                    graph[edge_id].add(next_e)
             for prev_e in predecessors[next_e]:
-                if prev_e in dict_edges and dict_edges[prev_e].end:
-                    end_node = dict_edges[prev_e].end
-                if prev_e in dict_edges and dict_edges[edge_id].repetitive and dict_edges[prev_e].repetitive:
-                    graph[edge_id].add(prev_e)
+                if prev_e in dict_edges:
+                    end_node = dict_edges[prev_e].end or end_node
+                    if is_edge_repetitive and dict_edges[prev_e].repetitive:
+                        graph[edge_id].add(prev_e)
         if not end_node:
             end_node = node_id
             node_id += 1

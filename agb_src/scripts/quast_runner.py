@@ -99,6 +99,7 @@ def run_quast_analysis(input_fpath, reference_fpath, output_dirpath, json_output
             handle.write("misassembledContigs=[];\n")
         return None, None, None, dict_edges
 
+    # search for misassemblies and store them for each edge and contig
     misassembled_seqs = defaultdict(list)
     with open(ms_out_fpath) as f:
         seq_id = ''

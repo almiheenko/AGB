@@ -33,6 +33,7 @@ def build_jsons(dict_edges, input_dirpath, output_dirpath, mapping_info, chrom_n
 
     undirected_g = g.to_undirected()
     print("Building JSON files...")
+    # create JSON files for each mode
     edges_by_component = process_graph(g, undirected_g, dict_edges, edges_by_nodes, two_way_edges, output_dirpath, 'def', assembler)
     edges_by_repeat_component = process_graph(repeat_g, undirected_g, dict_edges, edges_by_nodes, two_way_edges,
                                               output_dirpath, 'repeat', assembler, base_graph=g)

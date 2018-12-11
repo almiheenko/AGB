@@ -51,7 +51,8 @@ def parse_mapping_info(mapping_fpath, json_output_dir, dict_edges):
     chrom_names = set()
     best_aligns = defaultdict(defaultdict)
     for edge_id in edge_mappings:
-        len_threshold = 0.9 * edge_lengths[edge_id]  # assign an edge to a chromosome if more than 90% of edge aligned to the chromosome
+        # assign an edge to a chromosome if more than 90% of edge aligned to the chromosome
+        len_threshold = 0.9 * edge_lengths[edge_id]
         gap_threshold = min(5000, 0.05 * edge_lengths[edge_id])
         for chrom, mappings in edge_mappings[edge_id].items():
             mappings.sort(key=lambda x: (x[0], -x[1]), reverse=False)
@@ -78,7 +79,7 @@ def parse_mapping_info(mapping_fpath, json_output_dir, dict_edges):
                     if not align_s:
                         align_s = ref_start
                     if align_e and ref_start - align_e >= gap_threshold:
-                        if align_e - align_s >= 500:
+                        if align_e - align_s >= 500:  # break alignments if gap longer than 500 bp
                             aligns.append((chrom, align_s, align_e))
                         align_s = ref_start
                     align_e = ref_end - 1
@@ -88,7 +89,7 @@ def parse_mapping_info(mapping_fpath, json_output_dir, dict_edges):
                 edge_alignment = chrom + ":"
                 if aligns:
                     best_aligns[edge_id][chrom] = aligns[0][1]
-                for align in aligns[:3]:
+                for align in aligns[:3]:  # store top 3 alignments for each edge
                     edge_alignment += " %s-%s," % (format_pos(align[1]), format_pos(align[2]))
                 dict_edges[edge_id].aligns[chrom] = edge_alignment[:-1]
                 if get_match_edge_id(edge_id) in dict_edges:

@@ -75,9 +75,10 @@ def main():
     # add options for contigs/scaffolds
     parser.add_option_group(group)
 
-    parser.set_usage('Usage: \n1) ' + __file__ + ' [options]'
-                     ' --graph assembly_graph_file [--fasta file_with_graph_edge_sequences]'
-                     '\n2) ' + __file__ + ' [options] -i assembler_output_dir (supported for %s)' % ', '.join(SUPPORTED_ASSEMBLERS))
+    parser.set_usage('Usage: \n' +
+                     '1) ' + __file__ + ' [options] --graph assembly_graph_file -a <assembler_name> [--fasta file_with_graph_edge_sequences]\n'
+                     '2) ' + __file__ + ' [options] -a <assembler_name> -i <assembler_output_dir> (supported for %s)' %
+                     ', '.join(SUPPORTED_ASSEMBLERS))
 
     opts, args = parser.parse_args()
     if not opts.assembler:
@@ -115,7 +116,7 @@ def main():
     build_jsons(dict_edges, opts.input_dir, json_output_dirpath, mapping_info, chrom_names, edge_by_chrom, contig_edges, opts.assembler)
     output_fpath = join(opts.output_dir, HTML_NAME)
     with open(TEMPLATE_PATH) as f: html = f.read()
-    #html = embed_css_and_scripts(html)
+    html = embed_css_and_scripts(html)
     with open(output_fpath, 'w') as f:
         f.write(html)
     print('Assembly graph viewer is saved to ' + output_fpath)

@@ -228,7 +228,7 @@ function changeSplitMethod(method, component) {
         srcGraphs = ref_graphs;
         edgeData = refEdgeData;
         srcPartDict = refPartitionDict;
-        hangNodes = defHangNodes;
+        leafNodes = defLeafNodes;
         selectedChrom = 0;
     }
     else if(selectedMethod == 'contig') {
@@ -255,7 +255,7 @@ function changeSplitMethod(method, component) {
         srcGraphs = repeat_graphs;
         srcPartDict = repeatPartitionDict;
         edgeData = repeatEdgeData;
-        hangNodes = repeatHangNodes;
+        leafNodes = repeatLeafNodes;
     }
     else {
         $('#default_mode').addClass('active');
@@ -269,7 +269,7 @@ function changeSplitMethod(method, component) {
         srcGraphs = def_graphs;
         edgeData = defEdgeData;
         srcPartDict = defPartitionDict;
-        hangNodes = defHangNodes;
+        leafNodes = defLeafNodes;
         selectedChrom = "";
     }
     changeComponent(componentN, true);
@@ -821,13 +821,13 @@ function selectNode(selectedNode) {
         s = s + ' <span class="link" onclick="javascript:changeComponent(' + part.idx + ');">Show</span>';
         for (var i = 0; i < part.in.length; i++) {
              edgeId = part.in[i];
-             if (uniqueEdgesDict[edgeId]) {
+             if (parallelEdgeDict[edgeId]) {
                 bigEdge = edgeData[edgeId];
                 d3.select('#' + edgeId).classed('node_selected_in', true);
                 if ((selectedMethod != "repeat" && bigEdge.comp == componentN) || (selectedMethod == "repeat" && bigEdge.rep_comp == componentN)) {
-                    for (var k = 0; k < uniqueEdgesDict[edgeId].length; k++) {
-                        if (defEdgeData[uniqueEdgesDict[edgeId][k]]) {
-                            edge = edgeData[uniqueEdgesDict[edgeId][k]];
+                    for (var k = 0; k < parallelEdgeDict[edgeId].length; k++) {
+                        if (defEdgeData[parallelEdgeDict[edgeId][k]]) {
+                            edge = edgeData[parallelEdgeDict[edgeId][k]];
                             if ((selectedMethod != "repeat" && edge.comp == componentN) || (selectedMethod == "repeat" && edge.rep_comp == componentN))
                                 inEdges.push(edge);
                         }
@@ -843,13 +843,13 @@ function selectNode(selectedNode) {
         }
         for (var i = 0; i < part.out.length; i++) {
             edgeId = part.out[i];
-             if (uniqueEdgesDict[edgeId]) {
+             if (parallelEdgeDict[edgeId]) {
                 bigEdge = edgeData[edgeId];
                 d3.select('#' + edgeId).classed('node_selected_out', true);
                 if ((selectedMethod != "repeat" && bigEdge.comp == componentN) || (selectedMethod == "repeat" && bigEdge.rep_comp == componentN)) {
-                    for (var k = 0; k < uniqueEdgesDict[edgeId].length; k++) {
-                        if (edgeData[uniqueEdgesDict[edgeId][k]]) {
-                            edge = edgeData[uniqueEdgesDict[edgeId][k]];
+                    for (var k = 0; k < parallelEdgeDict[edgeId].length; k++) {
+                        if (edgeData[parallelEdgeDict[edgeId][k]]) {
+                            edge = edgeData[parallelEdgeDict[edgeId][k]];
                                 outEdges.push(edge);
                         }
                     }
@@ -864,6 +864,7 @@ function selectNode(selectedNode) {
         }
     }
     else {
+        // color incoming and outgoing edges
         var adjEdges = graph[selectedNode];
         if (adjEdges) {
             var adjNodes = Object.keys(adjEdges);

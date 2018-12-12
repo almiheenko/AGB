@@ -169,7 +169,7 @@
                 <p>Use color to highlight
                 <select id="color_select">
                 </select></p>
-                  <p><span id='single_chrom_info' class='gray_text' style='display: none;'>Reference consists of a single chromosome.
+                  <p><span id='single_chrom_info' class='gray_text' style='display: none;'>The reference is composed of a single chromosome.
                       Edges are colored according to their position in the reference using the following order:
                       red-green-blue-purple.</span></p>
                   <p><span id='repeat_info' class='gray_text' style='display: none;'>Note: repeat edges are represented with parallel edges</span></p>
@@ -361,10 +361,10 @@ if (srcPartDict['part' + componentN] && srcPartDict['part' + componentN].big) $(
 var selectedMethod = "default";
 
 var baseLoopEdgeDict = defLoopEdgeDict;
-var uniqueEdgesDict = {};//unique_edges_dict;
+var parallelEdgeDict = {}; // parallel edges collapsed to 1 edge
 
 var collapsedNodes = new Set();
-var hangNodes = defHangNodes;
+var leafNodes = defLeafNodes;
 var newNodes, nodeColors;
 
 var edgeData = defEdgeData;

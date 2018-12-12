@@ -1,3 +1,5 @@
+var MAX_PARALLEL_EDGES = 4;
+
 function render(doRefresh, doAnimate, doRefreshTables) {
     d3.select("#graph > svg").attr("display", "none");
     if (doRefresh) {
@@ -52,7 +54,7 @@ function render(doRefresh, doAnimate, doRefreshTables) {
         }
         nodes = d3.selectAll('.node');
         nodes.attr('pointer-events', 'all')
-        
+
         nodes
             .on("click", function (e) {
                 deselectAll();
@@ -126,7 +128,7 @@ function render(doRefresh, doAnimate, doRefreshTables) {
                     curEdge = defEdgeData[d3.select(this).attr('id')];
                     selectEdge(d3.select(this).attr('id'), curEdge.id, curEdge.len, curEdge.cov, curEdge.mult);
                 }
-                else selectEdge(d3.select(this).attr('id')); 
+                else selectEdge(d3.select(this).attr('id'));
             }
             else {
                 selectEdge(d3.select(this).attr('id'));
@@ -160,10 +162,10 @@ function highlightNodes() {
         })
         .classed('unbalanced_node', true); // highlight nodes with differences in indegree/outdegree with red
     }
-    nodes = hangNodes[componentN] ? new Set(hangNodes[componentN]) : new Set();
+    var leaves = leafNodes[componentN] ? new Set(leafNodes[componentN]) : new Set();
     d3.selectAll('.node').filter(function (e) {
         nodeId = d3.select(this).select('title').text();
-        return nodes.has(nodeId);
+        return leaves.has(nodeId);
     })
     .classed('hanging_node', true); // highlight nodes with zero indegree or outdegree with black
     if (selectedMethod == "repeat") {
@@ -218,7 +220,7 @@ function highlightContigEdges() {
                 var edgeElId = edge[0] == '-' ? 'rc' + edge.substr(1) : 'e' + edge;
                 var edgeId = getEdgeElement(edgeData[edgeElId]);
                 //console.log(edgeId, edgeElId)
-                visEdgeId = d3.select('#' + edgeId).empty() ? edgeElId : edgeId; 
+                visEdgeId = d3.select('#' + edgeId).empty() ? edgeElId : edgeId;
                 if (!d3.select('#' + visEdgeId).empty()) {
                      realEdges.push(edgeId);
                      if (defEdgeData[edgeElId].unique)
@@ -251,7 +253,7 @@ function highlightContigEdges() {
                     // if an edge repeats more than 2 times, print only one occurence
                     if (edgeCount <= 2 && prevEdge) {
                         graphPath = prevEdge + graphPath;
-                    } 
+                    }
                     else graphPath = prevEdge + ' (' + edgeCount + ' times)' + graphPath;
                     if (i > 0 && graphEdges.length > 1) graphPath = ' &#8209;> ' + graphPath;
                     edgeCount = 1;
@@ -284,7 +286,7 @@ function highlightChromEdges() {
         for (i = 0; i < chromEdges.length; i++) {
             var edgeId = chromEdges[i];
             var edgeElId = getEdgeElement(edgeData[edgeId]);
-            visEdgeId = d3.select('#' + edgeId).empty() ? edgeElId : edgeId; 
+            visEdgeId = d3.select('#' + edgeId).empty() ? edgeElId : edgeId;
             if (!d3.select('#' + visEdgeId).empty()) selectedEdges.add(edge);
         }
     }
@@ -392,12 +394,12 @@ function updateDot(doRefresh, doAnimate, doRefreshTables) {
     }
     var collapsedNodes = {};
     newNodes = new Set();
+    // store edges that should be collapsed based on their repetitiveness or length/depth thresholds
     for (node in graph) {
         for (i = 0; i < Object.keys(graph[node]).length; i++) {
             edgesToCollapse = 0;
             node2 = Object.keys(graph[node])[i];
             var filteredEdges = new Set();
-            // store edges that should be collapsed based on their repetitiveness or length/depth thresholds
             for (let edgeId of graph[node][node2]) {
                 if (!hiddenEdges.has(edgeId)) {
                     filteredEdges.add(edgeId)
@@ -431,11 +433,11 @@ function updateDot(doRefresh, doAnimate, doRefreshTables) {
     replacementDict = {};
     nodeColors = {};
     collapsedEdges = {};
+    // iteratively collapse stored edges
     for (node in collapsedNodes) {
-        // iteratively collapse stored edges
         edgeS = replacementDict[node] ? replacementDict[node] : node;
         collapsedEdges[edgeS] = collapsedEdges[edgeS] || new Set();
-        for (let node2 of collapsedNodes[node]) {  
+        for (let node2 of collapsedNodes[node]) {
             edgeE = replacementDict[node2] ? replacementDict[node2] : node2;
             if (edgeS == edgeE || !graph[edgeE]) continue;
             newNodes.add(edgeS);
@@ -487,19 +489,68 @@ function updateDot(doRefresh, doAnimate, doRefreshTables) {
     dotSrcLines = ['digraph {','graph [pad="0.5", ranksep=1,nodesep=0.5];', 'node [shape = circle, label = "", height = 0.15];'];
     newEdges = new Set();
     loopEdges = {};
+    parallelEdgeDict = {};
+    var edgesToLeaves = {};
+    var parallelEdges = {};
+    var leaves = leafNodes[componentN] ? new Set(leafNodes[componentN]) : new Set();
+    // if more than 4 parallel edges between 2 nodes or between 1 node and several leaf nodes, render them as 1 edge
+
     for (node in graph) {
+        edgesToLeaves[node] = edgesToLeaves[node] || new Set();
         for (i = 0; i < Object.keys(graph[node]).length; i++) {
             pairNode = Object.keys(graph[node])[i];
-            for (let edgeId of graph[node][pairNode]) {   
-                if (node == pairNode) {
-                    loopEdges[node] = loopEdges[node] || [];
-                    loopEdges[node].push(edgeId)
+            edgesToLeaves[pairNode] = edgesToLeaves[pairNode] || new Set();
+            var parallelVisibleEdges = new Set();
+            if (node != pairNode && graph[node][pairNode].size > MAX_PARALLEL_EDGES) {
+                for (let edgeId of graph[node][pairNode]) {
+                    if (!isEdgeHidden(node, pairNode, edgeId)) {
+                        parallelVisibleEdges.add(edgeId);
+                    }
                 }
-                else newEdges.add(edgeId);
+            }
+            if (parallelVisibleEdges.size > MAX_PARALLEL_EDGES) {
+                var parallelEdgeId = 'parallel' + Math.min(parseInt(node.replace(/[^0-9]/g,'')), parseInt(pairNode.replace(/[^0-9]/g,''))) + '_' +
+                    Math.max(parseInt(node.replace(/[^0-9]/g,'')), parseInt(pairNode.replace(/[^0-9]/g,'')));
+                parallelEdges[parallelEdgeId] = parallelVisibleEdges;
+            }
+            else {
+                for (let edgeId of graph[node][pairNode]) {
+                    if (node == pairNode) {
+                        loopEdges[node] = loopEdges[node] || [];
+                        loopEdges[node].push(edgeId)
+                    }
+                    else {
+                        newEdges.add(edgeId);
+                        if (node != pairNode && leaves.has(pairNode)) edgesToLeaves[node].add(edgeId);
+                        else if (node != pairNode && leaves.has(node)) edgesToLeaves[pairNode].add(edgeId);
+                    }
+                }
             }
         }
     }
-    
+    if (newEdges.size > 100) {
+        for (let parallelEdgeId in parallelEdges) {
+            parallelEdgeDict[parallelEdgeId] = Array.from(parallelEdges[parallelEdgeId]);
+            newEdges.add(parallelEdgeId);
+        }
+        for (let node in edgesToLeaves) {
+            if (edgesToLeaves[node].size > MAX_PARALLEL_EDGES) {
+                var parallelEdgeId = 'parallel' + node;
+                parallelEdgeDict[parallelEdgeId] = Array.from(edgesToLeaves[node]);
+                for (var j = 0; j < parallelEdgeDict[parallelEdgeId].length; j++) {
+                    newEdges.delete(parallelEdgeDict[parallelEdgeId][j]);
+                }
+                newEdges.add(parallelEdgeId);
+            }
+        }
+    }
+    else {
+        for (let parallelEdgeId in parallelEdges) {
+            for (var j = 0; j < parallelEdges[parallelEdgeId].length; j++) {
+                newEdges.add(parallelEdges[parallelEdgeId][j]);
+            }
+        }
+    }
     // find new loop edges
     loopEdgeDict = {};
     for (node in loopEdges) {
@@ -539,8 +590,8 @@ function updateDot(doRefresh, doAnimate, doRefreshTables) {
         }
     }
 
-    // create new dot
-    for (let edgeId of newEdges) {   
+    // create new DOT
+    for (let edgeId of newEdges) {
         edge = edgeData[edgeId];
         if (edge) {
             source = newData[edgeId] ? newData[edgeId][0] : edge.s;
@@ -560,7 +611,14 @@ function updateDot(doRefresh, doAnimate, doRefreshTables) {
             var s = '"' + source + '" -> "' + end + '" [label="' + label + '",id = "' + edgeId + '", color="' + edge.color + '"];';
             dotSrcLines.push(s);
         }
-        else if (loopEdgeDict[edgeId].length > 0) {
+        else if (parallelEdgeDict[edgeId] && parallelEdgeDict[edgeId].length > 0) {
+            var originalEdgeId = parallelEdgeDict[edgeId][0];
+            source = newData[originalEdgeId] ? newData[originalEdgeId][0] : edgeData[originalEdgeId].s;
+            end = newData[originalEdgeId] ? newData[originalEdgeId][1] : edgeData[originalEdgeId].e;
+            var s = '"' + source + '" -> "' + end + '" [label="",id = "' + edgeId + '", color="black:white:black",penwidth=8,arrowType="tee"];';
+            dotSrcLines.push(s);
+        }
+        else if (loopEdgeDict[edgeId] && loopEdgeDict[edgeId].size > 0) {
             curEdges = 0;
             var loopNode;
             var filterEdges = [];
@@ -580,13 +638,14 @@ function updateDot(doRefresh, doAnimate, doRefreshTables) {
                         s = '"' + loopNode + '" -> "' + loopNode + '" [label="' + label + '",id = "' + edgeId + '", color="' + edge.color + '"];';
                     }
                 }
-                // if there are several loop edges, hide their labels and display as one
+                // special case: two loop edges are forward and reverse complement components of the same edge
                 else if (filterEdges.length == 2 && filterEdges[0].name.replace('-', '') === filterEdges[1].name.replace('-', '')) {
                     edge = filterEdges[0];
                     label = edge.len ? 'id ' + edge.name.replace('-', '') + '\\l' + edge.len + 'k ' + edge.cov + 'x' : "";
                     s = '"' + loopNode + '" -> "' + loopNode + '" [label="' + label + '",id = "' + edgeId + '", color="' +
                         edge.color + '",penwidth=5];';
                 }
+                // if there are several loop edges, hide their labels and display as one
                 else {
                     s = '"' + loopNode + '" -> "' + loopNode + '" [label="",id = "' + edgeId + '", color="' +
                         (loopColors.size === 1 ? loopColors.values().next().value : "black") + '",penwidth=5];';
@@ -601,6 +660,7 @@ function updateDot(doRefresh, doAnimate, doRefreshTables) {
     var colorCovEdges = document.getElementById('color_select').selectedIndex == 3;
 
     var filteredNodes = new Set();
+    // store nodes that are contained in a new DOT
     for (i = 0; i < dotSrcLines.length;) {
         var matches = dotSrcLines[i].match(idPattern);
         if (matches) {
@@ -620,7 +680,8 @@ function updateDot(doRefresh, doAnimate, doRefreshTables) {
     if (uniqueEdges.length > 300) {
         $('#unique_warning').show();
     }
-    else { // if there are less than 300 edges, show adjacent edges if they are satisfied with length/depth thresholds
+    else {
+        // if there are less than 300 edges, show adjacent edges if they are satisfied with length/depth thresholds
         $('#unique_warning').hide();
         for (i = 0; i < uniqueEdges.length; i++) {
             var edgeMatches = uniqueEdges[i].match(edgePattern);
@@ -737,9 +798,7 @@ function updateDot(doRefresh, doAnimate, doRefreshTables) {
         }
     }
     dot = dotSrcLines.join('\n');
-    console.log('finish script', Date.now())
     render(doRefresh, doAnimate, doRefreshTables);
-    console.log('finish render', Date.now())
 }
 
 function isEdgeHidden(source, end, edgeId) {
@@ -766,7 +825,7 @@ function searchEdge(event) {
       } else {
         tr[i].style.display = "none";
       }
-    } 
+    }
   }
 }
 
@@ -774,7 +833,7 @@ function getEdgeComponent(edgeId) {
     // get the number of component containing the edge
     if (edgeData[edgeId])
         edge = edgeData[edgeId];
-    else if (loopEdgeDict[edgeId]) 
+    else if (loopEdgeDict[edgeId])
         edge = edgeData[loopEdgeDict[edgeId][0]];
     if (selectedMethod == "repeat")
         edgeComponent = edge.rep_comp;
@@ -898,7 +957,7 @@ function selectEdge(edge, edgeId, edgeLen, edgeCov, edgeMulti) {
     // select an edge and its reverse complement component
     selectedMatchEdge = selectedEdge.indexOf("rc") == -1 ? selectedEdge.replace('e', 'rc') : selectedEdge.replace('rc', 'e');
     if (d3.select('#' + selectedMatchEdge).empty()) selectedMatchEdge = null;
-    d3.select('#' + selectedEdge).classed('selected', true); 
+    d3.select('#' + selectedEdge).classed('selected', true);
     if (selectedMatchEdge)
         d3.select('#' + selectedMatchEdge).classed('selected', true);
 
@@ -910,7 +969,7 @@ function selectEdge(edge, edgeId, edgeLen, edgeCov, edgeMulti) {
             if (checkEdge(curLoopEdge)) {
                 edge = defEdgeData[curLoopEdge];
 
-                edgeDescription = edgeDescription + 
+                edgeDescription = edgeDescription +
                         '<li>Edge ID: ' + edge.name +
                         ', length: '  + edge.len +
                         'kb, coverage: '  + edge.cov + 'x, inferred multiplicity: '  + edge.mult;
@@ -936,11 +995,11 @@ function selectEdge(edge, edgeId, edgeLen, edgeCov, edgeMulti) {
             }
         }
     }
-    else if (uniqueEdgesDict[selectedEdge]) {
+    else if (parallelEdgeDict[selectedEdge]) {
         edgeDescription = '<ul><b>Edges:</b>';
-        for (var k = 0; k < uniqueEdgesDict[selectedEdge].length; k++) {
-            if (defEdgeData[uniqueEdgesDict[selectedEdge][k]]) {
-                edge = defEdgeData[uniqueEdgesDict[selectedEdge][k]];
+        for (var k = 0; k < parallelEdgeDict[selectedEdge].length; k++) {
+            if (defEdgeData[parallelEdgeDict[selectedEdge][k]]) {
+                edge = defEdgeData[parallelEdgeDict[selectedEdge][k]];
 
                 edgeDescription = edgeDescription + 
                         '<li>Edge ID: ' + edge.name +

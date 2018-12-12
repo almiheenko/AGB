@@ -53,10 +53,11 @@
 
 <h2 style="margin-left: 20px;">Assembly Graph Browser <a href="javascript:infoPopUpShow()">(show help)</a></h2>
 
+<!--Help pop-up window-->
 <div class="info-popup" id="info_popup" style="display:none" onclick="javascript:infoPopUpHide()">
     <div class="info-popup-content" onclick="javascript:infoPopUpShow()">
         <h4><b>Edges</b></h4>
-        <svg width="800" height="110">
+        <svg width="800" height="140">
             <g transform="translate(0,5)">
             <path fill="none" stroke="#000000" stroke-width="2" d="M0,5 40,5" style=""></path>
             <polygon fill="#000000" stroke="#000000" stroke-width="2" points="35,2 42,5 35,8" style=""></polygon>
@@ -70,16 +71,24 @@
                     <text x="0" y="32" text-anchor="start" font="16px">Clusters of adjacent repeat edges are shown with the same color.
                     </text>
             </g>
-            <text x="0" y="95" text-anchor="start" font="24px">When a node is selected:</text>
-            <g transform="translate(205,85)" class="node_selected_in">
-            <path fill="none" stroke-width="2" d="M0,5 40,5" style=""></path>
-            <polygon stroke-width="2" points="35,2 42,5 35,8" style=""></polygon>
-                <text x="50" y="10" text-anchor="start" font="16px"> incoming edge</text>
+            <g transform="translate(0,90)">
+                <path fill="none" stroke="black" stroke-width="4" d="M0,3 37,3" style=""></path>
+                <path fill="none" stroke="black" stroke-width="2" d="M0,7 37,7" style=""></path>
+                <polygon fill="black" stroke="black" stroke-width="2" points="35,0 42,5 35,10" style=""></polygon>
+                    <text x="50" y="10" text-anchor="start" font="16px"> in large graphs this edge replaces several parallel edges (for simplicity).
+                        <text x="0" y="32" text-anchor="start" font="16px">Clusters of adjacent repeat edges are shown with the same color.
+                        </text>
             </g>
-            <g transform="translate(390,85)" class="node_selected_out">
-            <path fill="none" stroke-width="2" d="M0,5 40,5" style=""></path>
-            <polygon stroke-width="2" points="35,2 42,5 35,8" style=""></polygon>
-                <text x="50" y="10" text-anchor="start" font="16px"> outgoing edge</text>
+            <text x="0" y="135" text-anchor="start" font="24px">When a node is selected:</text>
+            <g transform="translate(205,125)" class="node_selected_in">
+                <path fill="none" stroke-width="2" d="M0,5 40,5" style=""></path>
+                <polygon stroke-width="2" points="35,2 42,5 35,8" style=""></polygon>
+                    <text x="50" y="10" text-anchor="start" font="16px"> incoming edge</text>
+            </g>
+            <g transform="translate(390,125)" class="node_selected_out">
+                <path fill="none" stroke-width="2" d="M0,5 40,5" style=""></path>
+                <polygon stroke-width="2" points="35,2 42,5 35,8" style=""></polygon>
+                    <text x="50" y="10" text-anchor="start" font="16px"> outgoing edge</text>
             </g>
         </svg>
 
@@ -116,27 +125,28 @@
         <h4><b>Reference-based mode</b></h4>
         <p>You can scroll and zoom into the reference panel using the mouse or touchpad.
         <svg width="800" height="80">
-        <g transform="translate(0,10)">
-            <rect class="chromBg" width="430" height="30"></rect>
-        </g>
-        <g transform="translate(10,10)">
-            <rect class="align correct" width="120" height="30"></rect>
-            <text x="5" y="20" text-anchor="start" font="16px">correct edge</text>
-        </g>
-        <g transform="translate(140,10)">
-            <text x="10" y="20" text-anchor="start" font="16px">gap</text>
-        </g>
-        <g transform="translate(200,10)">
-            <rect class="align wrong" width="220" height="30"></rect>
-            <text x="5" y="20" text-anchor="start" font="16px">edge with assembly errors</text>
-        </g>
-        <g transform="translate(180,60)">
-            <text text-anchor="start" font="16px">chromosome</text>
-        </g>
+            <g transform="translate(0,10)">
+                <rect class="chromBg" width="430" height="30"></rect>
+            </g>
+            <g transform="translate(10,10)">
+                <rect class="align correct" width="120" height="30"></rect>
+                <text x="5" y="20" text-anchor="start" font="16px">correct edge</text>
+            </g>
+            <g transform="translate(140,10)">
+                <text x="10" y="20" text-anchor="start" font="16px">gap</text>
+            </g>
+            <g transform="translate(200,10)">
+                <rect class="align wrong" width="220" height="30"></rect>
+                <text x="5" y="20" text-anchor="start" font="16px">edge with assembly errors</text>
+            </g>
+            <g transform="translate(180,60)">
+                <text text-anchor="start" font="16px">chromosome</text>
+            </g>
         </svg>
         <a>OK</a>
     </div>
 </div>
+
 <div id="left_panel" style="margin-top: 10px;">
     <div style="margin-left: 20px;">
           <div class="menu_div panel panel-default collapse_panel" style="margin-top: 10px;">

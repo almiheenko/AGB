@@ -1,4 +1,5 @@
-var MAX_PARALLEL_EDGES = 4;
+var MAX_PARALLEL_EDGES_LARGE_GRAPH = 4;
+var MAX_PARALLEL_EDGES = 10;
 
 function render(doRefresh, doAnimate, doRefreshTables) {
     d3.select("#graph > svg").attr("display", "none");
@@ -501,14 +502,14 @@ function updateDot(doRefresh, doAnimate, doRefreshTables) {
             pairNode = Object.keys(graph[node])[i];
             edgesToLeaves[pairNode] = edgesToLeaves[pairNode] || new Set();
             var parallelVisibleEdges = new Set();
-            if (node != pairNode && graph[node][pairNode].size > MAX_PARALLEL_EDGES) {
+            if (node != pairNode && graph[node][pairNode].size > MAX_PARALLEL_EDGES_LARGE_GRAPH) {
                 for (let edgeId of graph[node][pairNode]) {
                     if (!isEdgeHidden(node, pairNode, edgeId)) {
                         parallelVisibleEdges.add(edgeId);
                     }
                 }
             }
-            if (parallelVisibleEdges.size > MAX_PARALLEL_EDGES) {
+            if (parallelVisibleEdges.size > MAX_PARALLEL_EDGES_LARGE_GRAPH) {
                 var parallelEdgeId = 'parallel' + Math.min(parseInt(node.replace(/[^0-9]/g,'')), parseInt(pairNode.replace(/[^0-9]/g,''))) + '_' +
                     Math.max(parseInt(node.replace(/[^0-9]/g,'')), parseInt(pairNode.replace(/[^0-9]/g,'')));
                 parallelEdges[parallelEdgeId] = parallelVisibleEdges;
@@ -529,12 +530,8 @@ function updateDot(doRefresh, doAnimate, doRefreshTables) {
         }
     }
     if (newEdges.size > 100) {
-        for (let parallelEdgeId in parallelEdges) {
-            parallelEdgeDict[parallelEdgeId] = Array.from(parallelEdges[parallelEdgeId]);
-            newEdges.add(parallelEdgeId);
-        }
         for (let node in edgesToLeaves) {
-            if (edgesToLeaves[node].size > MAX_PARALLEL_EDGES) {
+            if (edgesToLeaves[node].size > MAX_PARALLEL_EDGES_LARGE_GRAPH) {
                 var parallelEdgeId = 'parallel' + node;
                 parallelEdgeDict[parallelEdgeId] = Array.from(edgesToLeaves[node]);
                 for (var j = 0; j < parallelEdgeDict[parallelEdgeId].length; j++) {
@@ -544,9 +541,13 @@ function updateDot(doRefresh, doAnimate, doRefreshTables) {
             }
         }
     }
-    else {
-        for (let parallelEdgeId in parallelEdges) {
-            for (var j = 0; j < parallelEdges[parallelEdgeId].length; j++) {
+    for (let parallelEdgeId in parallelEdges) {
+        if (newEdges.size > 100 || parallelEdges[parallelEdgeId].size > MAX_PARALLEL_EDGES) {
+            parallelEdgeDict[parallelEdgeId] = Array.from(parallelEdges[parallelEdgeId]);
+            newEdges.add(parallelEdgeId);
+        }
+        else {
+            for (var j = 0; j < parallelEdges[parallelEdgeId].size; j++) {
                 newEdges.add(parallelEdges[parallelEdgeId][j]);
             }
         }

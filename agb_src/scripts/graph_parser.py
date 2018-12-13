@@ -308,19 +308,21 @@ def construct_graph(dict_edges, predecessors, successors):
     # we need to construct graph based on this information
     node_id = 1
     graph = defaultdict(set)
+    adj_matrix = defaultdict(list)
     for edge_id in dict_edges.keys():
         start_node = None
         is_edge_repetitive = dict_edges[edge_id].repetitive
         for prev_e in predecessors[edge_id]:
             if prev_e in dict_edges:
                 start_node = dict_edges[prev_e].end or start_node
-                if is_edge_repetitive and dict_edges[prev_e].repetitive:
-                    graph[edge_id].add(prev_e)
-            for next_e in successors[prev_e]:
+            j = 0
+            while start_node is None and j < len(successors[prev_e]):
+                next_e = successors[prev_e][j]
                 if next_e in dict_edges:
                     start_node = dict_edges[next_e].start or start_node
-                    if is_edge_repetitive and dict_edges[next_e].repetitive:
-                        graph[edge_id].add(next_e)
+                j += 1
+            if start_node is not None:
+                break
         if not start_node:
             start_node = node_id
             node_id += 1
@@ -328,18 +330,27 @@ def construct_graph(dict_edges, predecessors, successors):
         for next_e in successors[edge_id]:
             if next_e in dict_edges:
                 end_node = dict_edges[next_e].start or end_node
-                if is_edge_repetitive and dict_edges[next_e].repetitive:
-                    graph[edge_id].add(next_e)
-            for prev_e in predecessors[next_e]:
+            j = 0
+            while end_node is None and j < len(predecessors[next_e]):
+                prev_e = predecessors[next_e][j]
                 if prev_e in dict_edges:
                     end_node = dict_edges[prev_e].end or end_node
-                    if is_edge_repetitive and dict_edges[prev_e].repetitive:
-                        graph[edge_id].add(prev_e)
+                j += 1
+            if end_node is not None:
+                break
         if not end_node:
             end_node = node_id
             node_id += 1
+        if is_edge_repetitive:
+            adj_matrix[start_node].append(edge_id)
+            adj_matrix[end_node].append(edge_id)
         dict_edges[edge_id].start = start_node
         dict_edges[edge_id].end = end_node
+    for node_id, edges in adj_matrix.items():
+        for i, edge_id in enumerate(edges):
+            for j, adj_edge_id in enumerate(edges):
+                if i != j:
+                    graph[edge_id].add(adj_edge_id)
 
     ### color each cluster of repeat edges in one color
     colored_edges = set()

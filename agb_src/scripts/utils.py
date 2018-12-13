@@ -70,7 +70,7 @@ def get_median(arr):
     arr.sort()
     if len(arr) % 2:
         return arr[len(arr)//2 + 1]
-    else:
+    elif arr:
         return (arr[len(arr)//2] + arr[len(arr)//2-1]) / 2
 
 

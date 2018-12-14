@@ -793,10 +793,10 @@ function zoomToElement(elementId) {
         var bx = bbox.x;
         var by = bbox.y;
         var realHeight = parseInt($('#graph > svg').attr('height'));
-        var offsetY = svgh - realHeight;
         var scaleFactor = Math.min(Math.round(svgh / 500), Math.round(svgw / 500));  // zoom to 500px
+        var offsetY = (svgh+500/2) - realHeight;
         var tx = -bx*scaleFactor + svgx + svgw/4;
-        var ty = -by*scaleFactor + svgy - svgh/2 - offsetY;
+        var ty = -by*scaleFactor + svgy - offsetY;
 
         var t = d3.zoomTransform(graphviz.zoomSelection().node());
         t = t.translate(tx, ty);

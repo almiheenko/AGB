@@ -92,7 +92,8 @@ function render(doRefresh, doAnimate, doRefreshTables) {
         edges = d3.selectAll('.edge');
         edges
             .on("mouseenter", function (e) {
-                d3.select(this).classed("focused", true);
+                var edgeWidth = d3.select(this).select('path').attr('stroke-width');
+                d3.select(this).select('path').attr("stroke-width", parseInt(edgeWidth) + 4);
                 var edgeId = d3.select(this).attr('id');
                 var curEdge = defEdgeData[edgeId] || defEdgeData[edgeId];
                 if (curEdge) { // add edge tooltip
@@ -116,7 +117,8 @@ function render(doRefresh, doAnimate, doRefreshTables) {
                 }
             })
             .on("mouseleave", function (e) {
-                d3.select(this).classed("focused", false);
+                var edgeWidth = d3.select(this).select('path').attr('stroke-width');
+                d3.select(this).select('path').attr("stroke-width", parseInt(edgeWidth) - 4);
                 tooltipDiv.transition()
                  .duration(300)
                  .style("opacity", 0);

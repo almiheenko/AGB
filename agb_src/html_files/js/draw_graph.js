@@ -549,8 +549,9 @@ function updateDot(doRefresh, doAnimate, doRefreshTables) {
             newEdges.add(parallelEdgeId);
         }
         else {
-            for (var j = 0; j < parallelEdges[parallelEdgeId].size; j++) {
-                newEdges.add(parallelEdges[parallelEdgeId][j]);
+            var it = parallelEdges[parallelEdgeId].values();
+            for (var nextId=it.next().value; nextId=it.next().value;) {
+                newEdges.add(nextId);
             }
         }
     }

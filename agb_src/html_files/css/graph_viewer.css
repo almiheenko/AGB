@@ -166,6 +166,10 @@ path.contig_selected  {
     fill: #8d48a7;
 }
 
+.hidden_edge_text {
+    color: #818181;
+}
+
 .gray_text {
     font-size: 9px;
     line-height: 12px;

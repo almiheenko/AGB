@@ -236,9 +236,9 @@ function highlightContigEdges() {
                 }
                 else {
                      if (defEdgeData[edgeElId].unique)
-                        graphEdges.push('<span class="gray_text"><b>' + edge + '</b></span>');
+                        graphEdges.push('<span class="hidden_edge_text"><b>' + edge + '</b></span>');
                      else
-                        graphEdges.push('<span class="gray_text">' + edge + '</span> (' + defEdgeData[edgeElId].mult + ')');
+                        graphEdges.push('<span class="hidden_edge_text">' + edge + '</span> (' + defEdgeData[edgeElId].mult + ')');
                     isHiddenEdges = true;
                 }
                 selectedEdges.add(edge);

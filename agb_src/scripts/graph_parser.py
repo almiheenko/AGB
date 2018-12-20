@@ -219,6 +219,8 @@ def parse_gfa(gfa_fpath, min_edge_len, input_dirpath=None, assembler=None):
             if record_type == 'S':
                 fs = line.split()
                 name, seq_len = fs[1], len(fs[2])
+                if fs[2] == '*':
+                    seq_len = None
                 add_fields = fs[3:] if len(fs) > 3 else []
                 add_info = dict((f.split(':')[0].lower(), f.split(':')[-1]) for f in add_fields)
                 cov = 1
@@ -226,9 +228,9 @@ def parse_gfa(gfa_fpath, min_edge_len, input_dirpath=None, assembler=None):
                     cov = float(add_info["dp"])  ## coverage depth
                 elif "kc" in add_info:
                     cov = max(1, int(add_info["kc"]) / seq_len)  ## k-mer count / edge length
-                if cov is None:
-                    print(name)
-                if not seq_len or seq_len >= min_edge_len:
+                if "ln" in add_info:
+                    seq_len = int(add_info["ln"])  ## sequence length
+                if seq_len and seq_len >= min_edge_len:
                     edge_id = get_edge_agv_id(get_edge_num(name))
                     edge = Edge(edge_id, get_edge_num(name), seq_len, cov, element_id=edge_id)
                     dict_edges[edge_id] = edge

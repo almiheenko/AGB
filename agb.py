@@ -2,7 +2,8 @@
 
 import os
 import sys
-from optparse import OptionParser, OptionGroup
+from copy import copy
+from optparse import OptionParser, OptionGroup, Option
 from os.path import exists
 
 from agb_src.scripts.config import *
@@ -13,6 +14,26 @@ from agb_src.scripts.quast_runner import run_quast_analysis
 from agb_src.scripts.utils import embed_css_and_scripts, get_scaffolds_fpath, is_empty_file, is_abyss, is_canu, is_flye, \
     is_spades
 from agb_src.scripts.viewer_builder import build_jsons
+
+
+class AGBOption(Option):
+    def check_file(option, opt, fpath):
+        if fpath and os.path.isdir(fpath):
+            print("ERROR! You specify a folder instead of a file: %s" % (fpath))
+            sys.exit(2)
+        if not fpath or not os.path.isfile(fpath):
+            print("ERROR! File not found: %s" % (fpath))
+            sys.exit(2)
+        return fpath
+    def check_dir(option, opt, dirpath):
+        if not dirpath or not os.path.isdir(dirpath):
+            print("ERROR! Folder not found: %s" % (dirpath))
+            sys.exit(2)
+        return dirpath
+    TYPES = Option.TYPES + ('file', 'dir')
+    TYPE_CHECKER = copy(Option.TYPE_CHECKER)
+    TYPE_CHECKER['file'] = check_file
+    TYPE_CHECKER['dir'] = check_dir
 
 
 def parse_assembler_output(assembler_name, input_dirpath, input_fpath, output_dirpath, input_fasta_fpath, min_edge_len):
@@ -56,7 +77,7 @@ def parse_assembler_output(assembler_name, input_dirpath, input_fpath, output_di
 def main():
     description = (
         'The program will create interactive assembly graph viewer')
-    parser = OptionParser(description=description)
+    parser = OptionParser(description=description, option_class=AGBOption)
 
     group = OptionGroup(parser, "Common Options",
                         "Options that can be used in any mode")
@@ -69,9 +90,9 @@ def main():
     parser.add_option_group(group)
 
     group = OptionGroup(parser, "Special Options")
-    group.add_option('-i', dest='input_dir', help='Assembler output folder')
-    group.add_option('--graph', dest='input_file', help='Assembly graph in GFA1/GFA2/Graphviz/FASTG format. Cannot be used with -i option')
-    group.add_option('--fasta', dest='input_fasta', help='FASTA file with graph edge sequences. Cannot be used with -i option')
+    group.add_option('-i', dest='input_dir', type="dir", help='Assembler output folder')
+    group.add_option('--graph', dest='input_file', type="file", help='Assembly graph in GFA1/GFA2/Graphviz/FASTG format. Cannot be used with -i option')
+    group.add_option('--fasta', dest='input_fasta', type="file", help='FASTA file with graph edge sequences. Cannot be used with -i option')
     # add options for contigs/scaffolds
     parser.add_option_group(group)
 

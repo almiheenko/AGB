@@ -102,19 +102,24 @@ def main():
                      ', '.join(SUPPORTED_ASSEMBLERS))
 
     opts, args = parser.parse_args()
+
+    if not opts.input_file and not opts.input_dir:
+        print('ERROR! You should specify an assembly graph file using the option --graph OR '
+              'an assembler output folder using the option -i.\nUse --help to see the full usage information')
+        sys.exit(1)
     if not opts.assembler:
-        print('ERROR! You should specify the name of the used assembler software using the option -a')
-        parser.print_help(file=sys.stderr)
+        print('ERROR! You should specify the name of the used assembler software using the option -a\n'
+              'Use --help to see the full usage information')
         sys.exit(1)
 
     if opts.input_dir and opts.input_file:
-        print('ERROR! You should specify an assembly graph file OR assembler output folder')
-        parser.print_help(file=sys.stderr)
+        print('ERROR! You should specify an assembly graph file using the option --graph OR '
+              'assembler output folder using the option -i.\nUse --help to see the full usage information')
         sys.exit(1)
 
     if opts.input_fasta and not opts.input_file:
-        print('ERROR! If you specify a file with graph edge sequences, you should specify an assembly graph')
-        parser.print_help(file=sys.stderr)
+        print('ERROR! If you specify a file with graph edge sequences, you also have to specify a file with an assembly graph'
+              ' using --graph option\nUse --help to see the full usage information')
         sys.exit(1)
 
     if not exists(opts.output_dir):

@@ -622,7 +622,7 @@ function updateDot(doRefresh, doAnimate, doRefreshTables) {
             var s = '"' + source + '" -> "' + end + '" [label="",id = "' + edgeId + '", color="black:white:black",penwidth=8,arrowType="tee"];';
             dotSrcLines.push(s);
         }
-        else if (loopEdgeDict[edgeId] && loopEdgeDict[edgeId].size > 0) {
+        else if (loopEdgeDict[edgeId] && loopEdgeDict[edgeId].length > 0) {
             curEdges = 0;
             var loopNode;
             var filterEdges = [];

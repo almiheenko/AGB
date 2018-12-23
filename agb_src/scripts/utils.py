@@ -140,7 +140,7 @@ def calculate_median_cov(dict_edges):
     coverages = []
     for edge in dict_edges.values():
         coverages.extend([edge.cov] * int(edge.length / 100))
-    return get_median(coverages)
+    return get_median(coverages) or 1
 
 
 def can_reuse(fpath, files_to_check=None, dir_to_check=None):
@@ -189,11 +189,11 @@ def convert_to_unicode(value):
 
 
 def find_file_by_pattern(dir, pattern):
-    files = [join(path, file) for (path, dirs, files) in os.walk(dir) for file in files
-             if file.endswith(pattern)]
-    if files:
-        return files[0]
-    return None
+    if dir:
+        files = [join(path, file) for (path, dirs, files) in os.walk(dir) for file in files
+                 if file.endswith(pattern)]
+        if files:
+            return files[0]
 
 
 def embed_css_and_scripts(html):

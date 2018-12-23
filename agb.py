@@ -49,13 +49,18 @@ def parse_assembler_output(assembler_name, input_dirpath, input_fpath, output_di
             edges_fpath = get_edges_from_gfa(input_fpath, output_dirpath, min_edge_len)
         elif input_fpath.endswith("dot") or input_fpath.endswith("gv"):
             edges_fpath = format_edges_file(input_fasta_fpath, output_dirpath)
+            dict_edges = dict()
             if is_abyss(assembler_name):
                 dict_edges = parse_abyss_dot(input_fpath, min_edge_len)
-            else:
+            if not dict_edges:
                 try:
                     dict_edges = parse_flye_dot(input_fpath, min_edge_len)
-                except:
-                    sys.exit("ERROR! Failed parsing " + input_fpath + " file.")
+                except Exception as e:
+                    sys.exit("ERROR! Failed parsing " + input_fpath + " file.\n"
+                             "During parsing the following error has occured: " + str(e) +
+                             "\nPlease make sure that you correctly specified the used assembler. "
+                             "DOT files produced by different assemblers can have very different formats.\n"
+                             "Examples of input data can be found here https://github.com/almiheenko/AGB/tree/master/test_data")
     else:
         if is_canu(assembler_name):
             dict_edges, contig_edges, edges_fpath = parse_canu_output(input_dirpath, output_dirpath, min_edge_len)

@@ -13,7 +13,7 @@ export PATH=$(pwd)/miniconda/bin:$PATH
 
 Create a new conda environment and install AGB into it:
 ```
-conda create -c almiheenko -c graphtools -c bioconda -n AGB agb
+conda create -c almiheenko -c bioconda -n AGB agb
 ```
 
 Activate the environment:

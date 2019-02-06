@@ -45,3 +45,6 @@ You can see AGB examples here https://almiheenko.github.io/AGB/index.html
 Useful information can be found here https://almiheenko.github.io/AGB/manual.html
 
 ### Citation
+
+Alla Mikheenko, Mikhail Kolmogorov, "Assembly Graph Browser: interactive visualization of assembly graphs",
+Bioinformatics. [doi: 10.1093/bioinformatics/btz072](https://doi.org/10.1093/bioinformatics/btz072)

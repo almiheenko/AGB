@@ -58,7 +58,7 @@ def parse_assembler_output(assembler_name, input_dirpath, input_fpath, output_di
                 except Exception as e:
                     sys.exit("ERROR! Failed parsing " + input_fpath + " file.\n"
                              "During parsing the following error has occured: " + str(e) +
-                             "\nPlease make sure that you correctly specified the used assembler. "
+                             "\nPlease make sure that you correctly specified the assembler name using -a option. "
                              "DOT files produced by different assemblers can have very different formats.\n"
                              "Examples of input data can be found here https://github.com/almiheenko/AGB/tree/master/test_data")
     else:
@@ -69,9 +69,10 @@ def parse_assembler_output(assembler_name, input_dirpath, input_fpath, output_di
         elif is_spades(assembler_name):
             dict_edges, contig_edges, edges_fpath = parse_spades_output(input_dirpath, output_dirpath, min_edge_len)
         else:
-            sys.exit("Assembler %s is not supported yet! Supported assemblers: %s. "
-                     "More assemblers will be added in the next release."
-                     "You can specify the assembly graph file in GFA/FASTG/GraphViz formats using --graph option "
+            sys.exit("Output folder of %s assembler can not be parsed! Supported assemblers: %s. "
+                     "More assemblers will be added in the next release.\n"
+                     "To visualize the assembly graph produced by this assembler, "
+                     "you should manually specify the assembly graph file in GFA/FASTG/GraphViz formats using --graph option "
                      "and (optionally) file with edge sequences using --fasta option" %
                      (assembler_name, ', '.join(SUPPORTED_ASSEMBLERS)))
     for edge_id, edge in dict_edges.items():
@@ -96,30 +97,25 @@ def main():
 
     group = OptionGroup(parser, "Special Options")
     group.add_option('-i', dest='input_dir', type="dir", help='Assembler output folder')
-    group.add_option('--graph', dest='input_file', type="file", help='Assembly graph in GFA1/GFA2/Graphviz/FASTG format. Cannot be used with -i option')
-    group.add_option('--fasta', dest='input_fasta', type="file", help='FASTA file with graph edge sequences. Cannot be used with -i option')
+    group.add_option('--graph', dest='input_file', type="file", help='Assembly graph in GFA1/GFA2/Graphviz/FASTG format. Cannot be used with -i option.')
+    group.add_option('--fasta', dest='input_fasta', type="file", help='FASTA file with graph edge sequences. Cannot be used with -i option.')
     # add options for contigs/scaffolds
     parser.add_option_group(group)
 
     parser.set_usage('Usage: \n' +
                      '1) ' + __file__ + ' [options] --graph assembly_graph_file -a <assembler_name> [--fasta file_with_graph_edge_sequences]\n'
-                     '2) ' + __file__ + ' [options] -a <assembler_name> -i <assembler_output_dir> (supported for %s)' %
-                     ', '.join(SUPPORTED_ASSEMBLERS))
+                     '2) ' + __file__ + ' [options] -a <assembler_name> -i <assembler_output_dir>\tThis option is supported for %s assemblers only.' % ', '.join(SUPPORTED_ASSEMBLERS))
 
     opts, args = parser.parse_args()
 
-    if not opts.input_file and not opts.input_dir:
+    if (not opts.input_file and not opts.input_dir) or (opts.input_dir and opts.input_file):
         print('ERROR! You should specify an assembly graph file using the option --graph OR '
               'an assembler output folder using the option -i.\nUse --help to see the full usage information')
         sys.exit(1)
+
     if not opts.assembler:
         print('ERROR! You should specify the name of the used assembler software using the option -a\n'
               'Use --help to see the full usage information')
-        sys.exit(1)
-
-    if opts.input_dir and opts.input_file:
-        print('ERROR! You should specify an assembly graph file using the option --graph OR '
-              'assembler output folder using the option -i.\nUse --help to see the full usage information')
         sys.exit(1)
 
     if opts.input_fasta and not opts.input_file:

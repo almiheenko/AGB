@@ -27,7 +27,7 @@ Run AGB to visualize an assembly graph:
     agb.py --graph <GFA(1,2)/FASTG/Graphviz file> -a <assembler_name>
 ```
 
-Run AGB on an assembler output folder (supported assemblers: Canu, Flye, SPAdes) to visualize an assembly graph with additional useful information:
+Run AGB on an assembler output folder to visualize an assembly graph with additional useful information. Supported assemblers in this mode: Canu, Flye, SPAdes.
 ```
     agb.py -i <assembler_output_dir> -a <assembler_name>
 ```

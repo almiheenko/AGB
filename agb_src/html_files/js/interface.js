@@ -145,7 +145,7 @@ function setupInterfaceBtns() {
             alert("blob not supported");
         }
 
-        var html = d3.select("svg")
+        var html = d3.select("#graph > svg")
             .attr("title", "graph")
             .attr("version", 1.1)
             .attr("xmlns", "http://www.w3.org/2000/svg")

@@ -37,7 +37,13 @@ def parse_flye_output(input_dirpath, output_dirpath, min_edge_len):
 
 
 def parse_spades_output(input_dirpath, output_dirpath, min_edge_len):
-    gfa_fpath = find_file_by_pattern(input_dirpath, "assembly_graph.gfa")
+    gfa_fpath = find_file_by_pattern(input_dirpath, "assembly_graph.gfa") or \
+                find_file_by_pattern(input_dirpath, "assembly_graph_with_scaffolds.gfa")
+    if not gfa_fpath:
+        print("ERROR! Assembly graph is not found in %s! "
+              "Please check the folder or specify the file with assembly graph using --graph option" % (input_dirpath))
+        sys.exit(1)
+
     dict_edges = parse_gfa(gfa_fpath, min_edge_len, input_dirpath, assembler="spades")
     contig_edges = parse_spades_paths(input_dirpath, dict_edges)
     edges_fpath = get_edges_from_gfa(gfa_fpath, output_dirpath, min_edge_len)

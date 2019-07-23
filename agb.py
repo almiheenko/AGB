@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+import io
 import os
 import sys
 from copy import copy
@@ -142,7 +143,7 @@ def main():
 
     build_jsons(dict_edges, opts.input_dir, json_output_dirpath, mapping_info, chrom_names, edge_by_chrom, contig_edges, opts.assembler)
     output_fpath = join(opts.output_dir, HTML_NAME)
-    with open(TEMPLATE_PATH) as f: html = f.read()
+    with io.open(TEMPLATE_PATH, 'r', encoding="utf-8") as f: html = f.read()
     html = embed_css_and_scripts(html)
     with open(output_fpath, 'w') as f:
         f.write(html)

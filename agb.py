@@ -92,7 +92,7 @@ def main():
     group.add_option('-o', dest='output_dir', help='Output directory [default: agb_output]', default='agb_output')
     group.add_option('-r', dest='reference', help='Path to the reference genome')
     group.add_option('-t', dest='threads', help='Maximum number of threads [default: %d]' % DEFAULT_THREADS, default=DEFAULT_THREADS)
-    group.add_option('-m', dest='min_edge_len', help='Lower threshold for edge length [default: %d]' % MIN_EDGE_LEN, default=MIN_EDGE_LEN)
+    group.add_option('-m', type='int', dest='min_edge_len', help='Lower threshold for edge length [default: %d]' % MIN_EDGE_LEN, default=MIN_EDGE_LEN)
     group.add_option('--meta', dest='is_meta', action='store_true', help='Use QUAST options for metagenome', default=False)
     parser.add_option_group(group)
 

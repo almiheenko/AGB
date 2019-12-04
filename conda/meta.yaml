@@ -1,9 +1,9 @@
 package:
   name: "agb"
-  version: "0.5.1"
+  version: "0.5.4"
 
 source:
-  git_rev: ca66b04
+  git_rev: b0c9f7b
   git_url: https://github.com/almiheenko/AGB
 
 build:
@@ -24,9 +24,9 @@ requirements:
 
   run:
     - python
+    - networkx <=2.3
     - six
     - cython
-    - networkx
     - gfapy
     - minimap2
     - nxmetis

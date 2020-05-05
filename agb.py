@@ -145,7 +145,7 @@ def main():
     output_fpath = join(opts.output_dir, HTML_NAME)
     with io.open(TEMPLATE_PATH, 'r', encoding="utf-8") as f: html = f.read()
     html = embed_css_and_scripts(html)
-    with open(output_fpath, 'w') as f:
+    with io.open(output_fpath, 'w', encoding="utf-8") as f:
         f.write(html)
     print('Assembly graph viewer is saved to ' + output_fpath)
 

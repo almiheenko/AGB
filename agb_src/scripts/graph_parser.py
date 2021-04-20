@@ -274,9 +274,9 @@ def parse_gfa(gfa_fpath, min_edge_len, input_dirpath=None, assembler=None):
         edge2 = get_edge_agv_id(get_edge_num(to_name))
         if from_orient == '-': edge1 = get_match_edge_id(edge1)
         if to_orient == '-': edge2 = get_match_edge_id(edge2)
-        if edge1 != edge2:
-            predecessors[edge2].append(edge1)
-            successors[edge1].append(edge2)
+        #if edge1 != edge2:
+        predecessors[edge2].append(edge1)
+        successors[edge1].append(edge2)
         g.add_edge(edge1, edge2)
         if is_spades(assembler) or is_abyss(assembler):
             edge1, edge2 = get_match_edge_id(edge2), get_match_edge_id(edge1)
@@ -327,7 +327,8 @@ def construct_graph(dict_edges, predecessors, successors):
                 break
         if not start_node:
             start_node = node_id
-            node_id += 1
+            if edge_id not in successors[edge_id]:
+                node_id += 1
         end_node = None
         for next_e in successors[edge_id]:
             if next_e in dict_edges:

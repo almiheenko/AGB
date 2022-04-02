@@ -18,7 +18,7 @@ conda create -c almiheenko -c bioconda -n AGB agb
 
 Activate the environment:
 ```
-source activate AGB
+conda activate AGB
 ```
 
 ### Usage
